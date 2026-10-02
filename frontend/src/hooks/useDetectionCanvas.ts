@@ -116,11 +116,10 @@ export function useDetectionCanvas({
   }, [canvasRef, detections, minConfidence, showFire, showSmoke, renderLabels]);
 
   useEffect(() => {
-    let animId: number;
     const render = () => {
       drawDetections();
     };
-    animId = requestAnimationFrame(render);
+    const animId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animId);
   }, [drawDetections]);
 
