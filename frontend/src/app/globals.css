@@ -4,24 +4,50 @@
   --font-sans: var(--font-poppins), "Poppins", sans-serif;
   --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
 
-  --color-industrial-canvas: #0B111E;
-  --color-industrial-surface: #131B2A;
-  --color-industrial-elevated: #182235;
-  --color-industrial-border: #1F293D;
-  --color-industrial-border-subtle: #162033;
-  --color-industrial-border-active: #2E3D5B;
+  /* Stitch Design Tokens - AegisFlame Palette */
+  --color-surface-container-lowest: #060e20;
+  --color-surface-dim: #0b1326;
+  --color-background: #0b1326;
+  --color-surface: #0b1326;
+  --color-surface-container-low: #131b2e;
+  --color-surface-container: #171f33;
+  --color-surface-container-high: #222a3d;
+  --color-surface-container-highest: #2d3449;
+  --color-surface-bright: #31394d;
 
-  --color-alert-fire: #DC2626;
-  --color-alert-fire-bright: #EF4444;
-  --color-alert-smoke: #D97706;
-  --color-alert-smoke-bright: #F59E0B;
-  --color-alert-safe: #059669;
-  --color-alert-safe-bright: #10B981;
+  --color-on-background: #dae2fd;
+  --color-on-surface: #dae2fd;
+  --color-on-surface-variant: #e4beb4;
+  --color-outline: #ab8980;
+  --color-outline-variant: #5b4039;
+
+  --color-primary: #ffb5a0;
+  --color-primary-container: #ff5722;
+  --color-on-primary: #5f1500;
+  --color-on-primary-container: #541200;
+
+  --color-secondary: #ffb4ac;
+  --color-secondary-container: #a90111;
+  --color-on-secondary: #690006;
+  --color-on-secondary-container: #ffb3ab;
+
+  --color-tertiary: #ffba38;
+  --color-tertiary-container: #c08600;
+  --color-on-tertiary: #432c00;
+  --color-on-tertiary-container: #3a2600;
+
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
+
+  --color-smoke-cyan: #06b6d4;
+  --color-smoke-sky: #38bdf8;
 }
 
 :root {
-  --background: #0B111E;
-  --foreground: #F1F5F9;
+  --background: #0b1326;
+  --foreground: #dae2fd;
 }
 
 * {
@@ -29,12 +55,50 @@
 }
 
 body {
-  background-color: #0B111E;
-  color: #F1F5F9;
+  background-color: #0b1326;
+  color: #dae2fd;
   font-family: var(--font-poppins), "Poppins", sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Radar sweep animation */
+.radar-sweep {
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(255, 87, 34, 0.22) 60deg, transparent 65deg);
+  animation: spin 3.5s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1000%); }
+}
+
+.animate-scanline {
+  animation: scanline 8s linear infinite;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 0.95; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.pulse-danger {
+  box-shadow: 0 0 20px rgba(229, 57, 53, 0.4);
+}
+
+.cctv-grain {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
 }
 
 /* Custom scrollbar for industrial UI */
@@ -44,14 +108,14 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B111E;
+  background: #0b1326;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1F293D;
+  background: #222a3d;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2E3D5B;
+  background: #ff5722;
 }

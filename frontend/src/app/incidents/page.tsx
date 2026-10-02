@@ -63,24 +63,24 @@ export default function IncidentsPage() {
   }, [filtered]);
 
   return (
-    <div className="min-h-screen bg-[#0B111E] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#0b1326] text-[#dae2fd] flex flex-col font-sans">
       <HeaderNav />
 
       {/* Page Subheader */}
-      <div className="bg-[#131B2A] border-b border-[#1F293D] px-4 lg:px-8 py-3 flex items-center justify-between">
+      <div className="bg-[#131b2e] border-b border-[#2d3449] px-4 lg:px-8 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Activity className="w-4 h-4 text-slate-400" />
-          <h1 className="text-xs font-mono font-bold tracking-wider text-slate-200">
-            INCIDENT AUDIT TRAIL & LOGS
+          <Activity className="w-4 h-4 text-[#ff5722]" />
+          <h1 className="text-xs font-mono font-bold tracking-wider text-white">
+            HAZARD AUDIT TRAIL &amp; LOGS
           </h1>
         </div>
 
         <button
           onClick={exportCsv}
           type="button"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#182235] hover:bg-[#202d44] border border-[#2E3D5B] text-xs font-mono text-slate-200 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#171f33] hover:bg-[#222a3d] border border-[#2d3449] text-xs font-mono text-[#dae2fd] transition-colors"
         >
-          <Download className="w-3.5 h-3.5 text-slate-300" />
+          <Download className="w-3.5 h-3.5 text-[#ffb5a0]" />
           <span>DOWNLOAD CSV REPORT</span>
         </button>
       </div>
@@ -88,38 +88,38 @@ export default function IncidentsPage() {
       <main className="flex-1 p-4 lg:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
         {/* Metric Summary Stat Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[#131B2A] border border-[#1F293D] rounded-lg p-4">
-            <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
+          <div className="bg-[#131b2e] border border-[#2d3449] rounded-lg p-4">
+            <div className="text-[10px] font-mono text-[#e4beb4] uppercase tracking-wider mb-1">
               Active Threats
             </div>
             <div className="font-mono text-2xl font-bold text-red-400">{activeCount}</div>
             <div className="text-[11px] text-slate-500 font-mono mt-1">Requiring Response</div>
           </div>
 
-          <div className="bg-[#131B2A] border border-[#1F293D] rounded-lg p-4">
-            <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
+          <div className="bg-[#131b2e] border border-[#2d3449] rounded-lg p-4">
+            <div className="text-[10px] font-mono text-[#e4beb4] uppercase tracking-wider mb-1">
               Fire Incidents
             </div>
             <div className="font-mono text-2xl font-bold text-slate-100 flex items-center gap-2">
-              <Flame className="w-5 h-5 text-red-500" />
+              <Flame className="w-5 h-5 text-[#ff5722] fill-[#ff5722]" />
               {fireCount}
             </div>
             <div className="text-[11px] text-slate-500 font-mono mt-1">Optical Signatures</div>
           </div>
 
-          <div className="bg-[#131B2A] border border-[#1F293D] rounded-lg p-4">
-            <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
+          <div className="bg-[#131b2e] border border-[#2d3449] rounded-lg p-4">
+            <div className="text-[10px] font-mono text-[#e4beb4] uppercase tracking-wider mb-1">
               Smoke Advisories
             </div>
             <div className="font-mono text-2xl font-bold text-slate-100 flex items-center gap-2">
-              <CloudFog className="w-5 h-5 text-amber-500" />
+              <CloudFog className="w-5 h-5 text-[#ffba38]" />
               {smokeCount}
             </div>
             <div className="text-[11px] text-slate-500 font-mono mt-1">Particulate Plumes</div>
           </div>
 
-          <div className="bg-[#131B2A] border border-[#1F293D] rounded-lg p-4">
-            <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
+          <div className="bg-[#131b2e] border border-[#2d3449] rounded-lg p-4">
+            <div className="text-[10px] font-mono text-[#e4beb4] uppercase tracking-wider mb-1">
               Resolved Cases
             </div>
             <div className="font-mono text-2xl font-bold text-emerald-400 flex items-center gap-2">

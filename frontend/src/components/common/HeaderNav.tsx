@@ -2,121 +2,125 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
-import { Flame, Volume2, VolumeX, Radio } from "lucide-react";
+import { Flame, Bell, Settings, Volume2, VolumeX, ShieldAlert } from "lucide-react";
 
 interface HeaderNavProps {
   isMuted?: boolean;
   onToggleMute?: () => void;
+  onEmergencyOverride?: () => void;
 }
 
-export function HeaderNav({ isMuted = true, onToggleMute }: HeaderNavProps) {
+export function HeaderNav({
+  isMuted = false,
+  onToggleMute,
+  onEmergencyOverride,
+}: HeaderNavProps) {
   const pathname = usePathname();
-  const [timeStr, setTimeStr] = useState<string>("");
 
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setTimeStr(
-        now.toLocaleTimeString("id-ID", {
-          hour12: false,
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        })
-      );
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const navItems = [
-    { label: "Command Center", href: "/" },
-    { label: "Media Inspector", href: "/inspector" },
-    { label: "Incident Log", href: "/incidents" },
+  const navLinks = [
+    { label: "Platform", href: "/#platform" },
+    { label: "Live Scan", href: "/live-scan" },
+    { label: "Telemetry", href: "/inspector" },
+    { label: "Hazard Log", href: "/incidents" },
   ];
 
   return (
-    <header className="h-16 border-b border-[#1F293D] bg-[#0B111E] px-4 lg:px-8 flex items-center justify-between sticky top-0 z-40">
-      {/* Brand Identity */}
+    <header className="w-full px-4 lg:px-8 py-3 flex justify-between items-center border-b border-[#2d3449]/70 bg-[#060e20] sticky top-0 z-50">
+      {/* Brand & Neural Scan Version */}
       <div className="flex items-center gap-6">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded bg-[#131B2A] border border-[#1F293D] flex items-center justify-center text-red-500 group-hover:border-red-500/50 transition-colors">
-            <Flame className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-sm font-bold tracking-wider text-slate-100 flex items-center gap-2">
-              FLAMEGUARD AI
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#182235] border border-[#1F293D] text-slate-400">
-                v1.0-EDGE
-              </span>
-            </div>
-            <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5">
-              <Radio className="w-2.5 h-2.5 text-emerald-400" />
-              VISION OPS DESK
-            </div>
-          </div>
+        <Link
+          href="/"
+          className="text-lg font-bold tracking-wider text-[#ff5722] flex items-center gap-2 transition-transform hover:scale-102"
+        >
+          <Flame className="w-6 h-6 text-[#ff5722] fill-[#ff5722]" />
+          <span className="font-extrabold tracking-tight text-white font-sans">
+            AegisFlame <span className="text-[#ff5722]">AI</span>
+          </span>
         </Link>
 
-        {/* Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1 pl-4 border-l border-[#1F293D]">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
+        <div className="hidden lg:flex items-center gap-2 pl-4 border-l border-[#2d3449] text-[11px] font-mono text-[#e4beb4]">
+          <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          <span className="text-[#ffb5a0] tracking-widest font-semibold">NEURAL SCAN V4.2</span>
+        </div>
+
+        {/* Desktop Navigation Links */}
+        <nav className="hidden md:flex items-center gap-2 ml-4">
+          {navLinks.map((link) => {
+            const isActive =
+              link.href === pathname ||
+              (link.href === "/live-scan" && pathname === "/live-scan") ||
+              (link.href === "/inspector" && pathname === "/inspector") ||
+              (link.href === "/incidents" && pathname === "/incidents");
+
             return (
               <Link
-                key={item.href}
-                href={item.href}
-                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                key={link.href}
+                href={link.href}
+                className={`px-3 py-1 text-sm font-medium rounded transition-colors duration-150 ${
                   isActive
-                    ? "bg-[#182235] text-slate-100 border border-[#2E3D5B]"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-[#131B2A]"
+                    ? "text-[#ffb5a0] border-b-2 border-[#ff5722] font-semibold bg-[#131b2e]/50"
+                    : "text-[#e4beb4] hover:text-[#ffb5a0] hover:bg-[#171f33]"
                 }`}
               >
-                {item.label}
+                {link.label}
               </Link>
             );
           })}
         </nav>
       </div>
 
-      {/* Right Telemetry & Controls */}
-      <div className="flex items-center gap-4">
-        {/* Live System Clock */}
-        <div className="hidden sm:flex flex-col items-end">
-          <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-            STATION CLOCK
-          </span>
-          <span className="font-mono text-xs font-semibold text-slate-200">
-            {timeStr || "--:--:--"}
-          </span>
-        </div>
-
-        {/* Master Audio Mute Toggle */}
+      {/* Trailing Actions */}
+      <div className="flex items-center gap-3">
         {onToggleMute && (
           <button
             onClick={onToggleMute}
             type="button"
-            className={`flex items-center gap-2 px-3 py-1.5 rounded border text-xs font-mono transition-colors ${
-              isMuted
-                ? "bg-[#131B2A] text-slate-400 border-[#1F293D] hover:text-slate-200"
-                : "bg-red-950/40 text-red-300 border-red-800/60 hover:bg-red-900/50"
-            }`}
-            title={isMuted ? "Audio Muted. Click to Unmute" : "Alarm Siren Active. Click to Mute"}
+            className="p-2 text-[#e4beb4] hover:text-[#ffb5a0] hover:bg-[#171f33] rounded transition-colors"
+            title={isMuted ? "Unmute Alarm" : "Mute Alarm"}
+            aria-label="Toggle Siren Audio"
           >
             {isMuted ? (
-              <>
-                <VolumeX className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">SIREN MUTED</span>
-              </>
+              <VolumeX className="w-4 h-4 text-amber-400" />
             ) : (
-              <>
-                <Volume2 className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-                <span className="hidden sm:inline">SIREN LIVE</span>
-              </>
+              <Volume2 className="w-4 h-4 text-emerald-400" />
             )}
           </button>
         )}
+
+        <button
+          type="button"
+          className="hidden sm:flex p-2 text-[#e4beb4] hover:text-[#ffb5a0] hover:bg-[#171f33] rounded transition-colors"
+          title="Notifications"
+          aria-label="Notifications"
+        >
+          <Bell className="w-4 h-4" />
+        </button>
+
+        <button
+          type="button"
+          className="hidden sm:flex p-2 text-[#e4beb4] hover:text-[#ffb5a0] hover:bg-[#171f33] rounded transition-colors"
+          title="Settings"
+          aria-label="Settings"
+        >
+          <Settings className="w-4 h-4" />
+        </button>
+
+        <button
+          type="button"
+          className="hidden lg:inline-flex text-[#e4beb4] text-xs font-mono font-medium hover:text-[#ffb5a0] px-3 py-1.5 transition-colors"
+        >
+          Sign In
+        </button>
+
+        <button
+          onClick={onEmergencyOverride}
+          type="button"
+          className="bg-[#a90111] hover:bg-[#c61021] text-[#ffdad6] border border-[#ffb4ab]/40 px-3.5 py-1.5 rounded text-xs font-mono font-bold flex items-center gap-1.5 transition-transform active:scale-[0.98] shadow-md shadow-red-950/40"
+        >
+          <span className="w-2 h-2 rounded-full bg-red-400 animate-ping"></span>
+          <ShieldAlert className="w-3.5 h-3.5 text-white" />
+          <span>Emergency Override</span>
+        </button>
       </div>
     </header>
   );

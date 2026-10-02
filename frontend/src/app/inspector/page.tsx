@@ -74,18 +74,18 @@ export default function MediaInspectorPage() {
   }, [sampleTitle, confidence, filteredDetections]);
 
   return (
-    <div className="min-h-screen bg-[#0B111E] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#0b1326] text-[#dae2fd] flex flex-col font-sans">
       <HeaderNav />
 
       {/* Subheader */}
-      <div className="bg-[#131B2A] border-b border-[#1F293D] px-4 lg:px-8 py-3 flex items-center justify-between">
+      <div className="bg-[#131b2e] border-b border-[#2d3449] px-4 lg:px-8 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Eye className="w-4 h-4 text-slate-400" />
-          <h1 className="text-xs font-mono font-bold tracking-wider text-slate-200">
+          <Eye className="w-4 h-4 text-[#ff5722]" />
+          <h1 className="text-xs font-mono font-bold tracking-wider text-white">
             MEDIA INSPECTOR // VISION DIAGNOSTIC LAB
           </h1>
         </div>
-        <div className="text-[11px] font-mono text-slate-400 hidden sm:block">
+        <div className="text-[11px] font-mono text-[#e4beb4] hidden sm:block">
           STATIC IMAGE & STORED FOOTAGE ANALYSIS
         </div>
       </div>
@@ -93,15 +93,15 @@ export default function MediaInspectorPage() {
       <main className="flex-1 p-4 lg:p-8 flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto w-full">
         {/* Left Column: Visual Stage */}
         <div className="flex-1 flex flex-col gap-4">
-          <div className="bg-[#131B2A] border border-[#1F293D] rounded-lg overflow-hidden flex flex-col flex-1 min-h-[420px]">
+          <div className="bg-[#131b2e] border border-[#2d3449] rounded-lg overflow-hidden flex flex-col flex-1 min-h-[420px]">
             {/* Viewport Header */}
-            <div className="p-3 bg-[#0E1522] border-b border-[#1F293D] flex items-center justify-between text-xs font-mono">
-              <span className="text-slate-300 font-bold truncate">{sampleTitle}</span>
-              <span className="text-slate-500">CANVAS RESOLUTION: 1920x1080 (HD)</span>
+            <div className="p-3 bg-[#060e20] border-b border-[#2d3449] flex items-center justify-between text-xs font-mono">
+              <span className="text-[#ffb5a0] font-bold truncate">{sampleTitle}</span>
+              <span className="text-[#e4beb4]">CANVAS RESOLUTION: 1920x1080 (HD)</span>
             </div>
 
             {/* Viewport Screen */}
-            <div className="relative flex-1 bg-[#070B13] flex items-center justify-center overflow-hidden min-h-[380px]">
+            <div className="relative flex-1 bg-[#060e20] flex items-center justify-center overflow-hidden min-h-[380px]">
               {previewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -111,13 +111,13 @@ export default function MediaInspectorPage() {
                 />
               ) : (
                 <div className="text-center p-8 select-none">
-                  <div className="w-12 h-12 rounded-lg bg-[#131B2A] border border-[#1F293D] mx-auto flex items-center justify-center text-slate-600 mb-3">
+                  <div className="w-12 h-12 rounded-lg bg-[#171f33] border border-[#2d3449] mx-auto flex items-center justify-center text-[#ff5722] mb-3">
                     <ImageIcon className="w-6 h-6" />
                   </div>
-                  <div className="text-xs font-mono text-slate-400 font-semibold mb-1">
+                  <div className="text-xs font-mono text-[#ffb5a0] font-semibold mb-1">
                     STANDBY STAGE
                   </div>
-                  <p className="text-[11px] font-mono text-slate-600 max-w-xs">
+                  <p className="text-[11px] font-mono text-[#e4beb4] max-w-xs">
                     Drop an image or select a sample preset on the right to view annotated bounding boxes.
                   </p>
                 </div>
