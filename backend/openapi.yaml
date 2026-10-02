@@ -1,0 +1,239 @@
+openapi: 3.0.3
+info:
+  title: Fire & Smoke Detection Vision Microservice
+  description: Real-time Computer Vision Inference API contract matching the Next.js Command Center frontend platform.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local Microservice Development Server
+
+paths:
+  /api/v1/health:
+    get:
+      summary: Health Check
+      description: Probes service availability and status for frontend adapter resilience.
+      responses:
+        '200':
+          description: Service is healthy and online
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: fire-smoke-vision-service
+                  version:
+                    type: string
+                    example: 1.0.0
+
+  /api/v1/cameras:
+    get:
+      summary: List Camera Feeds
+      description: Returns active CCTV channel feeds, metadata, and live detection boxes.
+      responses:
+        '200':
+          description: List of camera channels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CameraFeed'
+
+  /api/v1/incidents:
+    get:
+      summary: List Incident Logs
+      description: Returns audit records of fire and smoke detections.
+      responses:
+        '200':
+          description: Incident record list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IncidentRecord'
+
+  /api/v1/detect/image:
+    post:
+      summary: Detect Fire and Smoke in Image
+      description: Multipart image upload for computer vision inference. Returns bounding box coordinates.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Image file (JPG, PNG, WebP)
+      responses:
+        '200':
+          description: Successful inference result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetectionResponse'
+
+  /api/v1/ws/cctv/{camera_id}:
+    get:
+      summary: Live WebSocket Telemetry Channel
+      description: WebSocket duplex stream transmitting real-time bounding box frames (10-30 FPS).
+      parameters:
+        - name: camera_id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: cam-1
+      responses:
+        '101':
+          description: Switching Protocols to WebSocket
+
+components:
+  schemas:
+    BoundingBox:
+      type: object
+      required:
+        - id
+        - label
+        - confidence
+        - bbox
+      properties:
+        id:
+          type: string
+          example: box-101
+        label:
+          type: string
+          enum: [fire, smoke]
+          example: fire
+        confidence:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.94
+        bbox:
+          type: array
+          items:
+            type: number
+          minItems: 4
+          maxItems: 4
+          description: Normalized coordinates [norm_x, norm_y, norm_w, norm_h] (0.0 to 1.0)
+          example: [0.38, 0.42, 0.22, 0.35]
+
+    CameraFeed:
+      type: object
+      required:
+        - id
+        - name
+        - location
+        - status
+        - detections
+        - fps
+      properties:
+        id:
+          type: string
+          example: cam-1
+        name:
+          type: string
+          example: Lab Komputer & Robotika
+        location:
+          type: string
+          example: Gedung A - Lt. 2
+        streamUrl:
+          type: string
+          nullable: true
+          example: rtsp://192.168.1.50:554/live/stream1
+        isWebcam:
+          type: boolean
+          example: false
+        status:
+          type: string
+          enum: [safe, warning, critical]
+          example: critical
+        detections:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoundingBox'
+        fps:
+          type: integer
+          example: 30
+        resolution:
+          type: string
+          example: 1920x1080
+        latencyMs:
+          type: integer
+          example: 14
+
+    IncidentRecord:
+      type: object
+      required:
+        - id
+        - timestamp
+        - cameraId
+        - cameraName
+        - type
+        - confidence
+        - status
+      properties:
+        id:
+          type: string
+          example: inc-001
+        timestamp:
+          type: string
+          format: date-time
+          example: 2026-10-02T15:30:00Z
+        cameraId:
+          type: string
+          example: cam-1
+        cameraName:
+          type: string
+          example: Lab Komputer & Robotika
+        type:
+          type: string
+          enum: [fire, smoke]
+          example: fire
+        confidence:
+          type: number
+          format: float
+          example: 0.94
+        status:
+          type: string
+          enum: [active, investigating, resolved]
+          example: active
+        snapshotUrl:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+          example: Optical flame signature confirmed near workbench 4
+
+    DetectionResponse:
+      type: object
+      required:
+        - boxes
+        - inferenceTimeMs
+        - timestamp
+      properties:
+        boxes:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoundingBox'
+        inferenceTimeMs:
+          type: number
+          format: float
+          example: 14.8
+        timestamp:
+          type: string
+          format: date-time
+          example: 2026-10-02T15:30:00Z
