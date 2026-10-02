@@ -5,17 +5,14 @@ import { HeaderNav } from "@/components/common/HeaderNav";
 import {
   Flame,
   Video,
-  Activity,
   Zap,
   Wind,
   ShieldCheck,
   TrendingUp,
   Clock,
-  Layers,
   Sliders,
   Bell,
   ArrowRight,
-  ExternalLink,
 } from "lucide-react";
 
 export default function AegisFlameHomePage() {

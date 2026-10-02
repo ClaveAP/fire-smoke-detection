@@ -15,7 +15,6 @@ export function useCameraFeeds() {
   const [webcamFeedId, setWebcamFeedId] = useState<string | null>(null);
   const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null);
 
-  // Derive global system severity status
   const globalStatus: CameraStatus = useMemo(() => {
     if (feeds.some((f) => f.status === "critical")) return "critical";
     if (feeds.some((f) => f.status === "warning")) return "warning";
@@ -49,7 +48,6 @@ export function useCameraFeeds() {
   const toggleWebcam = useCallback(
     async (cameraId: string) => {
       if (webcamFeedId === cameraId) {
-        // Stop current webcam
         if (webcamStream) {
           webcamStream.getTracks().forEach((track) => track.stop());
         }
@@ -94,7 +92,6 @@ export function useCameraFeeds() {
     );
   }, []);
 
-  // Cleanup webcam stream on unmount
   useEffect(() => {
     return () => {
       if (webcamStream) {

@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   AlertTriangle,
   Droplets,
-  Activity,
   Thermometer,
   Wifi,
 } from "lucide-react";
@@ -22,7 +21,6 @@ export default function LiveScanPage() {
   const [flashlightOn, setFlashlightOn] = useState(false);
   const [isWebcam, setIsWebcam] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [emergencyActive, setEmergencyActive] = useState(false);
   const [fm200Active, setFm200Active] = useState(false);
   const [alertToast, setAlertToast] = useState<string | null>(null);
 
@@ -30,9 +28,8 @@ export default function LiveScanPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const { isMuted, toggleMute, playAlert, stopAlarm } = useAlarmSound();
+  const { isMuted, toggleMute, playAlert } = useAlarmSound();
 
-  // Toggle Live Webcam
   const handleToggleWebcam = useCallback(async () => {
     if (isWebcam) {
       if (streamRef.current) {
@@ -60,7 +57,6 @@ export default function LiveScanPage() {
     }
   }, [isWebcam]);
 
-  // Cleanup webcam stream on unmount
   useEffect(() => {
     return () => {
       if (streamRef.current) {
@@ -69,9 +65,7 @@ export default function LiveScanPage() {
     };
   }, []);
 
-  // Emergency Trigger
   const handleEmergencyTrigger = useCallback(() => {
-    setEmergencyActive(true);
     playAlert("critical");
     setAlertToast("ALARM DARURAT DIAKTIFKAN - PANGGILAN EVAKUASI BERJALAN");
     setTimeout(() => {
@@ -79,7 +73,6 @@ export default function LiveScanPage() {
     }, 6000);
   }, [playAlert]);
 
-  // FM-200 Suppression Trigger
   const handleFm200Discharge = useCallback(() => {
     setFm200Active(true);
     setAlertToast("VALVE SPRINKLER FM-200 DIBUKA - DISCHARGE GAS BERLANGSUNG");
@@ -89,7 +82,6 @@ export default function LiveScanPage() {
     }, 5000);
   }, []);
 
-  // Fullscreen Toggle
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen?.();

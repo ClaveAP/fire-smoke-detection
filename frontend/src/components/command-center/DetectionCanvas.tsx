@@ -28,7 +28,6 @@ export function DetectionCanvas({
     },
   });
 
-  // Responsive canvas resolution matching container size
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;

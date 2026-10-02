@@ -36,9 +36,7 @@ export function MediaUploader({ onMediaSelect, isProcessing }: MediaUploaderProp
     }
   };
 
-  // Sample presets for instant testing
   const loadPreset = (name: string, filename: string) => {
-    // Create dummy File object with realistic attributes
     const file = new File(["dummy-media-payload"], filename, { type: "image/jpeg" });
     onMediaSelect(file, name);
   };

@@ -15,7 +15,6 @@ export default function IncidentsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [inspectingIncident, setInspectingIncident] = useState<IncidentRecord | null>(null);
 
-  // Filtered dataset
   const filtered = useMemo(() => {
     return incidents.filter((item) => {
       if (typeFilter !== "all" && item.type !== typeFilter) return false;
@@ -32,13 +31,11 @@ export default function IncidentsPage() {
     });
   }, [incidents, search, typeFilter, statusFilter]);
 
-  // Statistics
   const fireCount = incidents.filter((i) => i.type === "fire").length;
   const smokeCount = incidents.filter((i) => i.type === "smoke").length;
   const activeCount = incidents.filter((i) => i.status === "active").length;
   const resolvedCount = incidents.filter((i) => i.status === "resolved").length;
 
-  // Client-side CSV export
   const exportCsv = useCallback(() => {
     const headers = ["ID", "Timestamp", "Camera ID", "Camera Name", "Type", "Confidence (%)", "Status", "Notes"];
     const rows = filtered.map((i) => [

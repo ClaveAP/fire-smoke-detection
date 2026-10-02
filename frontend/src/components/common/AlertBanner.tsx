@@ -44,7 +44,6 @@ export function AlertBanner({ status, activeCount }: AlertBannerProps) {
     );
   }
 
-  // Warning (Smoke)
   return (
     <div className="w-full bg-amber-950/70 border-b border-amber-600/60 px-4 py-2.5 flex items-center justify-between text-xs text-amber-100">
       <div className="flex items-center gap-2.5 font-mono">

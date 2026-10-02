@@ -55,7 +55,6 @@ export default function MediaInspectorPage() {
   }, [detections, confidence, showFire, showSmoke]);
 
   const handleExportSnapshot = useCallback(() => {
-    // Generate simple data export alert or virtual snapshot download
     const exportData = {
       timestamp: new Date().toISOString(),
       sample: sampleTitle,

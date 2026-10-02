@@ -54,49 +54,42 @@ export function useDetectionCanvas({
       const fillColor = isFire ? "rgba(239, 68, 68, 0.12)" : "rgba(245, 158, 11, 0.12)";
       const tagBg = isFire ? "#DC2626" : "#D97706";
 
-      // Semi-transparent box background fill
       ctx.fillStyle = fillColor;
       ctx.fillRect(x, y, w, h);
 
-      // Bounding box border
       ctx.strokeStyle = strokeColor;
       ctx.lineWidth = 2;
       ctx.strokeRect(x, y, w, h);
 
-      // Tactical corner target markers
+      // Corner target markers
       const cornerLength = Math.min(12, w / 4, h / 4);
       ctx.strokeStyle = "#FFFFFF";
       ctx.lineWidth = 2.5;
 
-      // Top-left
       ctx.beginPath();
       ctx.moveTo(x, y + cornerLength);
       ctx.lineTo(x, y);
       ctx.lineTo(x + cornerLength, y);
       ctx.stroke();
 
-      // Top-right
       ctx.beginPath();
       ctx.moveTo(x + w - cornerLength, y);
       ctx.lineTo(x + w, y);
       ctx.lineTo(x + w, y + cornerLength);
       ctx.stroke();
 
-      // Bottom-left
       ctx.beginPath();
       ctx.moveTo(x, y + h - cornerLength);
       ctx.lineTo(x, y + h);
       ctx.lineTo(x + cornerLength, y + h);
       ctx.stroke();
 
-      // Bottom-right
       ctx.beginPath();
       ctx.moveTo(x + w - cornerLength, y + h);
       ctx.lineTo(x + w, y + h);
       ctx.lineTo(x + w, y + h - cornerLength);
       ctx.stroke();
 
-      // Header label tag
       if (renderLabels) {
         const labelText = `${box.label.toUpperCase()} ${(box.confidence * 100).toFixed(0)}%`;
         ctx.font = "bold 11px ui-monospace, monospace";
