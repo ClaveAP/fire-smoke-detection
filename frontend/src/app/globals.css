@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-poppins), "Poppins", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
+
+  --color-industrial-canvas: #0B111E;
+  --color-industrial-surface: #131B2A;
+  --color-industrial-elevated: #182235;
+  --color-industrial-border: #1F293D;
+  --color-industrial-border-subtle: #162033;
+  --color-industrial-border-active: #2E3D5B;
+
+  --color-alert-fire: #DC2626;
+  --color-alert-fire-bright: #EF4444;
+  --color-alert-smoke: #D97706;
+  --color-alert-smoke-bright: #F59E0B;
+  --color-alert-safe: #059669;
+  --color-alert-safe-bright: #10B981;
+}
+
+:root {
+  --background: #0B111E;
+  --foreground: #F1F5F9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #0B111E;
+  color: #F1F5F9;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar for industrial UI */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0B111E;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1F293D;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2E3D5B;
+}
