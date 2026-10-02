@@ -4,11 +4,11 @@ import { HeroScannerDemo } from "@/components/home/HeroScannerDemo";
 
 export function HeroSection() {
   return (
-    <section className="relative pt-12 pb-16 lg:pt-20 lg:pb-24 overflow-hidden border-b border-[#2d3449]/70 bg-[#060e20]">
+    <section className="relative min-h-[calc(100vh-61px)] flex flex-col justify-center py-8 lg:py-0 overflow-hidden border-b border-[#2d3449]/70 bg-[#060e20]">
       {/* Radial Grid Pattern Accent */}
       <div className="absolute inset-0 bg-[radial-gradient(#5b4039_1px,transparent_1px)] [background-size:24px_24px] opacity-25 pointer-events-none"></div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left Column: Copy & Primary CTAs */}
           <div className="lg:col-span-6 space-y-6">

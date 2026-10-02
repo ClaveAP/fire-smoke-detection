@@ -2,7 +2,7 @@ import { TrendingUp, Clock, ShieldCheck } from "lucide-react";
 
 export function BenchmarkSection() {
   return (
-    <section className="py-16 bg-[#060e20] border-y border-[#2d3449]" id="telemetry">
+    <section className="py-16 bg-[#060e20] border-y border-[#2d3449] scroll-mt-16" id="telemetry">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-5 space-y-4">

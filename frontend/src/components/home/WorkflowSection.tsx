@@ -3,7 +3,7 @@ import { Video, Sliders, Zap, ArrowRight } from "lucide-react";
 
 export function WorkflowSection() {
   return (
-    <section className="py-16 lg:py-24 bg-[#0b1326]" id="platform">
+    <section className="py-16 lg:py-24 bg-[#0b1326] scroll-mt-16" id="platform">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
           <div className="text-[11px] font-mono text-[#ff5722] tracking-widest uppercase font-bold">
