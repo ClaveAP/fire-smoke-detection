@@ -3,10 +3,12 @@
 import { useState, useMemo, useCallback } from "react";
 import { HeaderNav } from "@/components/common/HeaderNav";
 import { IncidentFilters } from "@/components/incidents/IncidentFilters";
+import { IncidentStatCards } from "@/components/incidents/IncidentStatCards";
+import { IncidentTable } from "@/components/incidents/IncidentTable";
 import { SnapshotModal } from "@/components/incidents/SnapshotModal";
 import { IncidentRecord } from "@/types/detection";
 import { INITIAL_INCIDENT_RECORDS } from "@/services/mockDetection";
-import { Download, Eye, Flame, CloudFog, ShieldCheck, Activity } from "lucide-react";
+import { Download, Activity } from "lucide-react";
 
 export default function IncidentsPage() {
   const [incidents] = useState<IncidentRecord[]>(INITIAL_INCIDENT_RECORDS);
@@ -83,51 +85,13 @@ export default function IncidentsPage() {
       </div>
 
       <main className="flex-1 p-4 lg:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
-        {/* Metric Summary Stat Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[#131b2e] border border-[#2d3449] rounded-lg p-4">
-            <div className="text-[10px] font-mono text-[#e4beb4] uppercase tracking-wider mb-1">
-              Active Threats
-            </div>
-            <div className="font-mono text-2xl font-bold text-red-400">{activeCount}</div>
-            <div className="text-[11px] text-slate-500 font-mono mt-1">Requiring Response</div>
-          </div>
+        <IncidentStatCards
+          activeCount={activeCount}
+          fireCount={fireCount}
+          smokeCount={smokeCount}
+          resolvedCount={resolvedCount}
+        />
 
-          <div className="bg-[#131b2e] border border-[#2d3449] rounded-lg p-4">
-            <div className="text-[10px] font-mono text-[#e4beb4] uppercase tracking-wider mb-1">
-              Fire Incidents
-            </div>
-            <div className="font-mono text-2xl font-bold text-slate-100 flex items-center gap-2">
-              <Flame className="w-5 h-5 text-[#ff5722] fill-[#ff5722]" />
-              {fireCount}
-            </div>
-            <div className="text-[11px] text-slate-500 font-mono mt-1">Optical Signatures</div>
-          </div>
-
-          <div className="bg-[#131b2e] border border-[#2d3449] rounded-lg p-4">
-            <div className="text-[10px] font-mono text-[#e4beb4] uppercase tracking-wider mb-1">
-              Smoke Advisories
-            </div>
-            <div className="font-mono text-2xl font-bold text-slate-100 flex items-center gap-2">
-              <CloudFog className="w-5 h-5 text-[#ffba38]" />
-              {smokeCount}
-            </div>
-            <div className="text-[11px] text-slate-500 font-mono mt-1">Particulate Plumes</div>
-          </div>
-
-          <div className="bg-[#131b2e] border border-[#2d3449] rounded-lg p-4">
-            <div className="text-[10px] font-mono text-[#e4beb4] uppercase tracking-wider mb-1">
-              Resolved Cases
-            </div>
-            <div className="font-mono text-2xl font-bold text-emerald-400 flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-emerald-500" />
-              {resolvedCount}
-            </div>
-            <div className="text-[11px] text-slate-500 font-mono mt-1">Verified Nominal</div>
-          </div>
-        </div>
-
-        {/* Filters */}
         <IncidentFilters
           search={search}
           onSearchChange={setSearch}
@@ -142,87 +106,12 @@ export default function IncidentsPage() {
           }}
         />
 
-        {/* Audit Table */}
-        <div className="bg-[#131B2A] border border-[#1F293D] rounded-lg overflow-hidden flex flex-col">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs font-mono">
-              <thead>
-                <tr className="border-b border-[#1F293D] text-[10px] text-slate-400 uppercase bg-[#0E1522]">
-                  <th className="py-3 px-4">Incident ID</th>
-                  <th className="py-3 px-4">Timestamp</th>
-                  <th className="py-3 px-4">Camera Source</th>
-                  <th className="py-3 px-4">Hazard Type</th>
-                  <th className="py-3 px-4">Confidence</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#1F293D]/60">
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-500">
-                      No incident records matching current filter parameters.
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((item) => {
-                    const isFire = item.type === "fire";
-                    return (
-                      <tr key={item.id} className="hover:bg-[#182235]/50 transition-colors">
-                        <td className="py-3 px-4 font-bold text-slate-300">{item.id.toUpperCase()}</td>
-                        <td className="py-3 px-4 text-slate-400">
-                          {new Date(item.timestamp).toLocaleString("id-ID")}
-                        </td>
-                        <td className="py-3 px-4 text-slate-200">{item.cameraName}</td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                              isFire
-                                ? "bg-red-950/60 text-red-400 border border-red-800/60"
-                                : "bg-amber-950/60 text-amber-400 border border-amber-800/60"
-                            }`}
-                          >
-                            {isFire ? <Flame className="w-3 h-3" /> : <CloudFog className="w-3 h-3" />}
-                            {item.type}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-slate-200 font-bold">
-                          {(item.confidence * 100).toFixed(0)}%
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${
-                              item.status === "active"
-                                ? "bg-red-950/60 text-red-400 border border-red-800/60"
-                                : item.status === "investigating"
-                                ? "bg-amber-950/60 text-amber-400 border border-amber-800/60"
-                                : "bg-emerald-950/60 text-emerald-400 border border-emerald-800/60"
-                            }`}
-                          >
-                            {item.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => setInspectingIncident(item)}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#182235] hover:bg-[#202d44] border border-[#2E3D5B] text-[11px] text-slate-200 transition-colors"
-                          >
-                            <Eye className="w-3 h-3 text-slate-300" />
-                            <span>SNAPSHOT</span>
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <IncidentTable
+          records={filtered}
+          onInspect={(item) => setInspectingIncident(item)}
+        />
       </main>
 
-      {/* Snapshot Modal */}
       <SnapshotModal
         incident={inspectingIncident}
         onClose={() => setInspectingIncident(null)}
