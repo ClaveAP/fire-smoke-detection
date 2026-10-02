@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Video } from "lucide-react";
 import { HeroScannerDemo } from "@/components/home/HeroScannerDemo";
+import { SpecularButton } from "@/components/common/SpecularButton";
 
 export function HeroSection() {
   return (
@@ -35,17 +36,33 @@ export function HeroSection() {
 
             {/* Primary Action Buttons */}
             <div className="flex flex-wrap items-center gap-4 pt-2">
-              <Link
+              <SpecularButton
                 href="/live-scan"
-                className="bg-[#ff5722] hover:bg-[#f4511e] text-white px-6 py-3 rounded text-sm font-semibold tracking-wide flex items-center gap-2 shadow-lg shadow-[#ff5722]/25 transition-all active:scale-[0.98]"
+                size="md"
+                radius={12}
+                tint="#171f33"
+                tintOpacity={0.85}
+                blur={12}
+                textColor="#ffffff"
+                lineColor="#ff6b3d"
+                baseColor="#2d1711"
+                intensity={1.25}
+                shineSize={12}
+                shineFade={36}
+                thickness={1.2}
+                speed={0.4}
+                followMouse={true}
+                proximity={280}
+                autoAnimate={true}
+                className="font-semibold text-sm shadow-xl shadow-[#ff5722]/15 hover:shadow-[#ff5722]/25"
               >
-                <Video className="w-4 h-4" />
+                <Video className="w-4 h-4 text-[#ff5722]" />
                 <span>Buka Kamera Pemindai</span>
-              </Link>
+              </SpecularButton>
 
               <a
                 href="#teknologi"
-                className="bg-transparent hover:bg-[#171f33] text-[#dae2fd] border border-[#2d3449] px-6 py-3 rounded text-sm font-semibold transition-all"
+                className="bg-transparent hover:bg-[#171f33] text-[#dae2fd] border border-[#2d3449] px-6 py-3 rounded-[12px] text-sm font-semibold transition-all"
               >
                 Pelajari Teknologi
               </a>
