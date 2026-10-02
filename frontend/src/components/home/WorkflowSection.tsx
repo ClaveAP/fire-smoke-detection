@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { Video, Sliders, Zap, ArrowRight } from "lucide-react";
+import { SpecularButton } from "@/components/common/SpecularButton";
 
 export function WorkflowSection() {
   return (
@@ -85,13 +85,29 @@ export function WorkflowSection() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Link
+            <SpecularButton
               href="/live-scan"
-              className="bg-[#ff5722] hover:bg-[#f4511e] text-white px-6 py-3 rounded text-sm font-semibold tracking-wide transition-all shadow-md active:scale-95 flex items-center gap-2"
+              size="md"
+              radius={12}
+              tint="#0b1326"
+              tintOpacity={0.85}
+              blur={12}
+              textColor="#ffffff"
+              lineColor="#ff6b3d"
+              baseColor="#2d1711"
+              intensity={1.25}
+              shineSize={12}
+              shineFade={36}
+              thickness={1.2}
+              speed={0.4}
+              followMouse={true}
+              proximity={280}
+              autoAnimate={true}
+              className="font-semibold text-sm shadow-xl shadow-[#ff5722]/15 hover:shadow-[#ff5722]/25"
             >
               <span>Mulai Pemindaian Sekarang</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+              <ArrowRight className="w-4 h-4 text-[#ff5722]" />
+            </SpecularButton>
           </div>
         </div>
       </div>
