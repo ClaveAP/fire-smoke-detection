@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AegisFlame AI - Live Scan Viewfinder</title>
+<!-- Typography: Poppins font requested, along with system design fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&amp;family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Space+Grotesk:wght@600;700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "secondary-fixed-dim": "#ffb4ac",
+            "surface-container-highest": "#2d3449",
+            "on-primary": "#5f1500",
+            "on-surface": "#dae2fd",
+            "secondary-fixed": "#ffdad6",
+            "on-secondary": "#690006",
+            "primary-fixed-dim": "#ffb5a0",
+            "on-primary-fixed-variant": "#862200",
+            "inverse-surface": "#dae2fd",
+            "surface-container-lowest": "#060e20",
+            "tertiary-fixed-dim": "#ffba38",
+            "on-primary-fixed": "#3b0900",
+            "on-error-container": "#ffdad6",
+            "tertiary-container": "#c08600",
+            "on-background": "#dae2fd",
+            "outline": "#ab8980",
+            "on-secondary-container": "#ffb3ab",
+            "on-tertiary-fixed-variant": "#604100",
+            "primary-container": "#ff5722",
+            "on-primary-container": "#541200",
+            "on-secondary-fixed-variant": "#93000d",
+            "on-tertiary": "#432c00",
+            "on-tertiary-container": "#3a2600",
+            "surface-dim": "#0b1326",
+            "on-tertiary-fixed": "#281900",
+            "on-surface-variant": "#e4beb4",
+            "primary": "#ffb5a0",
+            "surface-variant": "#2d3449",
+            "on-error": "#690005",
+            "surface-container-low": "#131b2e",
+            "surface": "#0b1326",
+            "tertiary-fixed": "#ffdeac",
+            "surface-container": "#171f33",
+            "background": "#0b1326",
+            "secondary": "#ffb4ac",
+            "surface-container-high": "#222a3d",
+            "secondary-container": "#a90111",
+            "surface-bright": "#31394d",
+            "surface-tint": "#ffb5a0",
+            "outline-variant": "#5b4039",
+            "error": "#ffb4ab",
+            "error-container": "#93000a",
+            "on-secondary-fixed": "#410002",
+            "inverse-on-surface": "#283044",
+            "tertiary": "#ffba38",
+            "inverse-primary": "#b02f00",
+            "primary-fixed": "#ffdbd1"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin-lg": "2rem",
+            "space-xl": "2.5rem",
+            "gutter-lg": "1.5rem",
+            "space-md": "1rem",
+            "margin": "1rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "margin-md": "1.5rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "telemetry-data": [
+              "JetBrains Mono"
+            ],
+            "body-sm": [
+              "Poppins", "Work Sans"
+            ],
+            "headline-xl": [
+              "Poppins", "Space Grotesk"
+            ],
+            "body-md": [
+              "Poppins", "Work Sans"
+            ],
+            "body-lg": [
+              "Poppins", "Work Sans"
+            ],
+            "headline-lg": [
+              "Poppins", "Space Grotesk"
+            ],
+            "headline-xl-mobile": [
+              "Poppins", "Space Grotesk"
+            ],
+            "label-caps": [
+              "JetBrains Mono"
+            ],
+            "display-lg": [
+              "Poppins", "Space Grotesk"
+            ],
+            "headline-md": [
+              "Poppins", "Space Grotesk"
+            ]
+          },
+          "fontSize": {
+            "telemetry-data": [
+              "1rem",
+              {
+                "lineHeight": "1.25rem",
+                "letterSpacing": "0.02em",
+                "fontWeight": "600"
+              }
+            ],
+            "body-sm": [
+              "0.8125rem",
+              {
+                "lineHeight": "1.25rem",
+                "fontWeight": "400"
+              }
+            ],
+            "headline-xl": [
+              "2.25rem",
+              {
+                "lineHeight": "2.75rem",
+                "letterSpacing": "-0.01em",
+                "fontWeight": "600"
+              }
+            ],
+            "body-md": [
+              "0.9375rem",
+              {
+                "lineHeight": "1.5rem",
+                "fontWeight": "400"
+              }
+            ],
+            "body-lg": [
+              "1.125rem",
+              {
+                "lineHeight": "1.75rem",
+                "fontWeight": "400"
+              }
+            ],
+            "headline-lg": [
+              "1.75rem",
+              {
+                "lineHeight": "2.25rem",
+                "fontWeight": "600"
+              }
+            ],
+            "headline-xl-mobile": [
+              "1.75rem",
+              {
+                "lineHeight": "2.25rem",
+                "fontWeight": "600"
+              }
+            ],
+            "label-caps": [
+              "0.6875rem",
+              {
+                "lineHeight": "0.875rem",
+                "letterSpacing": "0.08em",
+                "fontWeight": "600"
+              }
+            ],
+            "display-lg": [
+              "3rem",
+              {
+                "lineHeight": "3.5rem",
+                "letterSpacing": "-0.02em",
+                "fontWeight": "700"
+              }
+            ],
+            "headline-md": [
+              "1.25rem",
+              {
+                "lineHeight": "1.75rem",
+                "fontWeight": "600"
+              }
+            ]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    /* Radar sweep & target reticle animations */
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(1000%); }
+    }
+    .animate-scanline {
+      animation: scanline 8s linear infinite;
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 0.95; }
+      50% { opacity: 0.6; }
+    }
+    .animate-pulse-subtle {
+      animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    .cctv-grain {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased overflow-hidden select-none min-h-screen flex flex-col">
+<!-- TOP NAV BAR (Shared Component JSON Blueprint) -->
+<header class="w-full px-space-lg py-space-sm flex justify-between items-center border-b border-outline-variant bg-surface-container-lowest docked full-width top-0 sticky z-50">
+<!-- Brand Logo -->
+<div class="flex items-center gap-space-md">
+<div class="text-headline-md font-headline-md uppercase tracking-wider text-primary-container flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+<span>AegisFlame AI</span>
+</div>
+<div class="hidden lg:flex items-center gap-space-xs pl-space-md border-l border-outline-variant text-label-caps font-label-caps text-on-surface-variant">
+<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+<span class="text-primary tracking-widest">NEURAL SCAN V3.8</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center gap-space-md">
+<!-- Platform -->
+<a class="text-on-surface-variant font-medium hover:text-primary hover:bg-surface-container transition-colors duration-150 px-space-sm py-1 rounded" href="#">Platform</a>
+<!-- Live Scan (ACTIVE TAB) -->
+<a class="text-primary border-b-2 border-primary font-bold px-space-sm py-1" href="#">Live Scan</a>
+<!-- Telemetry -->
+<a class="text-on-surface-variant font-medium hover:text-primary hover:bg-surface-container transition-colors duration-150 px-space-sm py-1 rounded" href="#">Telemetry</a>
+<!-- Hazard Log -->
+<a class="text-on-surface-variant font-medium hover:text-primary hover:bg-surface-container transition-colors duration-150 px-space-sm py-1 rounded" href="#">Hazard Log</a>
+<!-- Docs -->
+<a class="text-on-surface-variant font-medium hover:text-primary hover:bg-surface-container transition-colors duration-150 px-space-sm py-1 rounded" href="#">Docs</a>
+</nav>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-space-sm">
+<button class="hidden sm:flex items-center justify-center p-space-xs text-on-surface-variant hover:text-primary hover:bg-surface-container rounded transition-colors duration-150" title="Notifikasi">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hidden sm:flex items-center justify-center p-space-xs text-on-surface-variant hover:text-primary hover:bg-surface-container rounded transition-colors duration-150" title="Pengaturan">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<!-- Trailing Secondary Action -->
+<button class="text-label-caps font-label-caps px-space-sm py-1 text-on-surface-variant hover:text-on-surface border border-outline-variant rounded hover:bg-surface-container transition-colors duration-150">
+        Sign In
+      </button>
+<!-- Trailing Primary Action -->
+<button class="text-label-caps font-label-caps bg-primary-container text-on-primary-container px-space-md py-1.5 rounded font-bold uppercase tracking-wider hover:brightness-110 active:scale-[0.98] transition-all duration-100 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+        Emergency Override
+      </button>
+</div>
+</header>
+<!-- MAIN VIEWPORT CANVAS: Fullscreen CCTV/Webcam Viewfinder with HUD & Telemetry -->
+<main class="relative flex-1 w-full overflow-hidden flex flex-col md:flex-row bg-surface-container-lowest">
+<!-- LEFT / CENTER: Live Camera Feed & Interactive Scan Viewfinder Area -->
+<section class="relative flex-1 h-[calc(100vh-61px)] flex flex-col overflow-hidden bg-black">
+<!-- CCTV / WEBCAM LIVE FEED BACKGROUND IMAGE -->
+<div class="absolute inset-0 w-full h-full z-0 overflow-hidden">
+<img class="w-full h-full object-cover opacity-85 filter brightness-90 contrast-115" data-alt="A wide-angle perspective photograph of an industrial warehouse high-bay storage sector seen through an automated security camera lens, featuring heavy steel racking with faint smoky haze accumulating near the reinforced ceiling beams and an intense orange combustible thermal glow illuminating equipment in the background. The scene is enveloped in high-contrast technical surveillance lighting with dark slate shadows, steel reflections, and cinematic industrial tension." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDO1Cr5BqTBbXL1BD6HsOliNKN4tu44FzrS8xmssmDwD3Mq6w5RN9QgQPWKEisMJKNWiTD77rIYkVuVx0ahjVZ192M-yJQqM4552EGhbAwu4LkXTZhMQrHkuEVqXXSwdL0BHf0yreiG7icOfs-x97TzjCr-SXFlr0J18lbUWrqJ2xBdhLFVGQ7ZAArQFwqW32Rs8z6b_7I7rW4xKicuyXtnOhRw2U4kZtPJGfDaAF4ZpeDDMqIRIwnh"/>
+<!-- CRT / Sensor Grid & Vignette Overlays -->
+<div class="absolute inset-0 cctv-grain pointer-events-none"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-surface-container-lowest opacity-70 pointer-events-none"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-surface-container-lowest/60 via-transparent to-surface-container-lowest/40 pointer-events-none"></div>
+<div class="w-full h-1 bg-gradient-to-b from-transparent via-primary-container/20 to-transparent absolute top-0 left-0 animate-scanline pointer-events-none"></div>
+</div>
+<!-- CAMERA TOP STATUS BAR (Overlay) -->
+<div class="relative z-20 w-full px-space-md py-space-sm flex flex-wrap items-center justify-between gap-space-sm bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/60">
+<!-- Live Status & Frame-Rate Pill -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-space-xs px-space-sm py-0.5 rounded bg-error-container/40 border border-error text-error text-label-caps font-label-caps">
+<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+<span class="tracking-widest">LIVE CAM 01 - AKTIF (60 FPS)</span>
+</div>
+<!-- Latency Gauge -->
+<div class="flex items-center gap-1.5 px-space-sm py-0.5 rounded bg-surface-container border border-outline-variant text-label-caps font-label-caps text-on-surface">
+<span class="material-symbols-outlined text-[14px] text-tertiary">network_check</span>
+<span>LATENSI:</span>
+<span class="text-tertiary font-telemetry-data font-bold">12ms</span>
+</div>
+<!-- Sensor Node ID Tag -->
+<div class="hidden sm:flex items-center gap-1 text-label-caps font-label-caps text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">photo_camera</span>
+<span>NODE: S04-CAM-WEST-PTZ</span>
+</div>
+</div>
+<!-- Camera Controls: Flashlight & Switch Camera -->
+<div class="flex items-center gap-space-xs">
+<!-- Flashlight Toggle -->
+<button class="flex items-center gap-1.5 px-space-sm py-1 bg-surface-container-high hover:bg-surface-bright active:scale-95 border border-outline-variant text-on-surface text-label-caps font-label-caps rounded transition-all duration-150" id="toggle-flash" title="Aktifkan Senter / Iluminasi Tambahan">
+<span class="material-symbols-outlined text-[16px] text-tertiary">flashlight_on</span>
+<span class="hidden sm:inline">SENTER</span>
+</button>
+<!-- Switch Camera -->
+<button class="flex items-center gap-1.5 px-space-sm py-1 bg-surface-container-high hover:bg-surface-bright active:scale-95 border border-outline-variant text-on-surface text-label-caps font-label-caps rounded transition-all duration-150" id="switch-cam" title="Beralih Kamera CCTV / Webcam">
+<span class="material-symbols-outlined text-[16px] text-primary">cameraswitch</span>
+<span class="hidden sm:inline">GANTI KAMERA</span>
+</button>
+<!-- Fullscreen Expand View -->
+<button class="p-1 bg-surface-container-high hover:bg-surface-bright border border-outline-variant text-on-surface rounded transition-colors" title="Layar Penuh">
+<span class="material-symbols-outlined text-[18px]">fullscreen</span>
+</button>
+</div>
+</div>
+<!-- VIEWFINDER RETICLE & BOUNDING BOXES HUD LAYER -->
+<div class="relative z-10 flex-1 w-full h-full p-space-md pointer-events-none">
+<!-- Center Reticle Crosshairs -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40">
+<div class="relative w-24 h-24 border border-outline/30 rounded-full flex items-center justify-center">
+<div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+<div class="absolute w-full h-[1px] bg-outline/40"></div>
+<div class="absolute h-full w-[1px] bg-outline/40"></div>
+</div>
+</div>
+<!-- Viewfinder Outer Corner Brackets -->
+<div class="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2 border-primary/60"></div>
+<div class="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2 border-primary/60"></div>
+<div class="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2 border-primary/60"></div>
+<div class="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2 border-primary/60"></div>
+<!-- 1. BOUNDING BOX 1: FIRE DETECTED - 94% (Orange Menyala Glowing) -->
+<div class="absolute left-[38%] top-[42%] w-[34%] md:w-[26%] h-[32%] md:h-[36%] border-2 border-primary-container rounded-sm shadow-[0_0_20px_rgba(255,87,34,0.65)] pointer-events-auto transition-transform hover:scale-[1.01]">
+<!-- Corner Coordinate Tick Marks -->
+<div class="absolute -top-1 -left-1 w-2.5 h-2.5 bg-primary-container"></div>
+<div class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary-container"></div>
+<div class="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-primary-container"></div>
+<div class="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-primary-container"></div>
+<!-- Flame Core Detection Banner Header -->
+<div class="absolute -top-7 left-0 flex items-center gap-1.5 bg-primary-container text-on-primary-container px-2 py-0.5 rounded-t-sm font-label-caps text-label-caps font-bold shadow-md tracking-wider">
+<span class="material-symbols-outlined text-[13px] animate-bounce">local_fire_department</span>
+<span>[FIRE DETECTED - 94%]</span>
+</div>
+<!-- Bottom Telemetry Coordinates -->
+<div class="absolute -bottom-6 right-0 bg-surface-container-lowest/90 px-1.5 py-0.5 border border-outline-variant font-telemetry-data text-[10px] text-primary flex gap-2">
+<span>X: 0.384</span>
+<span>Y: 0.421</span>
+<span class="text-tertiary">THERM: +412°C</span>
+</div>
+<!-- Subtle Inner Thermal Pulse Background -->
+<div class="w-full h-full bg-primary-container/10 backdrop-blur-[1px] animate-pulse-subtle"></div>
+</div>
+<!-- 2. BOUNDING BOX 2: SMOKE DETECTED - 88% (Abu-kebiruan Bounding Box) -->
+<div class="absolute left-[20%] top-[18%] w-[42%] md:w-[32%] h-[24%] md:h-[28%] border-2 border-[#38bdf8] rounded-sm shadow-[0_0_15px_rgba(56,189,248,0.45)] pointer-events-auto transition-transform hover:scale-[1.01]">
+<!-- Corner Coordinate Tick Marks -->
+<div class="absolute -top-1 -left-1 w-2.5 h-2.5 bg-[#38bdf8]"></div>
+<div class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#38bdf8]"></div>
+<div class="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-[#38bdf8]"></div>
+<div class="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-[#38bdf8]"></div>
+<!-- Smoke Cloud Detection Banner Header -->
+<div class="absolute -top-7 left-0 flex items-center gap-1.5 bg-[#0284c7] text-white px-2 py-0.5 rounded-t-sm font-label-caps text-label-caps font-bold shadow-md tracking-wider">
+<span class="material-symbols-outlined text-[13px] animate-spin">cyclone</span>
+<span>[SMOKE DETECTED - 88%]</span>
+</div>
+<!-- Bottom Telemetry Coordinates -->
+<div class="absolute -bottom-6 left-0 bg-surface-container-lowest/90 px-1.5 py-0.5 border border-outline-variant font-telemetry-data text-[10px] text-[#38bdf8] flex gap-2">
+<span>X: 0.201</span>
+<span>Y: 0.180</span>
+<span class="text-on-surface-variant">DENS: 76.4%</span>
+</div>
+<!-- Blue-Grey Mist Tint Overlay -->
+<div class="w-full h-full bg-[#38bdf8]/10 backdrop-blur-[1px]"></div>
+</div>
+<!-- Optical Field Metadata Stamp (Bottom Left of Camera) -->
+<div class="absolute bottom-4 left-4 bg-surface-container-lowest/85 backdrop-blur-md border border-outline-variant p-space-sm rounded font-telemetry-data text-[11px] text-on-surface-variant flex flex-col gap-0.5">
+<div class="flex items-center gap-2">
+<span class="text-primary font-bold">AEGIS-VISION ENGINE:</span>
+<span class="text-on-surface">ONLINE [PTZ-01]</span>
+</div>
+<div>SENSOR ZOOM: 2.4X | OPTICAL FL: 50mm | ISO: 800</div>
+<div>AI LATENCY INFERENCE: 7.8ms | TENSOR PIPELINE: OK</div>
+</div>
+</div>
+</section>
+<!-- RIGHT PANEL: Compact Telemetry & Emergency Mitigation Actions -->
+<aside class="w-full md:w-80 lg:w-96 flex-shrink-0 bg-surface-container-low border-l border-outline-variant flex flex-col justify-between p-space-md overflow-y-auto max-h-[calc(100vh-61px)] z-30">
+<!-- Panel Header & Node Identity -->
+<div>
+<div class="flex items-center justify-between pb-space-sm border-b border-outline-variant">
+<div>
+<span class="text-label-caps font-label-caps text-on-surface-variant tracking-wider">PANEL TELEMETRI SEKTOR</span>
+<h2 class="text-headline-md font-headline-md text-on-surface">Zona Produksi 04-A</h2>
+</div>
+<span class="flex items-center gap-1 px-2 py-0.5 rounded bg-error-container text-on-error-container border border-error text-[10px] font-label-caps font-bold animate-pulse">
+            KRITIS
+          </span>
+</div>
+<!-- 3 Essential Telemetry Metrics Bento Cards -->
+<div class="mt-space-md flex flex-col gap-space-sm">
+<!-- METRIC 1: Indeks Bahaya Api -->
+<div class="p-space-sm rounded bg-surface-container border border-outline-variant hover:border-primary-container transition-colors">
+<div class="flex items-center justify-between text-on-surface-variant mb-1">
+<span class="text-label-caps font-label-caps flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary-container">local_fire_department</span>
+                INDEKS BAHAYA API
+              </span>
+<span class="text-label-caps font-label-caps text-primary-container font-bold">TINGGI</span>
+</div>
+<div class="flex items-baseline justify-between">
+<div class="text-display-lg font-headline-xl text-primary font-telemetry-data leading-none">
+                94<span class="text-headline-md font-headline-md font-normal text-on-surface-variant">%</span>
+</div>
+<span class="text-label-caps font-label-caps text-error">+28% dlm 30d</span>
+</div>
+<!-- Visual Meter Bar -->
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden mt-2">
+<div class="h-full bg-primary-container transition-all duration-500 rounded-full" style="width: 94%;"></div>
+</div>
+</div>
+<!-- METRIC 2: Densitas Asap -->
+<div class="p-space-sm rounded bg-surface-container border border-outline-variant hover:border-[#38bdf8] transition-colors">
+<div class="flex items-center justify-between text-on-surface-variant mb-1">
+<span class="text-label-caps font-label-caps flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-[#38bdf8]">grain</span>
+                DENSITAS ASAP
+              </span>
+<span class="text-label-caps font-label-caps text-[#38bdf8] font-bold">PEKAT</span>
+</div>
+<div class="flex items-baseline justify-between">
+<div class="text-display-lg font-headline-xl text-[#38bdf8] font-telemetry-data leading-none">
+                88<span class="text-headline-md font-headline-md font-normal text-on-surface-variant">%</span>
+</div>
+<span class="text-label-caps font-label-caps text-on-surface-variant">Obscuration 4.2 dB/m</span>
+</div>
+<!-- Visual Meter Bar -->
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden mt-2">
+<div class="h-full bg-[#0284c7] transition-all duration-500 rounded-full" style="width: 88%;"></div>
+</div>
+</div>
+<!-- METRIC 3: Estimasi Suhu -->
+<div class="p-space-sm rounded bg-surface-container border border-outline-variant hover:border-tertiary transition-colors">
+<div class="flex items-center justify-between text-on-surface-variant mb-1">
+<span class="text-label-caps font-label-caps flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-tertiary">thermostat</span>
+                ESTIMASI SUHU
+              </span>
+<span class="text-label-caps font-label-caps text-tertiary font-bold">ABNORMAL</span>
+</div>
+<div class="flex items-baseline justify-between">
+<div class="text-display-lg font-headline-xl text-tertiary font-telemetry-data leading-none">
+                412<span class="text-headline-md font-headline-md font-normal text-tertiary-fixed">°C</span>
+</div>
+<span class="text-label-caps font-label-caps text-on-surface-variant">Titik Pusat Api</span>
+</div>
+<!-- Thermal Spectrum Progress Indicator -->
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden mt-2 flex">
+<div class="h-full bg-emerald-500 w-[20%]"></div>
+<div class="h-full bg-tertiary w-[30%]"></div>
+<div class="h-full bg-primary-container w-[50%]"></div>
+</div>
+</div>
+</div>
+<!-- Atmospheric & Environmental Quick Ticker -->
+<div class="mt-space-md grid grid-cols-2 gap-space-xs text-body-sm font-body-sm">
+<div class="p-space-xs bg-surface-container-high rounded border border-outline-variant/60 flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface-variant">KONSENTRASI CO</span>
+<span class="font-telemetry-data font-semibold text-primary">340 PPM</span>
+</div>
+<div class="p-space-xs bg-surface-container-high rounded border border-outline-variant/60 flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface-variant">KECEPATAN ANGIN</span>
+<span class="font-telemetry-data font-semibold text-on-surface">1.8 M/S TIMUR</span>
+</div>
+</div>
+<!-- Verification Checklist / Safety Status -->
+<div class="mt-space-md p-space-sm rounded bg-surface-container-lowest border border-outline-variant text-body-sm">
+<div class="flex items-center gap-2 text-label-caps font-label-caps text-on-surface-variant mb-2">
+<span class="material-symbols-outlined text-[16px] text-emerald-400">verified_user</span>
+            OTOMASI SISTEM PENANGGULANGAN
+          </div>
+<ul class="space-y-1.5 text-label-caps font-label-caps text-on-surface">
+<li class="flex items-center justify-between">
+<span class="text-on-surface-variant">Katup Sprinkler FM-200:</span>
+<span class="text-emerald-400 font-bold">TERKUNCI &amp; SIAP</span>
+</li>
+<li class="flex items-center justify-between">
+<span class="text-on-surface-variant">Sirkulasi Ventilasi HVAC:</span>
+<span class="text-tertiary font-bold">DIMATIKAN OTOMATIS</span>
+</li>
+<li class="flex items-center justify-between">
+<span class="text-on-surface-variant">Pintu Evakuasi E-04:</span>
+<span class="text-emerald-400 font-bold">TERBUKA BEBAS</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- BOTTOM CONTROL: Emergency Activation CTA Buttons -->
+<div class="mt-space-md pt-space-sm border-t border-outline-variant flex flex-col gap-space-xs">
+<!-- Action Feedback Toast (Hidden initially) -->
+<div class="hidden text-center py-1.5 px-2 bg-secondary-container text-white text-label-caps font-label-caps rounded border border-error animate-pulse" id="alarm-toast">
+          ALARM DARURAT DIAKTIFKAN - PANGGILAN EVAKUASI BERJALAN
+        </div>
+<!-- PRIMARY EMERGENCY CTA BUTTON (BIG CALLOUT) -->
+<button class="w-full py-3.5 px-space-md bg-secondary-container hover:bg-error-container active:scale-[0.98] border-2 border-error text-white font-headline-md text-headline-md rounded uppercase tracking-wider flex items-center justify-center gap-space-sm shadow-[0_0_24px_rgba(229,57,53,0.4)] transition-all duration-150" id="emergency-btn">
+<span class="material-symbols-outlined text-[24px] animate-bounce">e911_emergency</span>
+<span>Protokol Darurat / Aktifkan Alarm</span>
+</button>
+<!-- Secondary Action: Suppression Discharge Direct Trigger -->
+<button class="w-full py-2 px-space-md bg-transparent hover:bg-surface-container active:translate-x-0.5 border border-outline-variant text-primary text-label-caps font-label-caps uppercase tracking-wider rounded transition-all flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">water_drop</span>
+          Semprot Gas Pemadam FM-200
+        </button>
+<div class="text-center text-[10px] font-label-caps text-on-surface-variant mt-1">
+          OTORISASI TINGKAT-1: KONTROL RUANG KOMANDO INDUSTRI
+        </div>
+</div>
+</aside>
+</main>
+<!-- MICRO-INTERACTIONS JAVASCRIPT -->
+<script>
+    // Flashlight Toggle Interaction
+    const flashBtn = document.getElementById('toggle-flash');
+    let flashActive = false;
+    flashBtn.addEventListener('click', () => {
+      flashActive = !flashActive;
+      if (flashActive) {
+        flashBtn.classList.remove('bg-surface-container-high', 'text-on-surface');
+        flashBtn.classList.add('bg-tertiary-container', 'text-white', 'border-tertiary');
+      } else {
+        flashBtn.classList.add('bg-surface-container-high', 'text-on-surface');
+        flashBtn.classList.remove('bg-tertiary-container', 'text-white', 'border-tertiary');
+      }
+    });
+
+    // Switch Camera Animation
+    const switchCamBtn = document.getElementById('switch-cam');
+    switchCamBtn.addEventListener('click', () => {
+      const icon = switchCamBtn.querySelector('.material-symbols-outlined');
+      icon.classList.add('rotate-180', 'transition-transform', 'duration-300');
+      setTimeout(() => {
+        icon.classList.remove('rotate-180');
+      }, 300);
+    });
+
+    // Emergency Protocol Button Interaction
+    const emergencyBtn = document.getElementById('emergency-btn');
+    const toast = document.getElementById('alarm-toast');
+    emergencyBtn.addEventListener('click', () => {
+      toast.classList.remove('hidden');
+      emergencyBtn.classList.add('bg-error-container', 'animate-pulse');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+        emergencyBtn.classList.remove('animate-pulse');
+      }, 5000);
+    });
+  </script>
+</body></html>
