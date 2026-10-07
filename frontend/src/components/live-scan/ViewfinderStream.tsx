@@ -35,7 +35,7 @@ export function ViewfinderStream({
       {/* Simulated Industrial Fire & Smoke Stream */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/hero-fire-smoke.jpg"
+        src="/hero-fire-smoke.webp"
         alt="Simulasi Kamera Gudang"
         className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-700 ${
           isWebcam ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"

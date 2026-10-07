@@ -80,7 +80,7 @@ fire-smoke-detection/
 │   ├── public/
 │   │   ├── illustrations/                        # Aset visual bento grid & pipeline arsitektur
 │   │   ├── presets/                              # Sampel gambar preset (fire, smoke, dual)
-│   │   └── hero-fire-smoke.jpg                   # Aset latar belakang hero
+│   │   └── hero-fire-smoke.webp                  # Aset latar belakang hero teroptimasi (WebP)
 │   ├── src/
 │   │   ├── app/                                  # Routing halaman (/, /live-scan, /inspector, /incidents)
 │   │   ├── components/
