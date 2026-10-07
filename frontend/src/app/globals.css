@@ -2,12 +2,13 @@
 
 @theme {
   --font-sans: var(--font-poppins), "Poppins", sans-serif;
+  --font-display: var(--font-poppins), "Poppins", sans-serif;
   --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
 
   /* Stitch Design Tokens - AegisFlame Palette */
-  --color-surface-container-lowest: #060e20;
+  --color-surface-container-lowest: #050507;
   --color-surface-dim: #0b1326;
-  --color-background: #0b1326;
+  --color-background: #050507;
   --color-surface: #0b1326;
   --color-surface-container-low: #131b2e;
   --color-surface-container: #171f33;
@@ -15,7 +16,7 @@
   --color-surface-container-highest: #2d3449;
   --color-surface-bright: #31394d;
 
-  --color-on-background: #dae2fd;
+  --color-on-background: #f5f5f7;
   --color-on-surface: #dae2fd;
   --color-on-surface-variant: #e4beb4;
   --color-outline: #ab8980;
@@ -46,8 +47,8 @@
 }
 
 :root {
-  --background: #0b1326;
-  --foreground: #dae2fd;
+  --background: #050507;
+  --foreground: #f5f5f7;
 }
 
 * {
@@ -59,12 +60,17 @@ html {
 }
 
 body {
-  background-color: #0b1326;
-  color: #dae2fd;
+  background-color: #050507;
+  color: #f5f5f7;
   font-family: var(--font-poppins), "Poppins", sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.font-display {
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  letter-spacing: -0.025em;
 }
 
 /* Radar sweep animation */
@@ -87,6 +93,32 @@ body {
   animation: scanline 8s linear infinite;
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes scrollWheel {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  70% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+}
+
 @keyframes pulse-subtle {
   0%, 100% { opacity: 0.95; }
   50% { opacity: 0.6; }
@@ -96,23 +128,19 @@ body {
   animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-.pulse-danger {
-  box-shadow: 0 0 20px rgba(229, 57, 53, 0.4);
-}
-
 .cctv-grain {
   background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
   background-size: 24px 24px;
 }
 
-/* Custom scrollbar for industrial UI */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0b1326;
+  background: #050507;
 }
 
 ::-webkit-scrollbar-thumb {

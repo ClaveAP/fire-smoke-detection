@@ -17,8 +17,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fire & Smoke Detection Command Center",
-  description: "Real-time edge telemetry and computer vision inference command platform.",
+  title: "AegisFlame — Deteksi Api & Asap Real-Time",
+  description:
+    "Sistem deteksi dini api dan kepulan asap berbasis computer vision langsung di browser.",
 };
 
 export default function RootLayout({
@@ -27,9 +28,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="id" className="dark">
       <body
-        className={`${poppins.variable} ${jetbrainsMono.variable} font-sans bg-[#0B111E] text-slate-100 min-h-screen antialiased`}
+        className={`${poppins.variable} ${jetbrainsMono.variable} font-sans bg-[#050507] text-[#f5f5f7] min-h-screen antialiased`}
       >
         {children}
       </body>

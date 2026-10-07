@@ -31,11 +31,17 @@ export interface IncidentRecord {
   timestamp: string;
   cameraId: string;
   cameraName: string;
+  zone?: string;
   type: DetectionClass;
+  secondaryType?: DetectionClass;
   confidence: number;
+  smokeConfidence?: number;
+  temperatureC?: number;
+  smokeDensityDbm?: number;
   status: "active" | "investigating" | "resolved";
   snapshotUrl?: string;
   notes?: string;
+  detections?: BoundingBox[];
 }
 
 export interface DetectionResult {

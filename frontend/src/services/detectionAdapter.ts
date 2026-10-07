@@ -1,17 +1,76 @@
-import { CameraFeed, IncidentRecord, DetectionResult } from "@/types/detection";
+import { IncidentRecord, DetectionResult } from "@/types/detection";
 import {
-  INITIAL_CAMERA_FEEDS,
   INITIAL_INCIDENT_RECORDS,
   simulateImageInference,
 } from "./mockDetection";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
+const CUSTOM_INCIDENTS_KEY = "aegisflame_custom_incidents_v1";
 
 export class DetectionAdapter {
   private backendUrl: string;
 
   constructor(backendUrl: string = BACKEND_URL) {
     this.backendUrl = backendUrl.replace(/\/$/, "");
+  }
+
+  /**
+   * Read locally recorded incidents from browser storage and merge with initial dummy records
+   */
+  getStoredIncidents(): IncidentRecord[] {
+    if (typeof window === "undefined") {
+      return INITIAL_INCIDENT_RECORDS;
+    }
+    try {
+      const raw = window.localStorage.getItem(CUSTOM_INCIDENTS_KEY);
+      if (!raw) return INITIAL_INCIDENT_RECORDS;
+      const custom = JSON.parse(raw) as IncidentRecord[];
+      if (!Array.isArray(custom)) return INITIAL_INCIDENT_RECORDS;
+      return [...custom, ...INITIAL_INCIDENT_RECORDS];
+    } catch {
+      return INITIAL_INCIDENT_RECORDS;
+    }
+  }
+
+  /**
+   * Save a newly detected incident (from Live Scan webcam or Media Lab) into local storage
+   * and forward to backend API if configured
+   */
+  recordIncident(incident: IncidentRecord): IncidentRecord[] {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = window.localStorage.getItem(CUSTOM_INCIDENTS_KEY);
+        const existing: IncidentRecord[] = raw ? JSON.parse(raw) : [];
+        const updated = [incident, ...existing].slice(0, 25);
+        window.localStorage.setItem(CUSTOM_INCIDENTS_KEY, JSON.stringify(updated));
+      } catch {
+        // Ignore storage quota errors
+      }
+    }
+
+    if (this.backendUrl) {
+      fetch(`${this.backendUrl}/api/v1/incidents`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(incident),
+      }).catch(() => {});
+    }
+
+    return this.getStoredIncidents();
+  }
+
+  /**
+   * Clear custom simulated incidents and restore initial dummy dataset
+   */
+  clearCustomIncidents(): IncidentRecord[] {
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem(CUSTOM_INCIDENTS_KEY);
+      } catch {
+        // Ignore errors
+      }
+    }
+    return INITIAL_INCIDENT_RECORDS;
   }
 
   /**
@@ -35,25 +94,7 @@ export class DetectionAdapter {
   }
 
   /**
-   * Fetch initial camera feeds from server or fallback to mock dataset
-   */
-  async getCameraFeeds(): Promise<CameraFeed[]> {
-    if (this.backendUrl) {
-      try {
-        const res = await fetch(`${this.backendUrl}/api/v1/cameras`);
-        if (res.ok) {
-          const data = await res.json();
-          return data;
-        }
-      } catch {
-        // Fall back seamlessly to mock
-      }
-    }
-    return INITIAL_CAMERA_FEEDS;
-  }
-
-  /**
-   * Fetch incident logs or fallback to mock dataset
+   * Fetch incident logs or fallback to local + mock dataset
    */
   async getIncidentRecords(): Promise<IncidentRecord[]> {
     if (this.backendUrl) {
@@ -64,10 +105,10 @@ export class DetectionAdapter {
           return data;
         }
       } catch {
-        // Fall back seamlessly to mock
+        // Fall back seamlessly to local + mock
       }
     }
-    return INITIAL_INCIDENT_RECORDS;
+    return this.getStoredIncidents();
   }
 
   /**
