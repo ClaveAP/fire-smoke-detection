@@ -1,104 +1,88 @@
+"use client";
+
 import Link from "next/link";
-import { Video } from "lucide-react";
+import { ArrowUpRight, VideoCamera } from "@phosphor-icons/react";
 import { HeroScannerDemo } from "@/components/home/HeroScannerDemo";
 import { SpecularButton } from "@/components/common/SpecularButton";
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-[calc(100vh-61px)] flex flex-col justify-center py-8 lg:py-0 overflow-hidden border-b border-[#2d3449]/70 bg-[#060e20]">
-      {/* Radial Grid Pattern Accent */}
-      <div className="absolute inset-0 bg-[radial-gradient(#5b4039_1px,transparent_1px)] [background-size:24px_24px] opacity-25 pointer-events-none"></div>
+    <section className="relative min-h-[100dvh] flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden bg-[#050507]">
+      {/* Ultra-Smooth Soft-Bokeh Fire Embers, Volumetric Smoke & GPU Parallax */}
+      <HeroScannerDemo />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          {/* Left Column: Copy & Primary CTAs */}
-          <div className="lg:col-span-6 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-[#171f33] border border-[#2d3449]">
-              <span className="w-2 h-2 rounded-full bg-[#ff5722] animate-pulse"></span>
-              <span className="text-[11px] font-mono text-[#ffb5a0] tracking-wider uppercase font-semibold">
-                PyroGuard AI v4.2 Kernel
-              </span>
-              <span className="text-xs text-[#5b4039]">|</span>
-              <span className="text-[11px] font-mono text-[#e4beb4]">60FPS Latency-Free</span>
-            </div>
+      {/* Centered Cinematic Hero Content */}
+      <div className="relative z-10 max-w-5xl mx-auto text-center flex flex-col items-center pt-14 animate-[fadeInUp_0.8s_cubic-bezier(0.22,1,0.36,1)_both]">
+        <a
+          href="#teknologi"
+          className="group inline-flex items-center gap-2.5 rounded-full px-4 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-[#ff5722]/40 backdrop-blur-md mb-8 transition-all duration-300"
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff5722] opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff5722]" />
+          </span>
+          <span className="text-xs font-medium tracking-wide text-white/85 group-hover:text-white">
+            Computer Vision Fire &amp; Smoke Detection
+          </span>
+        </a>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight font-sans">
-              Deteksi Dini Api &amp; Asap Berbasis{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ffb5a0] via-[#ff5722] to-[#ffba38]">
-                Computer Vision
-              </span>{" "}
-              Real-Time.
-            </h1>
+        <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold tracking-[-0.03em] text-white leading-[1.06] max-w-4xl">
+          Kenali Titik Api &amp; Asap{" "}
+          <span className="text-[#ff6b3d]">Sebelum Menyebar.</span>
+        </h1>
 
-            <p className="text-sm sm:text-base text-[#e4beb4] max-w-xl font-normal leading-relaxed">
-              AegisFlame PyroGuard AI mentransformasi kamera CCTV standar menjadi sensor proteksi industri presisi tinggi. Deteksi kepulan asap volumetrik dan anomali termal dalam fraksi detik sebelum api merambat.
-            </p>
+        <p className="mt-6 text-base sm:text-lg text-white/65 max-w-xl font-normal leading-relaxed">
+          Pantau kamera secara langsung atau unggah rekaman untuk mendeteksi nyala api dan kepulan asap secara otomatis dalam hitungan milidetik.
+        </p>
 
-            {/* Primary Action Buttons */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <SpecularButton
-                href="/live-scan"
-                size="md"
-                radius={12}
-                tint="#171f33"
-                tintOpacity={0.85}
-                blur={12}
-                textColor="#ffffff"
-                lineColor="#ff6b3d"
-                baseColor="#2d1711"
-                intensity={1.25}
-                shineSize={12}
-                shineFade={36}
-                thickness={1.2}
-                speed={0.4}
-                followMouse={true}
-                proximity={280}
-                autoAnimate={true}
-                className="font-semibold text-sm shadow-xl shadow-[#ff5722]/15 hover:shadow-[#ff5722]/25"
-              >
-                <Video className="w-4 h-4 text-[#ff5722]" />
-                <span>Buka Kamera Pemindai</span>
-              </SpecularButton>
+        {/* Primary Action Buttons using User's WebGL SpecularButton */}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <SpecularButton
+            href="/live-scan"
+            size="lg"
+            radius={999}
+            tint="#140c0a"
+            tintOpacity={0.88}
+            blur={16}
+            textColor="#ffffff"
+            lineColor="#ff6b3d"
+            baseColor="#3a1910"
+            intensity={1.35}
+            shineSize={14}
+            shineFade={40}
+            thickness={1.4}
+            speed={0.45}
+            followMouse={true}
+            proximity={320}
+            autoAnimate={true}
+            className="font-semibold text-sm tracking-wide shadow-2xl shadow-[#ff5722]/20"
+          >
+            <VideoCamera weight="duotone" className="w-4 h-4 text-[#ff6b3d]" />
+            <span>Mulai Live Scan</span>
+          </SpecularButton>
 
-              <a
-                href="#teknologi"
-                className="bg-transparent hover:bg-[#171f33] text-[#dae2fd] border border-[#2d3449] px-6 py-3 rounded-[12px] text-sm font-semibold transition-all"
-              >
-                Pelajari Teknologi
-              </a>
-            </div>
-
-            {/* Micro Metrics Footnote */}
-            <div className="pt-4 flex items-center gap-6 border-t border-[#2d3449]/60">
-              <div>
-                <div className="text-2xl font-bold text-white font-mono">99.4%</div>
-                <div className="text-[10px] text-[#e4beb4] uppercase tracking-wider font-mono">
-                  Tingkat Akurasi
-                </div>
-              </div>
-              <div className="h-8 w-px bg-[#2d3449]"></div>
-              <div>
-                <div className="text-2xl font-bold text-[#ffba38] font-mono">&lt; 0.8s</div>
-                <div className="text-[10px] text-[#e4beb4] uppercase tracking-wider font-mono">
-                  Respon Peringatan
-                </div>
-              </div>
-              <div className="h-8 w-px bg-[#2d3449]"></div>
-              <div>
-                <div className="text-2xl font-bold text-[#ffb5a0] font-mono">0.01%</div>
-                <div className="text-[10px] text-[#e4beb4] uppercase tracking-wider font-mono">
-                  False-Positive
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Interactive Live Stream Simulation Widget */}
-          <div className="lg:col-span-6" id="scanner">
-            <HeroScannerDemo />
-          </div>
+          <Link
+            href="/inspector"
+            className="group inline-flex items-center gap-3 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/12 hover:border-white/25 px-6 py-3.5 min-h-[54px] text-sm font-medium text-white/90 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
+          >
+            <span>Coba Upload Media</span>
+            <span className="w-7 h-7 rounded-full bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+              <ArrowUpRight weight="bold" className="w-4 h-4 text-white" />
+            </span>
+          </Link>
         </div>
       </div>
+
+      {/* Mouse Scroll-Down Indicator */}
+      <a
+        href="#teknologi"
+        aria-label="Scroll ke bawah"
+        className="group absolute bottom-7 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-white/45 hover:text-white transition-colors"
+      >
+        <span className="w-6 h-10 rounded-full border-2 border-white/30 group-hover:border-[#ff6b3d] flex justify-center pt-2 transition-colors">
+          <span className="w-1 h-2 rounded-full bg-[#ff6b3d] animate-[scrollWheel_1.8s_cubic-bezier(0.22,1,0.36,1)_infinite]" />
+        </span>
+      </a>
     </section>
   );
 }
