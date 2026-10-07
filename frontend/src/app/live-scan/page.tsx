@@ -113,24 +113,24 @@ export default function LiveScanPage() {
     >
       <HeaderNav />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto pt-24 pb-10 px-4 sm:px-6 lg:px-8 flex flex-col gap-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto pt-20 sm:pt-24 pb-8 sm:pb-10 px-3.5 sm:px-6 lg:px-8 flex flex-col gap-4 sm:gap-6">
         {/* Clean Minimal Page Title */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-white">
+            <h1 className="font-display text-xl sm:text-3xl font-bold text-white">
               Pemindaian Kamera Langsung
             </h1>
-            <p className="text-sm text-white/60">
+            <p className="text-xs sm:text-sm text-white/60">
               Pantau titik api dan kepulan asap secara real-time melalui kamera laptop atau simulasi.
             </p>
           </div>
         </div>
 
-        {/* Double-Bezel Workspace Layout */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-6">
+        {/* Workspace Layout */}
+        <div className="flex-1 flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* Left Camera Stage */}
-          <div className="flex-1 p-2 rounded-[2rem] bg-white/[0.03] border border-white/10 flex flex-col min-h-[480px] lg:min-h-[600px]">
-            <section className="relative flex-1 rounded-[calc(2rem-0.5rem)] overflow-hidden bg-[#0a0b10] flex flex-col shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]">
+          <div className="flex-1 flex flex-col min-h-[380px] sm:min-h-[480px] lg:min-h-[600px]">
+            <section className="relative flex-1 rounded-2xl sm:rounded-3xl border border-white/10 overflow-hidden bg-[#0a0b10] flex flex-col">
               <ViewfinderStream
                 isWebcam={isWebcam}
                 flashlightOn={flashlightOn}
