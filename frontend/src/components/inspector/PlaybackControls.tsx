@@ -1,6 +1,6 @@
 "use client";
 
-import { Sliders, Flame, CloudFog } from "lucide-react";
+import { Fire, Wind } from "@phosphor-icons/react";
 
 interface PlaybackControlsProps {
   confidence: number;
@@ -10,6 +10,8 @@ interface PlaybackControlsProps {
   showSmoke: boolean;
   onToggleSmoke: () => void;
   filteredCount: number;
+  fireCount?: number;
+  smokeCount?: number;
 }
 
 export function PlaybackControls({
@@ -20,72 +22,130 @@ export function PlaybackControls({
   showSmoke,
   onToggleSmoke,
   filteredCount,
+  fireCount = 0,
+  smokeCount = 0,
 }: PlaybackControlsProps) {
+  const thresholdPresets = [
+    { label: "Sensitif 25%", value: 0.25 },
+    { label: "Seimbang 50%", value: 0.5 },
+    { label: "Ketat 80%", value: 0.8 },
+  ];
+
   return (
-    <div className="bg-[#131B2A] border border-[#1F293D] rounded-lg p-4 flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#1F293D] pb-3">
-        <div className="flex items-center gap-2">
-          <Sliders className="w-4 h-4 text-slate-400" />
-          <span className="text-xs font-mono font-bold text-slate-200">
-            FILTER & THRESHOLD CONTROLLER
+    <div className="p-2 rounded-[2rem] bg-white/[0.03] border border-white/10">
+      <div className="rounded-[calc(2rem-0.5rem)] bg-[#0b0d14] p-5 flex flex-col gap-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-base font-bold text-white">
+            Filter &amp; Sensitivitas
+          </h2>
+          <span className="px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/10 text-xs font-mono text-white/80">
+            {filteredCount} aktif
           </span>
         </div>
-        <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#182235] border border-[#1F293D] text-slate-300">
-          {filteredCount} OBJECT{filteredCount !== 1 ? "S" : ""} VISIBLE
-        </span>
-      </div>
 
-      {/* Threshold Slider */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between text-xs font-mono">
-          <span className="text-slate-400">Confidence Threshold</span>
-          <span className="font-bold text-slate-100">
-            {(confidence * 100).toFixed(0)}%
-          </span>
+        {/* Confidence Slider */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-white/60">Batas Akurasi Minimum</span>
+            <span className="font-mono font-bold text-white text-sm">
+              {(confidence * 100).toFixed(0)}%
+            </span>
+          </div>
+
+          <input
+            type="range"
+            min="10"
+            max="95"
+            step="1"
+            value={Math.round(confidence * 100)}
+            onChange={(e) => onConfidenceChange(Number(e.target.value) / 100)}
+            className="w-full accent-[#ff5722] bg-white/10 h-1.5 rounded-full cursor-pointer"
+          />
+
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            {thresholdPresets.map((preset) => {
+              const isSelected = Math.abs(confidence - preset.value) < 0.02;
+              return (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => onConfidenceChange(preset.value)}
+                  className={`py-1.5 px-2 rounded-full text-[11px] font-medium border transition-all ${
+                    isSelected
+                      ? "bg-white text-[#050507] font-semibold border-white"
+                      : "bg-white/[0.03] text-white/65 border-white/10 hover:text-white"
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <input
-          type="range"
-          min="10"
-          max="95"
-          step="1"
-          value={Math.round(confidence * 100)}
-          onChange={(e) => onConfidenceChange(Number(e.target.value) / 100)}
-          className="w-full accent-red-500 bg-[#0E1522] h-2 rounded cursor-pointer"
-        />
-        <div className="flex justify-between text-[10px] font-mono text-slate-500">
-          <span>10% (High Recall)</span>
-          <span>95% (High Precision)</span>
+
+        {/* Fire & Smoke Layer Toggles */}
+        <div className="space-y-2.5 pt-2 border-t border-white/10">
+          <div className="text-xs text-white/60">Layer Visual:</div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={onToggleFire}
+              className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between gap-2 ${
+                showFire
+                  ? "bg-[#ff5722]/15 text-white border-[#ff5722]/50"
+                  : "bg-white/[0.02] text-white/40 border-white/10"
+              }`}
+            >
+              <div className="flex items-center justify-between w-full">
+                <Fire
+                  weight="fill"
+                  className={`w-4 h-4 ${
+                    showFire ? "text-[#ff5722]" : "text-white/30"
+                  }`}
+                />
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-black/40">
+                  {showFire ? "AKTIF" : "MATI"}
+                </span>
+              </div>
+              <div>
+                <div className="text-xs font-semibold">Titik Api</div>
+                <div className="text-[11px] font-mono text-[#ff6b3d]">
+                  {fireCount} objek
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={onToggleSmoke}
+              className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between gap-2 ${
+                showSmoke
+                  ? "bg-[#38bdf8]/15 text-white border-[#38bdf8]/50"
+                  : "bg-white/[0.02] text-white/40 border-white/10"
+              }`}
+            >
+              <div className="flex items-center justify-between w-full">
+                <Wind
+                  weight="bold"
+                  className={`w-4 h-4 ${
+                    showSmoke ? "text-[#38bdf8]" : "text-white/30"
+                  }`}
+                />
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-black/40">
+                  {showSmoke ? "AKTIF" : "MATI"}
+                </span>
+              </div>
+              <div>
+                <div className="text-xs font-semibold">Kepulan Asap</div>
+                <div className="text-[11px] font-mono text-[#38bdf8]">
+                  {smokeCount} objek
+                </div>
+              </div>
+            </button>
+          </div>
         </div>
-      </div>
-
-      {/* Class Visibility Toggles */}
-      <div className="flex items-center gap-3 pt-1">
-        <button
-          type="button"
-          onClick={onToggleFire}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-mono border transition-colors ${
-            showFire
-              ? "bg-red-950/40 text-red-300 border-red-800/60"
-              : "bg-[#182235] text-slate-500 border-[#1F293D]"
-          }`}
-        >
-          <Flame className={`w-3.5 h-3.5 ${showFire ? "text-red-400" : "text-slate-500"}`} />
-          <span>FIRE CLASS</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={onToggleSmoke}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-mono border transition-colors ${
-            showSmoke
-              ? "bg-amber-950/40 text-amber-300 border-amber-800/60"
-              : "bg-[#182235] text-slate-500 border-[#1F293D]"
-          }`}
-        >
-          <CloudFog className={`w-3.5 h-3.5 ${showSmoke ? "text-amber-400" : "text-slate-500"}`} />
-          <span>SMOKE CLASS</span>
-        </button>
       </div>
     </div>
   );
