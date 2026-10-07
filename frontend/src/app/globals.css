@@ -128,6 +128,26 @@ body {
   animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+@keyframes heroKenBurns {
+  0% {
+    transform: scale3d(1.01, 1.01, 1) translate3d(0, 0, 0);
+  }
+  100% {
+    transform: scale3d(1.065, 1.065, 1) translate3d(-1.2%, -0.8%, 0);
+  }
+}
+
+@keyframes heroHeatPulse {
+  0%, 100% {
+    opacity: 0.38;
+    transform: translate3d(-50%, -50%, 0) scale3d(0.95, 0.95, 1);
+  }
+  50% {
+    opacity: 0.68;
+    transform: translate3d(-50%, -50%, 0) scale3d(1.08, 1.08, 1);
+  }
+}
+
 .cctv-grain {
   background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
   background-size: 24px 24px;
