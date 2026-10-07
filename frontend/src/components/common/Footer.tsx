@@ -1,29 +1,31 @@
 import Link from "next/link";
-import { Flame } from "lucide-react";
+import { Fire } from "@phosphor-icons/react/dist/ssr";
 
 export function Footer() {
   return (
-    <footer className="w-full py-8 px-6 lg:px-12 border-t border-[#2d3449] flex flex-col md:flex-row justify-between items-center gap-4 bg-[#060e20]">
-      <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
-        <div className="text-lg uppercase text-[#ff5722] font-bold flex items-center gap-2">
-          <Flame className="w-5 h-5 text-[#ff5722] fill-[#ff5722]" />
-          <span className="font-extrabold text-white">AegisFlame AI</span>
+    <footer className="w-full border-t border-white/10 bg-[#050507]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="flex items-center gap-2.5">
+          <Fire weight="fill" className="w-4 h-4 text-[#ff5722]" />
+          <span className="font-display font-bold text-white text-sm">
+            AegisFlame
+          </span>
+          <span className="text-xs text-white/40">
+            · Deteksi Api &amp; Asap Real-Time
+          </span>
         </div>
-        <div className="text-xs text-[#e4beb4] max-w-md">
-          © 2025 AegisFlame Vision Systems. Autonomous Industrial Fire &amp; Smoke Mitigation. All rights reserved.
-        </div>
-      </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-[#e4beb4]">
-        <Link href="/live-scan" className="hover:text-[#ff5722] transition-colors">
-          Live Viewfinder
-        </Link>
-        <Link href="/inspector" className="hover:text-[#ff5722] transition-colors">
-          Media Inspector
-        </Link>
-        <Link href="/incidents" className="hover:text-[#ff5722] transition-colors">
-          Hazard Incident Log
-        </Link>
+        <div className="flex items-center gap-6 text-xs text-white/60">
+          <Link href="/live-scan" className="hover:text-white transition-colors">
+            Live Scan
+          </Link>
+          <Link href="/inspector" className="hover:text-white transition-colors">
+            Media Lab
+          </Link>
+          <Link href="/incidents" className="hover:text-white transition-colors">
+            Insiden
+          </Link>
+        </div>
       </div>
     </footer>
   );

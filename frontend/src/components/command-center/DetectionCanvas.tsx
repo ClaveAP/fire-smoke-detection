@@ -8,12 +8,16 @@ interface DetectionCanvasProps {
   detections: BoundingBox[];
   className?: string;
   minConfidence?: number;
+  showFire?: boolean;
+  showSmoke?: boolean;
 }
 
 export function DetectionCanvas({
   detections,
   className = "",
   minConfidence = 0.2,
+  showFire = true,
+  showSmoke = true,
 }: DetectionCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -23,8 +27,8 @@ export function DetectionCanvas({
     options: {
       minConfidence,
       renderLabels: true,
-      showFire: true,
-      showSmoke: true,
+      showFire,
+      showSmoke,
     },
   });
 

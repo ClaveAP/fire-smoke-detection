@@ -1,65 +1,56 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Bell, Settings, Volume2, VolumeX, ShieldAlert } from "lucide-react";
+import {
+  Fire,
+  List,
+  X,
+  ArrowUpRight,
+} from "@phosphor-icons/react";
 
-interface HeaderNavProps {
-  isMuted?: boolean;
-  onToggleMute?: () => void;
-  onEmergencyOverride?: () => void;
-}
-
-export function HeaderNav({
-  isMuted = false,
-  onToggleMute,
-  onEmergencyOverride,
-}: HeaderNavProps) {
+export function HeaderNav() {
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { label: "Platform", href: "/#platform" },
+    { label: "Beranda", href: "/" },
     { label: "Live Scan", href: "/live-scan" },
-    { label: "Telemetry", href: "/inspector" },
-    { label: "Hazard Log", href: "/incidents" },
+    { label: "Media Lab", href: "/inspector" },
+    { label: "Insiden", href: "/incidents" },
   ];
 
   return (
-    <header className="w-full px-4 lg:px-8 py-3 flex justify-between items-center border-b border-[#2d3449]/70 bg-[#060e20] sticky top-0 z-50">
-      {/* Brand & Neural Scan Version */}
-      <div className="flex items-center gap-6">
+    <header className="fixed top-5 inset-x-0 z-50 px-4 flex flex-col items-center pointer-events-none">
+      <div className="pointer-events-auto flex items-center gap-2 sm:gap-5 px-3 py-2 rounded-full bg-[#0a0b10]/80 backdrop-blur-2xl border border-white/12 shadow-[0_8px_32px_rgba(0,0,0,0.55)]">
+        {/* Brand Logo */}
         <Link
           href="/"
-          className="text-lg font-bold tracking-wider text-[#ff5722] flex items-center gap-2 transition-transform hover:scale-102"
+          className="flex items-center gap-2 pl-2 pr-1 text-sm font-bold text-white"
         >
-          <Flame className="w-6 h-6 text-[#ff5722] fill-[#ff5722]" />
-          <span className="font-extrabold tracking-tight text-white font-sans">
-            AegisFlame <span className="text-[#ff5722]">AI</span>
-          </span>
+          <Fire weight="fill" className="w-4 h-4 text-[#ff5722]" />
+          <span className="font-display tracking-tight">AegisFlame</span>
         </Link>
 
-        <div className="hidden lg:flex items-center gap-2 pl-4 border-l border-[#2d3449] text-[11px] font-mono text-[#e4beb4]">
-          <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-          <span className="text-[#ffb5a0] tracking-widest font-semibold">NEURAL SCAN V4.2</span>
-        </div>
-
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-2 ml-4">
+        {/* Desktop Links */}
+        <nav
+          aria-label="Navigasi Utama"
+          className="hidden md:flex items-center gap-1"
+        >
           {navLinks.map((link) => {
-            const isActive =
-              link.href === pathname ||
-              (link.href === "/live-scan" && pathname === "/live-scan") ||
-              (link.href === "/inspector" && pathname === "/inspector") ||
-              (link.href === "/incidents" && pathname === "/incidents");
-
+            const active =
+              link.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(link.href);
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-3 py-1 text-sm font-medium rounded transition-colors duration-150 ${
-                  isActive
-                    ? "text-[#ffb5a0] border-b-2 border-[#ff5722] font-semibold bg-[#131b2e]/50"
-                    : "text-[#e4beb4] hover:text-[#ffb5a0] hover:bg-[#171f33]"
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                  active
+                    ? "bg-white text-[#050507] font-semibold shadow-sm"
+                    : "text-white/65 hover:text-white hover:bg-white/[0.06]"
                 }`}
               >
                 {link.label}
@@ -67,61 +58,66 @@ export function HeaderNav({
             );
           })}
         </nav>
-      </div>
 
-      {/* Trailing Actions */}
-      <div className="flex items-center gap-3">
-        {onToggleMute && (
-          <button
-            onClick={onToggleMute}
-            type="button"
-            className="p-2 text-[#e4beb4] hover:text-[#ffb5a0] hover:bg-[#171f33] rounded transition-colors"
-            title={isMuted ? "Unmute Alarm" : "Mute Alarm"}
-            aria-label="Toggle Siren Audio"
-          >
-            {isMuted ? (
-              <VolumeX className="w-4 h-4 text-amber-400" />
-            ) : (
-              <Volume2 className="w-4 h-4 text-emerald-400" />
+        {/* Contextual Actions: Buka Kamera only on Landing Page (/), plus Mobile Menu Toggle */}
+        {(pathname === "/" || true) && (
+          <div className="flex items-center gap-1.5">
+            {pathname === "/" && (
+              <Link
+                href="/live-scan"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#ff5722] hover:bg-[#f4511e] text-white px-4 py-1.5 text-xs font-semibold transition-transform active:scale-[0.98]"
+              >
+                <span>Buka Kamera</span>
+                <ArrowUpRight weight="bold" className="w-3.5 h-3.5" />
+              </Link>
             )}
-          </button>
+
+            {/* Mobile Hamburger */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              className="md:hidden w-8 h-8 rounded-full flex items-center justify-center bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-white"
+              aria-expanded={mobileMenuOpen}
+              aria-label="Menu navigasi"
+            >
+              {mobileMenuOpen ? (
+                <X weight="bold" className="w-4 h-4" />
+              ) : (
+                <List weight="bold" className="w-4 h-4" />
+              )}
+            </button>
+          </div>
         )}
-
-        <button
-          type="button"
-          className="hidden sm:flex p-2 text-[#e4beb4] hover:text-[#ffb5a0] hover:bg-[#171f33] rounded transition-colors"
-          title="Notifications"
-          aria-label="Notifications"
-        >
-          <Bell className="w-4 h-4" />
-        </button>
-
-        <button
-          type="button"
-          className="hidden sm:flex p-2 text-[#e4beb4] hover:text-[#ffb5a0] hover:bg-[#171f33] rounded transition-colors"
-          title="Settings"
-          aria-label="Settings"
-        >
-          <Settings className="w-4 h-4" />
-        </button>
-
-        <button
-          type="button"
-          className="hidden lg:inline-flex text-[#e4beb4] text-xs font-mono font-medium hover:text-[#ffb5a0] px-3 py-1.5 transition-colors"
-        >
-          Sign In
-        </button>
-
-        <button
-          onClick={onEmergencyOverride}
-          type="button"
-          className="bg-[#a90111] hover:bg-[#c61021] text-[#ffdad6] border border-[#ffb4ab]/40 px-3.5 py-1.5 rounded text-xs font-mono font-bold flex items-center gap-1.5 transition-transform active:scale-[0.98] shadow-md shadow-red-950/40"
-        >
-          <span className="w-2 h-2 rounded-full bg-red-400 animate-ping"></span>
-          <ShieldAlert className="w-3.5 h-3.5 text-white" />
-          <span>Emergency Override</span>
-        </button>
       </div>
+
+      {/* Mobile Floating Dropdown Pill */}
+      {mobileMenuOpen && (
+        <nav
+          aria-label="Navigasi Mobile"
+          className="pointer-events-auto md:hidden mt-2 w-60 rounded-3xl bg-[#0a0b10]/95 backdrop-blur-2xl border border-white/12 p-2 flex flex-col gap-1 shadow-2xl"
+        >
+          {navLinks.map((link) => {
+            const active =
+              link.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`px-4 py-2.5 rounded-2xl text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-white text-[#050507] font-semibold"
+                    : "text-white/75 hover:bg-white/[0.06] hover:text-white"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
     </header>
   );
 }

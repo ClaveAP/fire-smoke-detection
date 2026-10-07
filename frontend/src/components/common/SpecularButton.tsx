@@ -135,7 +135,21 @@ export const SpecularButton: React.FC<SpecularButtonProps> = ({
     autoAnimate
   });
 
-  propsRef.current = {
+  useEffect(() => {
+    propsRef.current = {
+      radius,
+      lineColor,
+      baseColor,
+      intensity,
+      shineSize,
+      shineFade,
+      thickness,
+      speed,
+      followMouse,
+      proximity,
+      autoAnimate
+    };
+  }, [
     radius,
     lineColor,
     baseColor,
@@ -147,15 +161,15 @@ export const SpecularButton: React.FC<SpecularButtonProps> = ({
     followMouse,
     proximity,
     autoAnimate
-  };
+  ]);
 
   useEffect(() => {
     const btn = btnRef.current;
     const fx = fxRef.current;
     if (!btn || !fx) return;
 
-    let renderer: any = null;
-    let gl: any = null;
+    let renderer: Renderer | null = null;
+    let gl: Renderer["gl"] | null = null;
     let ro: ResizeObserver | null = null;
     let raf = 0;
 
@@ -217,7 +231,7 @@ export const SpecularButton: React.FC<SpecularButtonProps> = ({
 
       const sizeRef = { w: 1, h: 1 };
       const resize = () => {
-        if (!btn) return;
+        if (!btn || !renderer) return;
         const rect = btn.getBoundingClientRect();
         const w = rect.width;
         const h = rect.height;
@@ -243,6 +257,7 @@ export const SpecularButton: React.FC<SpecularButtonProps> = ({
       const baseC = new Color();
 
       const update = (now: number) => {
+        if (!renderer) return;
         raf = requestAnimationFrame(update);
         const dt = Math.min((now - last) / 1000, 0.05);
         last = now;
