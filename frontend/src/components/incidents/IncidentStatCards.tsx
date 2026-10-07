@@ -67,49 +67,47 @@ export function IncidentStatCards({
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
           <div
             key={card.label}
             onMouseMove={handleMouseMove}
-            className="group p-1.5 rounded-[1.75rem] bg-white/[0.03] border border-white/10 hover:border-white/20 transition-all duration-300 shadow-[0_20px_50px_rgba(0,0,0,0.45)]"
+            className="group relative h-full rounded-2xl sm:rounded-3xl bg-[#0b0d14] border border-white/10 hover:border-white/20 p-4 sm:p-5 flex flex-col justify-between overflow-hidden transition-all duration-300"
           >
-            <div className="relative h-full rounded-[1.35rem] bg-[#0b0d14] border border-white/[0.06] p-5 flex flex-col justify-between overflow-hidden">
-              {/* Zero-re-render radial cursor spotlight */}
-              <div
-                className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                style={{
-                  background: `radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), ${card.glowColor}, transparent 70%)`,
-                }}
-              />
+            {/* Zero-re-render radial cursor spotlight */}
+            <div
+              className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              style={{
+                background: `radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), ${card.glowColor}, transparent 70%)`,
+              }}
+            />
 
-              <div className="relative z-10 flex items-center justify-between mb-4">
-                <span className="text-xs font-medium text-zinc-400">
-                  {card.label}
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center">
-                  <Icon
-                    weight="duotone"
-                    className="w-4 h-4"
-                    style={{ color: card.accentColor }}
-                  />
-                </div>
+            <div className="relative z-10 flex items-center justify-between gap-2 mb-3 sm:mb-4">
+              <span className="text-xs font-medium text-zinc-400 truncate">
+                {card.label}
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0">
+                <Icon
+                  weight="duotone"
+                  className="w-4 h-4"
+                  style={{ color: card.accentColor }}
+                />
               </div>
+            </div>
 
-              <div className="relative z-10 flex items-baseline justify-between gap-2">
-                <span
-                  className={`font-mono text-3xl sm:text-4xl font-bold tracking-tight tabular-nums ${card.valueClass}`}
-                >
-                  {card.value}
-                </span>
-                <span
-                  className={`text-[11px] font-mono px-2.5 py-0.5 rounded-full border ${card.badgeClass}`}
-                >
-                  {card.badge}
-                </span>
-              </div>
+            <div className="relative z-10 flex flex-wrap items-baseline justify-between gap-2">
+              <span
+                className={`font-mono text-2xl sm:text-4xl font-bold tracking-tight tabular-nums ${card.valueClass}`}
+              >
+                {card.value}
+              </span>
+              <span
+                className={`text-[10px] sm:text-[11px] font-mono px-2 sm:px-2.5 py-0.5 rounded-full border whitespace-nowrap ${card.badgeClass}`}
+              >
+                {card.badge}
+              </span>
             </div>
           </div>
         );

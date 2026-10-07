@@ -113,14 +113,14 @@ export default function IncidentsPage() {
 
       <HeaderNav />
 
-      <main className="relative z-10 flex-1 pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full flex flex-col gap-5">
+      <main className="relative z-10 flex-1 pt-20 sm:pt-24 pb-10 sm:pb-12 px-3.5 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full flex flex-col gap-4 sm:gap-5">
         {/* Clean Header Row */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
               Riwayat Insiden
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-xs font-mono text-zinc-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[11px] sm:text-xs font-mono text-zinc-400">
               {incidents.length} Rekaman
             </span>
           </div>
