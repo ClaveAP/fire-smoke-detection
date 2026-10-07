@@ -161,20 +161,20 @@ export default function MediaInspectorPage() {
     <div className="min-h-screen bg-[#050507] text-[#f5f5f7] flex flex-col font-sans overflow-x-hidden">
       <HeaderNav />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto pt-24 pb-12 px-4 sm:px-6 lg:px-8 flex flex-col gap-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto pt-20 sm:pt-24 pb-10 sm:pb-12 px-3.5 sm:px-6 lg:px-8 flex flex-col gap-4 sm:gap-6">
         {/* Clean Minimal Page Title */}
         <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold text-white">
+          <h1 className="font-display text-xl sm:text-3xl font-bold text-white">
             Media Inspector Lab
           </h1>
-          <p className="text-sm text-white/60">
+          <p className="text-xs sm:text-sm text-white/60">
             Unggah foto atau pilih sampel untuk menganalisis deteksi titik api dan kepulan asap per objek.
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* Left Column: Visual Stage & Table */}
-          <div className="flex-1 flex flex-col gap-6">
+          <div className="flex-1 min-w-0 flex flex-col gap-4 sm:gap-6">
             <InspectorPreviewCanvas
               sampleTitle={sampleTitle}
               previewUrl={previewUrl}
@@ -191,8 +191,8 @@ export default function MediaInspectorPage() {
             />
           </div>
 
-          {/* Right Column: Uploader & Controls */}
-          <div className="w-full lg:w-96 flex flex-col gap-6 shrink-0">
+          {/* Right Column: 1-col on Mobile, 2-col Grid on Tablet, 384px Sidebar on Desktop */}
+          <div className="w-full lg:w-96 grid grid-cols-1 md:grid-cols-2 lg:flex lg:flex-col gap-4 sm:gap-6 shrink-0">
             <MediaUploader
               onMediaSelect={handleMediaSelect}
               isProcessing={isProcessing}
