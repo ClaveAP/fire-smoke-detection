@@ -1,6 +1,6 @@
 "use client";
 
-import { MagnifyingGlass, Fire, Wind, ArrowCounterClockwise, Stack, X } from "@phosphor-icons/react";
+import { MagnifyingGlass, Fire, FlameIcon, Wind, ArrowCounterClockwise, Stack, X } from "@phosphor-icons/react";
 
 interface IncidentFiltersProps {
   search: string;
@@ -38,7 +38,7 @@ export function IncidentFilters({
     {
       id: "dual",
       label: "Api + Asap",
-      icon: Fire,
+      icon: FlameIcon,
       activeClass:
         "bg-[#ff5a1f]/20 text-white border border-[#ff5a1f]/50 shadow-[0_0_20px_rgba(255,90,31,0.2)]",
     },
@@ -108,7 +108,7 @@ export function IncidentFilters({
                       : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
                   }`}
                 >
-                  <Icon weight="duotone" className="w-3.5 h-3.5" />
+                  <Icon size={32} weight="duotone" className="w-3.5 h-3.5" />
                   <span>{opt.label}</span>
                 </button>
               );

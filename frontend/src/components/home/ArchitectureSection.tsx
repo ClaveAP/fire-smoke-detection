@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, PointerEvent } from "react";
-import { Fire, Wind, Stack, Sparkle } from "@phosphor-icons/react";
+import { Fire, Wind, FlameIcon, Sparkle } from "@phosphor-icons/react";
 
 type FocusMode = "both" | "fire" | "smoke";
 
@@ -87,7 +87,7 @@ export function ArchitectureSection() {
                   : "text-white/65 hover:text-white"
               }`}
             >
-              <Stack weight="duotone" className="w-3.5 h-3.5" />
+              <FlameIcon size={32} weight="duotone" className="w-3.5 h-3.5" />
               <span>Api + Asap</span>
             </button>
             <button
