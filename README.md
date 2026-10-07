@@ -1,6 +1,6 @@
-# 🔥 Fire & Smoke Detection System — Command Center Platform
+# 🔥 Fire & Smoke Detection System — AI Vision Command Center
 
-Sistem pemantauan dan deteksi dini anomali api (*fire*) dan asap (*smoke*) berbasis *Computer Vision* dengan antarmuka **Security Operations Command Center** modern, modular, dan berkinerja tinggi.
+Platform pemantauan dan deteksi dini anomali api (*fire*) serta kepulan asap (*smoke*) berbasis *Computer Vision* dengan antarmuka **Security Operations Command Center** modern, modular, dan responsif.
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.3-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2-blue?style=flat&logo=react)](https://react.dev/)
@@ -13,23 +13,22 @@ Sistem pemantauan dan deteksi dini anomali api (*fire*) dan asap (*smoke*) berba
 
 ## 📌 Ringkasan Proyek
 
-Platform ini dirancang untuk mendeteksi bahaya kebakaran dan kepulan asap secara *real-time* melalui umpan kamera CCTV maupun input video/gambar statis. 
+Platform ini dirancang untuk mendeteksi bahaya kebakaran dan kepulan asap secara *real-time* melalui umpan kamera CCTV, pemindaian **Live Webcam** langsung dari browser, maupun analisis file media statis (gambar/video).
 
 Dibangun dengan arsitektur **terpisah (*decoupled*)**:
-- **Frontend (Next.js):** Antarmuka responsif *Dark Operations Theme*, rendering *bounding box* akselerasi perangkat keras via HTML5 2D Canvas, serta sirine audio sintetis berbasis Web Audio API lokal. Dilengkapi *intelligent mock engine fallback* sehingga frontend tetap dapat berjalan dan mendemokan fitur tanpa ketergantungan langsung pada backend.
-- **Backend (FastAPI Microservice Template):** Menyediakan kontrak REST API & WebSocket yang siap dihubungkan langsung ke model *deep learning* (seperti YOLOv8 / PyTorch).
+- **Frontend (Next.js 16 + React 19):** Antarmuka *Dark Operations Command Center*, overlay *bounding box* berakselerasi perangkat keras via HTML5 2D Canvas, pemindai titik api webcam real-time (`useWebcamScanner`), serta sirine audio sintetis berbasis Web Audio API lokal. Dilengkapi *graceful client fallback* & *mock engine* sehingga aplikasi dapat langsung dijalankan penuh tanpa ketergantungan server backend.
+- **Backend (FastAPI Microservice Template):** Menyediakan kontrak REST API & WebSocket berstandar OpenAPI yang siap diintegrasikan langsung dengan model *deep learning* **YOLOv8 / PyTorch**.
 
 ---
 
 ## ✨ Fitur Utama
 
-| Modul | Deskripsi |
+| Modul | Fitur & Kapabilitas |
 | :--- | :--- |
-| 🛡️ **Live CCTV Command Center (`/live-scan`)** | Monitoring multi-kamera CCTV (grid 2x2 atau *focus view* 1x1), dukungan live webcam browser dan video simulasi, overlay *bounding box* canvas real-time, status peringatan global (`SAFE`, `WARNING`, `CRITICAL`), sirine audio sintetis (Web Audio API), dan *ticker feed* insiden langsung. |
-| 🔬 **Media Inspector (`/inspector`)** | Upload file gambar/video drag-and-drop, slider *confidence threshold* interaktif (10% - 95%), filter toggle kelas (Fire/Smoke), tabel rincian koordinat deteksi per frame, serta tombol ekspor *annotated snapshot*. |
-| 📋 **Incident Logs & Audit Trail (`/incidents`)** | Riwayat pencatatan insiden kebakaran, filter pencarian berdasarkan waktu, kamera, dan tingkat keparahan (*severity*), modal pratinjau snapshot insiden, dan ekspor laporan ke format CSV. |
-| 🌐 **Interactive Landing Page (`/`)** | Beranda modern dengan metrik statistik deteksi, alur kerja sistem (*system workflow*), dan elemen CTA interaktif. |
-| 🔄 **Graceful Fallback & Mock Engine** | Frontend otomatis beralih ke simulasi cerdas jika backend tidak aktif, memudahkan pengujian mandiri kapan pun tanpa setup server AI yang berat. |
+| 🌐 **Interactive Landing Page (`/`)** | • **Hero Scanner Demo**: Simulasi pemindaian interaktif langsung di halaman utama.<br>• **Bento Architecture & Dual-Detection Stage**: Visualisasi pipeline deteksi ganda (Api & Asap).<br>• **Benchmark & Workflow Sections**: Perbandingan performa latensi/akurasi serta elemen CTA interaktif (`SpecularButton`). |
+| 🛡️ **Live Scan Command Center (`/live-scan`)** | • **Real-Time Webcam Fire Scanner**: Deteksi titik api langsung dari kamera laptop (`useWebcamScanner`) dengan pemilihan kamera fisik otomatis (bypass virtual camera/OBS).<br>• **Simulated CCTV Streams**: Mode simulasi skenario kebakaran, asap, dan kondisi aman.<br>• **HUD Overlay & Telemetry Sidebar**: Tampilan koordinat *bounding box* dinamis, metrik suhu/kepadatan asap, sirine audio Web Audio API, dan *auto-incident logging*. |
+| 🔬 **Media Inspector (`/inspector`)** | • **Drag & Drop + One-Click Presets**: Unggah gambar/video sendiri atau uji cepat dengan sampel preset bawaan (*Fire*, *Smoke*, *Dual Detection*).<br>• **Interactive Threshold & Class Controls**: Slider *confidence threshold* (10% – 95%) dan filter kelas secara *real-time*.<br>• **Annotated Snapshot Export**: Unduh hasil tangkapan layar lengkap dengan gambar *bounding box* dan label akurasi. |
+| 📋 **Incident Logs & Audit Trail (`/incidents`)** | • **Auto-Recorded Webcam & CCTV Incidents**: Menyimpan otomatis tangkapan layar (*snapshot*) saat api terdeteksi di Live Scan.<br>• **Stat Cards & Advanced Filters**: Ringkasan metrik insiden, filter berdasarkan tingkat keparahan, status, dan pencarian kata kunci.<br>• **Snapshot Inspection Modal & CSV Export**: Pratinjau detail koordinat deteksi per insiden dan unduh laporan audit dalam format CSV. |
 
 ---
 
@@ -38,23 +37,33 @@ Dibangun dengan arsitektur **terpisah (*decoupled*)**:
 ```mermaid
 flowchart TD
     subgraph Client["Frontend (Next.js 16 + React 19)"]
-        UI["Command Center UI & Inspector"]
-        Canvas["HTML5 Canvas 2D Overlay"]
-        Synth["Web Audio API Alarm Synth"]
-        Adapter["Detection Adapter Service"]
-        MockEngine["Built-in Mock Engine"]
+        Home["Landing Page & Hero Scanner Demo (/)"]
+        LiveScan["Live Scan Viewfinder & HUD (/live-scan)"]
+        Inspector["Media Lab & Preset Inspector (/inspector)"]
+        Incidents["Incident Audit Trail & Modal (/incidents)"]
+        
+        Webcam["useWebcamScanner (Live Flame Tracking)"]
+        Canvas["useDetectionCanvas (HTML5 2D Overlay)"]
+        Synth["useAlarmSound (Web Audio API Siren)"]
+        Adapter["detectionAdapter Service"]
+        MockEngine["mockDetection Engine & Local Incident Store"]
     end
 
     subgraph Service["Backend Microservice (FastAPI)"]
         API["FastAPI REST & WebSocket Server"]
-        YOLO["YOLOv8 / Vision Inference Engine"]
+        YOLO["YOLOv8 / PyTorch Inference Engine"]
     end
 
-    UI --> Canvas
-    UI --> Synth
-    UI --> Adapter
+    LiveScan --> Webcam
+    LiveScan --> Canvas
+    LiveScan --> Synth
+    LiveScan --> Adapter
+    Inspector --> Canvas
+    Inspector --> Adapter
+    Incidents --> Adapter
+
     Adapter -->|Jika Backend Aktif| API
-    Adapter -->|Fallback Otomatis| MockEngine
+    Adapter -->|Graceful Fallback| MockEngine
     API --> YOLO
 ```
 
@@ -64,34 +73,45 @@ flowchart TD
 
 ```text
 fire-smoke-detection/
-├── docs/                               # Dokumentasi spesifikasi & perencanaan sistem
-│   └── superpowers/
-├── frontend/                           # Aplikasi Frontend Next.js (App Router)
+├── docs/                                         # Dokumentasi desain & spesifikasi sistem
+│   ├── stitch/                                   # Referensi desain layar UI
+│   └── superpowers/                              # Spesifikasi arsitektur & rencana implementasi
+├── frontend/                                     # Aplikasi Frontend Next.js (App Router)
+│   ├── public/
+│   │   ├── illustrations/                        # Aset visual bento grid & pipeline arsitektur
+│   │   ├── presets/                              # Sampel gambar preset (fire, smoke, dual)
+│   │   └── hero-fire-smoke.jpg                   # Aset latar belakang hero
 │   ├── src/
-│   │   ├── app/                        # Routing halaman (/live-scan, /inspector, /incidents)
-│   │   ├── components/                 # Komponen modular (command-center, inspector, common, ui)
-│   │   ├── hooks/                      # Custom hooks (canvas rendering, audio alarm, camera feeds)
-│   │   ├── services/                   # Detection adapter (backend connection & fallback mock)
-│   │   └── types/                      # Definisi tipe data TypeScript
+│   │   ├── app/                                  # Routing halaman (/, /live-scan, /inspector, /incidents)
+│   │   ├── components/
+│   │   │   ├── common/                           # HeaderNav, Footer, SpecularButton
+│   │   │   ├── home/                             # HeroSection, HeroScannerDemo, Architecture, Benchmark, Workflow
+│   │   │   ├── live-scan/                        # ViewfinderStream, ViewfinderTopBar, DetectionHudOverlay, TelemetrySidebar
+│   │   │   ├── inspector/                        # MediaUploader, InspectorPreviewCanvas, PlaybackControls, DetectionTable
+│   │   │   ├── incidents/                        # IncidentStatCards, IncidentFilters, IncidentTable, SnapshotModal
+│   │   │   └── command-center/                   # DetectionCanvas
+│   │   ├── hooks/                                # useWebcamScanner, useDetectionCanvas, useAlarmSound
+│   │   ├── services/                             # detectionAdapter.ts & mockDetection.ts
+│   │   └── types/                                # Kontrak tipe data TypeScript (detection.ts)
 │   ├── package.json
 │   └── tailwind.config.ts
-├── backend/                            # Microservice Vision API (FastAPI)
+├── backend/                                      # Microservice Vision API (FastAPI)
 │   ├── app/
-│   │   ├── main.py                     # Entrypoint FastAPI & router endpoint
-│   │   └── schemas.py                  # Pydantic schema (selaras dengan frontend types)
-│   ├── openapi.yaml                    # Spesifikasi kontrak OpenAPI / Swagger
+│   │   ├── main.py                               # Entrypoint FastAPI & router endpoint
+│   │   └── schemas.py                            # Skema Pydantic v2 (selaras dengan frontend types)
+│   ├── openapi.yaml                              # Spesifikasi kontrak OpenAPI 3.0 / Swagger
 │   ├── requirements.txt
-│   └── README.md                       # Panduan khusus backend & integrasi model
-└── README.md                           # Dokumentasi utama proyek
+│   └── README.md                                 # Panduan khusus backend & integrasi YOLOv8
+└── README.md                                     # Dokumentasi utama repositori
 ```
 
 ---
 
 ## 🚀 Panduan Memulai (Quickstart)
 
-### 1. Menjalankan Frontend
+### 1. Menjalankan Frontend (Next.js)
 
-Pastikan telah menginstal [Node.js](https://nodejs.org/) (versi 18+).
+Pastikan [Node.js](https://nodejs.org/) (versi 18+) telah terinstal.
 
 ```bash
 # 1. Masuk ke direktori frontend
@@ -104,13 +124,14 @@ npm install
 npm run dev
 ```
 
-Buka browser di [http://localhost:3000](http://localhost:3000). Secara *default*, frontend langsung berfungsi penuh menggunakan simulasi bawaan (*mock engine*).
+Buka [http://localhost:3000](http://localhost:3000) di browser.
+> 💡 **Tips:** Frontend dapat langsung dijalankan secara penuh (termasuk fitur **Live Webcam Scanner**, **Preset Inspector**, dan **Incident Logging**) tanpa perlu menyalakan server backend terlebih dahulu.
 
 ---
 
-### 2. Menjalankan Backend (Opsional / Integrasi AI)
+### 2. Menjalankan Backend (FastAPI — Opsional / Integrasi Model AI)
 
-Pastikan telah menginstal [Python](https://python.org/) (versi 3.10+).
+Pastikan [Python](https://python.org/) (versi 3.10+) telah terinstal.
 
 ```bash
 # 1. Masuk ke direktori backend
@@ -128,61 +149,50 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Dokumentasi Swagger API interaktif dapat diakses di: [http://localhost:8000/docs](http://localhost:8000/docs).
+Dokumentasi interaktif Swagger UI tersedia di: [http://localhost:8000/docs](http://localhost:8000/docs).
 
 ---
 
-## ⚙️ Menghubungkan Frontend ke Backend
+## ⚙️ Konfigurasi Environment Variables
 
-Buat file `.env.local` di dalam folder `frontend/`:
+Untuk menghubungkan frontend dengan backend FastAPI, buat file `.env.local` pada direktori `frontend/`:
 
 ```env
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ```
 
-> **Catatan:** Jika backend mati atau URL tidak diset, frontend secara otomatis tetap berjalan mulus menggunakan sistem simulasi *graceful client fallback*.
+Apabila variabel ini dikosongkan atau server backend tidak aktif, `detectionAdapter` pada frontend akan otomatis menggunakan mode *Graceful Client Fallback* tanpa menyebabkan error pada antarmuka.
 
 ---
 
 ## 📡 Ringkasan Kontrak API
 
-Endpoint backend didefinisikan secara lengkap di `backend/openapi.yaml` dan selaras dengan `frontend/src/types/detection.ts`:
+Seluruh endpoint backend didefinisikan di `backend/openapi.yaml` dan sinkron dengan `frontend/src/types/detection.ts`:
 
-- **`GET /api/v1/health`** — Pemeriksaan status kesehatan mikroservis.
-- **`GET /api/v1/cameras`** — Mengambil daftar kamera CCTV aktif beserta metadata dan status deteksi terakhir.
-- **`POST /api/v1/detect/image`** — Mengirim file gambar (`multipart/form-data`) untuk dianalisis dan mengembalikan *bounding box* koordinat `[x, y, w, h]`, label (`fire` / `smoke`), dan tingkat *confidence*.
-- **`WS /api/v1/ws/cctv/{camera_id}`** — WebSocket stream dua arah untuk umpan *live telemetry* dan deteksi per frame CCTV.
+| Method | Endpoint | Deskripsi |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/health` | Memeriksa status kesehatan layanan mikroservis vision. |
+| `GET` | `/api/v1/cameras` | Mengambil daftar kamera aktif beserta status & deteksi terbaru. |
+| `POST` | `/api/v1/detect/image` | Mengunggah gambar (`multipart/form-data`) untuk inferensi *bounding box* `[x, y, w, h]`, kelas (`fire` / `smoke`), dan *confidence*. |
+| `WS` | `/api/v1/ws/cctv/{camera_id}` | Stream WebSocket *real-time* untuk telemetri dan deteksi per frame. |
 
 ---
 
-## 🤖 Panduan Integrasi Model YOLOv8 / PyTorch
+## 🤖 Integrasi Model YOLOv8 / PyTorch
 
-Untuk menghubungkan bobot model terlatih (`best.pt`) ke backend:
+Untuk memasang bobot model hasil training (`best.pt`) ke backend:
 
-1. Install dependensi Ultralytics di folder `backend/`:
+1. Install paket Ultralytics & OpenCV di environment `backend/`:
    ```bash
    pip install ultralytics opencv-python-headless
    ```
-2. Simpan file bobot model pada direktori `backend/weights/best.pt`.
-3. Di file `backend/app/main.py`, inisialisasi model dan petakan hasil prediksi ke skema `BoundingBoxSchema`:
-   ```python
-   from ultralytics import YOLO
-
-   model = YOLO("weights/best.pt")
-
-   @app.post("/api/v1/detect/image")
-   async def detect_image(file: UploadFile = File(...)):
-       contents = await file.read()
-       # Decode gambar dan jalankan inferensi
-       # results = model(image_array)
-       # Petakan hasil ke BoundingBoxSchema: label, confidence, bbox [x, y, w, h]
-       ...
-   ```
+2. Tempatkan file model di `backend/weights/best.pt`.
+3. Muat model di dalam `backend/app/main.py` pada endpoint `/api/v1/detect/image` dan `/api/v1/ws/cctv/{camera_id}` untuk memetakan hasil prediksi ke skema `BoundingBoxSchema`.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Lucide React, HTML5 Canvas 2D, Web Audio API.
-- **Backend:** FastAPI, Pydantic v2, Uvicorn, WebSockets, OpenAPI Specification.
-- **Computer Vision Ready:** Ultralytics YOLOv8 / PyTorch / OpenCV.
+- **Frontend:** Next.js 16.3 (App Router), React 19.2, TypeScript 5, Tailwind CSS v4, Lucide React, OGL, HTML5 2D Canvas API, WebRTC (`getUserMedia`), Web Audio API.
+- **Backend:** FastAPI, Pydantic v2, Uvicorn, WebSockets, OpenAPI 3.0.
+- **AI / Computer Vision Ready:** Ultralytics YOLOv8, PyTorch, OpenCV.
