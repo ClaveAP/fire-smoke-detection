@@ -171,128 +171,192 @@ export const SpecularButton: React.FC<SpecularButtonProps> = ({
     let renderer: Renderer | null = null;
     let gl: Renderer["gl"] | null = null;
     let ro: ResizeObserver | null = null;
+    let io: IntersectionObserver | null = null;
     let raf = 0;
+    let initTimer: ReturnType<typeof setTimeout> | null = null;
+    let isVisible = false;
+    let isDisposed = false;
 
-    const onPointerMove = (e: PointerEvent) => {
+    const cachedRect = { left: 0, top: 0, right: 0, bottom: 0, width: 1, height: 1 };
+    const updateRect = () => {
       if (!btn) return;
-      const rect = btn.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
-      const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
-      const dist = Math.hypot(dx, dy);
-
-      if (dist === 0) {
-        const nx = (e.clientX - cx) / (rect.width / 2);
-        const ny = (cy - e.clientY) / (rect.height / 2);
-        pointerAngle = Math.atan2(2 / rect.height, -2 / rect.width) + nx * 0.3 + ny * 0.15;
-      } else {
-        pointerAngle = Math.atan2(cy - e.clientY, e.clientX - cx);
-      }
-      const t = Math.max(0, 1 - dist / Math.max(propsRef.current.proximity, 1));
-      proximityT = t * t * (3 - 2 * t);
+      const r = btn.getBoundingClientRect();
+      cachedRect.left = r.left;
+      cachedRect.top = r.top;
+      cachedRect.right = r.right;
+      cachedRect.bottom = r.bottom;
+      cachedRect.width = r.width;
+      cachedRect.height = r.height;
     };
 
     let pointerAngle: number | null = null;
     let proximityT = 0;
+    let needsFrame = false;
 
-    try {
-      const dpr = window.devicePixelRatio || 1;
-      renderer = new Renderer({ alpha: true, premultipliedAlpha: true, antialias: true, dpr });
-      gl = renderer.gl;
-      gl.clearColor(0, 0, 0, 0);
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
-      const geometry = new Triangle(gl);
-      if (geometry.attributes.uv) delete geometry.attributes.uv;
-
-      const program = new Program(gl, {
-        vertex: VERT,
-        fragment: FRAG,
-        uniforms: {
-          uCenter: { value: [0, 0] },
-          uHalfSize: { value: [1, 1] },
-          uRadius: { value: 0 },
-          uAngle: { value: 2.4 },
-          uPx: { value: dpr },
-          uLineColor: { value: [1, 1, 1] },
-          uBaseColor: { value: [0.32, 0.32, 0.32] },
-          uIntensity: { value: 1 },
-          uShineSize: { value: 0.17 },
-          uShineFade: { value: 0.7 },
-          uThickness: { value: 1 },
-          uBaseWidth: { value: dpr }
-        }
-      });
-
-      const mesh = new Mesh(gl, { geometry, program });
-      fx.appendChild(gl.canvas);
-
-      const sizeRef = { w: 1, h: 1 };
-      const resize = () => {
-        if (!btn || !renderer) return;
-        const rect = btn.getBoundingClientRect();
-        const w = rect.width;
-        const h = rect.height;
-        sizeRef.w = w;
-        sizeRef.h = h;
-        renderer.setSize(w + PAD * 2, h + PAD * 2);
-        program.uniforms.uCenter.value = [(PAD + w / 2) * dpr, (PAD + h / 2) * dpr];
-        program.uniforms.uHalfSize.value = [(w / 2) * dpr, (h / 2) * dpr];
-      };
-
-      ro = new ResizeObserver(resize);
-      ro.observe(btn);
-      resize();
-
-      window.addEventListener('pointermove', onPointerMove);
-
-      let angle = 2.4;
-      let idleAngle = 2.4;
-      let bright = 0;
-      let last = performance.now();
-
-      const lineC = new Color();
-      const baseC = new Color();
-
-      const update = (now: number) => {
-        if (!renderer) return;
+    const startLoop = () => {
+      if (!raf && isVisible && renderer) {
+        last = performance.now();
         raf = requestAnimationFrame(update);
-        const dt = Math.min((now - last) / 1000, 0.05);
-        last = now;
-        const p = propsRef.current;
+      }
+    };
 
-        idleAngle += p.speed * dt;
-        const steer = p.followMouse && pointerAngle != null && (!p.autoAnimate || proximityT > 0);
-        const target = (steer && pointerAngle !== null) ? pointerAngle : idleAngle;
-        const diff = ((target - angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-        angle += diff * (1 - Math.exp(-dt * 7));
+    const onPointerMove = (e: PointerEvent) => {
+      if (!isVisible) return;
+      const cx = cachedRect.left + cachedRect.width / 2;
+      const cy = cachedRect.top + cachedRect.height / 2;
+      const dx = Math.max(cachedRect.left - e.clientX, 0, e.clientX - cachedRect.right);
+      const dy = Math.max(cachedRect.top - e.clientY, 0, e.clientY - cachedRect.bottom);
+      const dist = Math.hypot(dx, dy);
 
-        const brightTarget = p.autoAnimate ? 1 : proximityT;
-        bright += (brightTarget - bright) * (1 - Math.exp(-dt * 8));
+      if (dist === 0) {
+        const nx = (e.clientX - cx) / Math.max(cachedRect.width / 2, 1);
+        const ny = (cy - e.clientY) / Math.max(cachedRect.height / 2, 1);
+        pointerAngle = Math.atan2(2 / Math.max(cachedRect.height, 1), -2 / Math.max(cachedRect.width, 1)) + nx * 0.3 + ny * 0.15;
+      } else {
+        pointerAngle = Math.atan2(cy - e.clientY, e.clientX - cx);
+      }
+      const t = Math.max(0, 1 - dist / Math.max(propsRef.current.proximity, 1));
+      const nextProx = t * t * (3 - 2 * t);
+      if (nextProx > 0.001 || proximityT > 0.001) {
+        proximityT = nextProx;
+        needsFrame = true;
+        startLoop();
+      }
+    };
 
-        lineC.set(p.lineColor);
-        baseC.set(p.baseColor);
-        program.uniforms.uAngle.value = angle;
-        program.uniforms.uRadius.value = Math.min(p.radius, Math.min(sizeRef.w, sizeRef.h) / 2) * dpr;
-        program.uniforms.uLineColor.value = [lineC.r, lineC.g, lineC.b];
-        program.uniforms.uBaseColor.value = [baseC.r, baseC.g, baseC.b];
-        program.uniforms.uIntensity.value = p.intensity * bright;
-        program.uniforms.uShineSize.value = (p.shineSize * Math.PI) / 180;
-        program.uniforms.uShineFade.value = (p.shineFade * Math.PI) / 180;
-        program.uniforms.uThickness.value = p.thickness * dpr;
-        renderer.render({ scene: mesh });
-      };
-      raf = requestAnimationFrame(update);
-    } catch (err) {
-      console.warn('SpecularButton WebGL initialization fallback:', err);
-    }
+    let angle = 2.4;
+    let idleAngle = 2.4;
+    let bright = propsRef.current.autoAnimate ? 1 : 0.65;
+    let last = performance.now();
+    const lineC = new Color();
+    const baseC = new Color();
+    const sizeRef = { w: 1, h: 1 };
+    let program: Program | null = null;
+    let mesh: Mesh | null = null;
+    const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+
+    const update = (now: number) => {
+      raf = 0;
+      if (!renderer || !program || !mesh || !isVisible) return;
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      const p = propsRef.current;
+
+      idleAngle += p.speed * dt;
+      const steer = p.followMouse && pointerAngle != null && (!p.autoAnimate || proximityT > 0);
+      const target = (steer && pointerAngle !== null) ? pointerAngle : idleAngle;
+      const diff = ((target - angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+      angle += diff * (1 - Math.exp(-dt * 7));
+
+      const brightTarget = p.autoAnimate ? 1 : Math.max(0.55, proximityT);
+      bright += (brightTarget - bright) * (1 - Math.exp(-dt * 8));
+
+      lineC.set(p.lineColor);
+      baseC.set(p.baseColor);
+      program.uniforms.uAngle.value = angle;
+      program.uniforms.uRadius.value = Math.min(p.radius, Math.min(sizeRef.w, sizeRef.h) / 2) * dpr;
+      program.uniforms.uLineColor.value = [lineC.r, lineC.g, lineC.b];
+      program.uniforms.uBaseColor.value = [baseC.r, baseC.g, baseC.b];
+      program.uniforms.uIntensity.value = p.intensity * bright;
+      program.uniforms.uShineSize.value = (p.shineSize * Math.PI) / 180;
+      program.uniforms.uShineFade.value = (p.shineFade * Math.PI) / 180;
+      program.uniforms.uThickness.value = p.thickness * dpr;
+      renderer.render({ scene: mesh });
+
+      if (p.autoAnimate || proximityT > 0.005 || Math.abs(diff) > 0.01 || needsFrame) {
+        needsFrame = false;
+        raf = requestAnimationFrame(update);
+      }
+    };
+
+    const initWebGL = () => {
+      if (isDisposed || renderer) return;
+      try {
+        renderer = new Renderer({ alpha: true, premultipliedAlpha: true, antialias: false, dpr });
+        gl = renderer.gl;
+        gl.clearColor(0, 0, 0, 0);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+        const geometry = new Triangle(gl);
+        if (geometry.attributes.uv) delete geometry.attributes.uv;
+
+        program = new Program(gl, {
+          vertex: VERT,
+          fragment: FRAG,
+          uniforms: {
+            uCenter: { value: [0, 0] },
+            uHalfSize: { value: [1, 1] },
+            uRadius: { value: 0 },
+            uAngle: { value: 2.4 },
+            uPx: { value: dpr },
+            uLineColor: { value: [1, 1, 1] },
+            uBaseColor: { value: [0.32, 0.32, 0.32] },
+            uIntensity: { value: 1 },
+            uShineSize: { value: 0.17 },
+            uShineFade: { value: 0.7 },
+            uThickness: { value: 1 },
+            uBaseWidth: { value: dpr }
+          }
+        });
+
+        mesh = new Mesh(gl, { geometry, program });
+        fx.appendChild(gl.canvas);
+
+        const resize = () => {
+          if (!btn || !renderer || !program) return;
+          updateRect();
+          const w = cachedRect.width;
+          const h = cachedRect.height;
+          sizeRef.w = w;
+          sizeRef.h = h;
+          renderer.setSize(w + PAD * 2, h + PAD * 2);
+          program.uniforms.uCenter.value = [(PAD + w / 2) * dpr, (PAD + h / 2) * dpr];
+          program.uniforms.uHalfSize.value = [(w / 2) * dpr, (h / 2) * dpr];
+          needsFrame = true;
+          startLoop();
+        };
+
+        ro = new ResizeObserver(resize);
+        ro.observe(btn);
+        resize();
+
+        window.addEventListener('pointermove', onPointerMove, { passive: true });
+        window.addEventListener('scroll', updateRect, { passive: true });
+      } catch (err) {
+        console.warn('SpecularButton WebGL initialization fallback:', err);
+      }
+    };
+
+    io = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible) {
+          updateRect();
+          if (!renderer && !initTimer) {
+            // Defer WebGL shader compile so initial page paint & scroll are 100% freeze-free
+            initTimer = setTimeout(initWebGL, 180);
+          } else {
+            needsFrame = true;
+            startLoop();
+          }
+        } else if (raf) {
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+      },
+      { threshold: 0.05 }
+    );
+    io.observe(btn);
 
     return () => {
-      cancelAnimationFrame(raf);
+      isDisposed = true;
+      if (initTimer) clearTimeout(initTimer);
+      if (raf) cancelAnimationFrame(raf);
       if (ro) ro.disconnect();
+      if (io) io.disconnect();
       window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('scroll', updateRect);
       if (gl && gl.canvas && gl.canvas.parentNode === fx) {
         fx.removeChild(gl.canvas);
       }

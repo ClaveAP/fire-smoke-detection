@@ -20,16 +20,13 @@
   backdrop-filter: blur(var(--sb-blur));
   -webkit-backdrop-filter: blur(var(--sb-blur));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 0 0 1px rgba(255, 107, 61, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 8px 24px rgba(0, 0, 0, 0.25);
   cursor: pointer;
   outline: none;
+  white-space: nowrap;
   transition: transform 0.15s ease;
-}
-
-.specular-button.w-full {
-  display: flex;
-  width: 100%;
 }
 
 .specular-button:active {
@@ -52,17 +49,30 @@
 
 .specular-button--sm {
   font-size: 0.85rem;
-  padding: 10px 22px;
+  padding: 10px 20px;
 }
 
 .specular-button--md {
-  font-size: 1rem;
-  padding: 14px 30px;
+  font-size: 0.95rem;
+  padding: 13px 24px;
 }
 
 .specular-button--lg {
-  font-size: 1.15rem;
-  padding: 18px 40px;
+  font-size: 0.95rem;
+  height: 54px;
+  padding: 0 28px;
+}
+
+@media (min-width: 640px) {
+  .specular-button--md {
+    font-size: 1rem;
+    padding: 14px 30px;
+  }
+  .specular-button--lg {
+    font-size: 0.95rem;
+    height: 54px;
+    padding: 0 28px;
+  }
 }
 
 /* Canvas extends past the button so the rim glow can bleed outside the edge */
