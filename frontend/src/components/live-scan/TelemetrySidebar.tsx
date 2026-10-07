@@ -1,164 +1,206 @@
-import { Flame, Wind, Thermometer, ShieldCheck, AlertTriangle, Droplets } from "lucide-react";
+"use client";
+
+import { PointerEvent } from "react";
+import {
+  Fire,
+  Wind,
+  Thermometer,
+  BellIcon,
+  BellRingingIcon,
+} from "@phosphor-icons/react";
+import { SpecularButton } from "@/components/common/SpecularButton";
 
 interface TelemetrySidebarProps {
-  fm200Active: boolean;
+  isWebcam?: boolean;
+  webcamLabel?: string;
+  webcamFireConfidence?: number;
+  alarmActive: boolean;
   alertToast: string | null;
   onEmergencyTrigger: () => void;
-  onFm200Discharge: () => void;
 }
 
 export function TelemetrySidebar({
-  fm200Active,
+  isWebcam = false,
+  webcamLabel = "Kamera Laptop",
+  webcamFireConfidence = 0,
+  alarmActive,
   alertToast,
   onEmergencyTrigger,
-  onFm200Discharge,
 }: TelemetrySidebarProps) {
+  const handleCardMove = (e: PointerEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty("--my", `${e.clientY - rect.top}px`);
+  };
+
+  const firePct = isWebcam ? Math.round(webcamFireConfidence * 100) : 94;
+  const smokePct = isWebcam
+    ? webcamFireConfidence > 0.4
+      ? Math.round(webcamFireConfidence * 72)
+      : 4
+    : 88;
+  const tempDisplay = isWebcam
+    ? webcamFireConfidence > 0.35
+      ? `+${Math.round(140 + webcamFireConfidence * 260)}°C`
+      : "+29°C"
+    : "+412°C";
+
+  const hasDanger = !isWebcam || webcamFireConfidence > 0.35;
+
   return (
-    <aside className="w-full lg:w-96 shrink-0 bg-[#131b2e] border-l border-[#2d3449] flex flex-col justify-between p-4 lg:p-6 overflow-y-auto max-h-[calc(100vh-61px)] z-30">
-      <div>
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#2d3449]">
-          <div>
-            <span className="text-[10px] font-mono uppercase text-[#e4beb4] tracking-wider">
-              PANEL TELEMETRI SEKTOR
+    <aside className="w-full lg:w-[380px] shrink-0 p-2 rounded-[2rem] bg-white/[0.03] border border-white/10 flex flex-col">
+      <div className="flex-1 rounded-[calc(2rem-0.5rem)] bg-[#0b0d14] p-6 flex flex-col justify-between gap-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]">
+        <div className="flex flex-col gap-5">
+          {/* Clean Header */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="font-display text-xl font-bold text-white">
+                Status Deteksi
+              </h2>
+              <p className="text-xs text-white/55 truncate">
+                {isWebcam ? webcamLabel : "Zona Gudang 04-A"}
+              </p>
+            </div>
+            <span
+              className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                hasDanger
+                  ? "bg-[#ff5722]/15 text-[#ff6b3d] border-[#ff5722]/35"
+                  : "bg-emerald-500/15 text-emerald-400 border-emerald-500/35"
+              }`}
+            >
+              {hasDanger ? "Bahaya Terdeteksi" : "Area Aman"}
             </span>
-            <h2 className="text-lg font-bold text-white font-sans">Zona Produksi 04-A</h2>
           </div>
-          <span className="flex items-center gap-1 px-2.5 py-0.5 rounded bg-[#a90111]/30 text-[#ffb4ab] border border-[#ffb4ab]/50 text-[10px] font-mono font-bold animate-pulse">
-            KRITIS
-          </span>
-        </div>
 
-        {/* Telemetry Metric Cards */}
-        <div className="mt-4 flex flex-col gap-3">
-          {/* METRIC 1: Indeks Bahaya Api */}
-          <div className="p-3.5 rounded bg-[#171f33] border border-[#2d3449] hover:border-[#ff5722] transition-colors">
-            <div className="flex items-center justify-between text-[#e4beb4] mb-1">
-              <span className="text-[11px] font-mono font-semibold flex items-center gap-1.5 text-[#ff5722]">
-                <Flame className="w-3.5 h-3.5 fill-[#ff5722]" />
-                INDEKS BAHAYA API
-              </span>
-              <span className="text-[11px] font-mono text-[#ff5722] font-bold">TINGGI</span>
-            </div>
-            <div className="flex items-baseline justify-between">
-              <div className="text-3xl font-extrabold text-[#ff5722] font-mono leading-none">
-                94<span className="text-sm font-normal text-[#e4beb4]">%</span>
+          {/* 3 Clean Metric Cards with Cursor Spotlight */}
+          <div className="flex flex-col gap-3.5">
+            {/* Fire Metric */}
+            <div
+              onPointerMove={handleCardMove}
+              className="group relative p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-[#ff5722]/40 overflow-hidden transition-colors"
+            >
+              <div
+                className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{
+                  background:
+                    "radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(255,87,34,0.15), transparent 70%)",
+                }}
+              />
+              <div className="relative flex items-center justify-between mb-2">
+                <span className="inline-flex items-center gap-2 text-xs font-medium text-white/80">
+                  <Fire weight="fill" className="w-4 h-4 text-[#ff5722]" />
+                  <span>Titik Api (Fire)</span>
+                </span>
+                <span className="text-lg font-bold font-mono text-[#ff5722] tabular-nums">
+                  {firePct}%
+                </span>
               </div>
-              <span className="text-[11px] font-mono text-red-400">+28% dlm 30d</span>
-            </div>
-            <div className="w-full h-1.5 bg-[#2d3449] rounded-full overflow-hidden mt-2">
-              <div className="h-full bg-[#ff5722] rounded-full transition-all duration-500 w-[94%]"></div>
-            </div>
-          </div>
-
-          {/* METRIC 2: Densitas Asap */}
-          <div className="p-3.5 rounded bg-[#171f33] border border-[#2d3449] hover:border-[#38bdf8] transition-colors">
-            <div className="flex items-center justify-between text-[#e4beb4] mb-1">
-              <span className="text-[11px] font-mono font-semibold flex items-center gap-1.5 text-[#38bdf8]">
-                <Wind className="w-3.5 h-3.5" />
-                DENSITAS ASAP
-              </span>
-              <span className="text-[11px] font-mono text-[#38bdf8] font-bold">PEKAT</span>
-            </div>
-            <div className="flex items-baseline justify-between">
-              <div className="text-3xl font-extrabold text-[#38bdf8] font-mono leading-none">
-                88<span className="text-sm font-normal text-[#e4beb4]">%</span>
+              <div className="relative w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#ff5722] rounded-full transition-all duration-500"
+                  style={{ width: `${firePct}%` }}
+                />
               </div>
-              <span className="text-[11px] font-mono text-slate-400">Obscuration 4.2 dB/m</span>
             </div>
-            <div className="w-full h-1.5 bg-[#2d3449] rounded-full overflow-hidden mt-2">
-              <div className="h-full bg-[#0284c7] rounded-full transition-all duration-500 w-[88%]"></div>
-            </div>
-          </div>
 
-          {/* METRIC 3: Estimasi Suhu */}
-          <div className="p-3.5 rounded bg-[#171f33] border border-[#2d3449] hover:border-[#ffba38] transition-colors">
-            <div className="flex items-center justify-between text-[#e4beb4] mb-1">
-              <span className="text-[11px] font-mono font-semibold flex items-center gap-1.5 text-[#ffba38]">
-                <Thermometer className="w-3.5 h-3.5" />
-                ESTIMASI SUHU
-              </span>
-              <span className="text-[11px] font-mono text-[#ffba38] font-bold">ABNORMAL</span>
-            </div>
-            <div className="flex items-baseline justify-between">
-              <div className="text-3xl font-extrabold text-[#ffba38] font-mono leading-none">
-                412<span className="text-sm font-normal text-amber-200">°C</span>
+            {/* Smoke Metric */}
+            <div
+              onPointerMove={handleCardMove}
+              className="group relative p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-[#38bdf8]/40 overflow-hidden transition-colors"
+            >
+              <div
+                className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{
+                  background:
+                    "radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(56,189,248,0.15), transparent 70%)",
+                }}
+              />
+              <div className="relative flex items-center justify-between mb-2">
+                <span className="inline-flex items-center gap-2 text-xs font-medium text-white/80">
+                  <Wind weight="bold" className="w-4 h-4 text-[#38bdf8]" />
+                  <span>Kepulan Asap (Smoke)</span>
+                </span>
+                <span className="text-lg font-bold font-mono text-[#38bdf8] tabular-nums">
+                  {smokePct}%
+                </span>
               </div>
-              <span className="text-[11px] font-mono text-slate-400">Titik Pusat Api</span>
+              <div className="relative w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#38bdf8] rounded-full transition-all duration-500"
+                  style={{ width: `${smokePct}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full h-1.5 bg-[#2d3449] rounded-full overflow-hidden mt-2 flex">
-              <div className="h-full bg-emerald-500 w-[20%]"></div>
-              <div className="h-full bg-amber-500 w-[30%]"></div>
-              <div className="h-full bg-[#ff5722] w-[50%]"></div>
+
+            {/* Temperature Metric */}
+            <div
+              onPointerMove={handleCardMove}
+              className="group relative p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-amber-400/40 overflow-hidden transition-colors"
+            >
+              <div className="relative flex items-center justify-between">
+                <span className="inline-flex items-center gap-2 text-xs font-medium text-white/80">
+                  <Thermometer
+                    weight="duotone"
+                    className="w-4 h-4 text-amber-400"
+                  />
+                  <span>Estimasi Suhu Inti</span>
+                </span>
+                <span className="text-lg font-bold font-mono tabular-nums text-amber-400">
+                  {tempDisplay}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Environmental Ticker */}
-        <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-mono">
-          <div className="p-2.5 bg-[#222a3d] rounded border border-[#2d3449]/70 flex flex-col">
-            <span className="text-[10px] text-[#e4beb4] uppercase">KONSENTRASI CO</span>
-            <span className="font-bold text-[#ff5722] mt-0.5">340 PPM</span>
+        {/* Bottom Emergency Alarm Action */}
+        <div className="flex flex-col gap-4 pt-5 border-t border-white/10">
+          {alertToast && (
+            <div className="py-2.5 px-4 rounded-2xl bg-red-500/20 border border-red-500/40 text-white text-xs font-medium text-center transition-colors">
+              {alertToast}
+            </div>
+          )}
+
+          <div className="w-full flex flex-col">
+            <SpecularButton
+              onClick={onEmergencyTrigger}
+              size="md"
+              radius={999}
+              tint={alarmActive ? "#450a0a" : "#1f0909"}
+              tintOpacity={0.92}
+              blur={14}
+              textColor="#ffffff"
+              lineColor={alarmActive ? "#ff3b30" : "#ff5722"}
+              baseColor={alarmActive ? "#7f1d1d" : "#45120b"}
+              intensity={alarmActive ? 1.9 : 1.35}
+              shineSize={alarmActive ? 18 : 14}
+              shineFade={38}
+              thickness={alarmActive ? 1.8 : 1.4}
+              speed={alarmActive ? 1.35 : 0.45}
+              followMouse={true}
+              proximity={280}
+              autoAnimate={true}
+              className="w-full font-semibold text-xs tracking-wide"
+            >
+              {alarmActive ? (
+                <>
+                  <BellRingingIcon
+                    size={32}
+                    className="text-red-300 animate-pulse shrink-0"
+                  />
+                  <span>Matikan Alarm Darurat</span>
+                </>
+              ) : (
+                <>
+                  <BellIcon
+                    size={32}
+                    className="text-[#ff6b3d] shrink-0"
+                  />
+                  <span>Bunyikan Alarm Darurat</span>
+                </>
+              )}
+            </SpecularButton>
           </div>
-          <div className="p-2.5 bg-[#222a3d] rounded border border-[#2d3449]/70 flex flex-col">
-            <span className="text-[10px] text-[#e4beb4] uppercase">KECEPATAN ANGIN</span>
-            <span className="font-bold text-slate-200 mt-0.5">1.8 M/S TIMUR</span>
-          </div>
-        </div>
-
-        {/* Verification Checklist */}
-        <div className="mt-4 p-3 rounded bg-[#060e20] border border-[#2d3449] text-xs font-mono">
-          <div className="flex items-center gap-1.5 text-[#e4beb4] font-semibold mb-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>OTOMASI SISTEM PENANGGULANGAN</span>
-          </div>
-          <ul className="space-y-1.5 text-[11px]">
-            <li className="flex items-center justify-between">
-              <span className="text-[#e4beb4]">Katup Sprinkler FM-200:</span>
-              <span className="text-emerald-400 font-bold">
-                {fm200Active ? "DIBUKA" : "TERKUNCI & SIAP"}
-              </span>
-            </li>
-            <li className="flex items-center justify-between">
-              <span className="text-[#e4beb4]">Sirkulasi Ventilasi HVAC:</span>
-              <span className="text-amber-400 font-bold">DIMATIKAN OTOMATIS</span>
-            </li>
-            <li className="flex items-center justify-between">
-              <span className="text-[#e4beb4]">Pintu Evakuasi E-04:</span>
-              <span className="text-emerald-400 font-bold">TERBUKA BEBAS</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      {/* BOTTOM CONTROLS & EMERGENCY BUTTONS */}
-      <div className="mt-4 pt-3 border-t border-[#2d3449] flex flex-col gap-2">
-        {alertToast && (
-          <div className="text-center py-2 px-3 bg-[#a90111] text-white text-[11px] font-mono font-bold rounded border border-red-500 animate-pulse">
-            {alertToast}
-          </div>
-        )}
-
-        <button
-          onClick={onEmergencyTrigger}
-          type="button"
-          className="w-full py-3 px-4 bg-[#a90111] hover:bg-[#c61021] active:scale-[0.98] border-2 border-red-500 text-white font-bold rounded uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(229,57,53,0.5)] transition-all font-mono text-sm"
-        >
-          <AlertTriangle className="w-5 h-5 text-white animate-bounce" />
-          <span>Protokol Darurat / Aktifkan Alarm</span>
-        </button>
-
-        <button
-          onClick={onFm200Discharge}
-          type="button"
-          className="w-full py-2 px-4 bg-[#171f33] hover:bg-[#222a3d] border border-[#2d3449] text-[#ff5722] font-mono text-xs font-semibold uppercase tracking-wider rounded transition-all flex items-center justify-center gap-1.5"
-        >
-          <Droplets className="w-4 h-4 text-[#ff5722]" />
-          <span>Semprot Gas Pemadam FM-200</span>
-        </button>
-
-        <div className="text-center text-[10px] font-mono text-[#e4beb4] mt-1">
-          OTORISASI TINGKAT-1: KONTROL RUANG KOMANDO INDUSTRI
         </div>
       </div>
     </aside>

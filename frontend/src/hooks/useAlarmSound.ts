@@ -71,8 +71,11 @@ export function useAlarmSound() {
   }, []);
 
   const playAlert = useCallback(
-    (severity: AlarmSeverity) => {
-      if (isMuted) return;
+    (severity: AlarmSeverity, forcePlay: boolean = false) => {
+      if (isMuted && !forcePlay) return;
+      if (forcePlay && isMuted) {
+        setIsMuted(false);
+      }
       initAudio();
       stopAlarm();
 

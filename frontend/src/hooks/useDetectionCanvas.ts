@@ -50,20 +50,25 @@ export function useDetectionCanvas({
       const h = nh * height;
 
       const isFire = box.label === "fire";
-      const strokeColor = isFire ? "#EF4444" : "#F59E0B";
-      const fillColor = isFire ? "rgba(239, 68, 68, 0.12)" : "rgba(245, 158, 11, 0.12)";
-      const tagBg = isFire ? "#DC2626" : "#D97706";
+      const strokeColor = isFire ? "#ff5722" : "#38bdf8";
+      const fillColor = isFire ? "rgba(255, 87, 34, 0.14)" : "rgba(56, 189, 248, 0.12)";
+      const tagBg = isFire ? "#ff5722" : "#0284c7";
 
       ctx.fillStyle = fillColor;
       ctx.fillRect(x, y, w, h);
 
       ctx.strokeStyle = strokeColor;
       ctx.lineWidth = 2;
+      if (!isFire) {
+        ctx.setLineDash([6, 4]);
+      } else {
+        ctx.setLineDash([]);
+      }
       ctx.strokeRect(x, y, w, h);
+      ctx.setLineDash([]);
 
-      // Corner target markers
-      const cornerLength = Math.min(12, w / 4, h / 4);
-      ctx.strokeStyle = "#FFFFFF";
+      const cornerLength = Math.min(14, w / 4, h / 4);
+      ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 2.5;
 
       ctx.beginPath();
@@ -91,19 +96,32 @@ export function useDetectionCanvas({
       ctx.stroke();
 
       if (renderLabels) {
-        const labelText = `${box.label.toUpperCase()} ${(box.confidence * 100).toFixed(0)}%`;
+        const prefix = isFire ? "FIRE [THERMAL]" : "SMOKE [PLUME]";
+        const labelText = `${prefix} ${(box.confidence * 100).toFixed(1)}%`;
         ctx.font = "bold 11px ui-monospace, monospace";
         const textMetrics = ctx.measureText(labelText);
-        const tagWidth = textMetrics.width + 12;
-        const tagHeight = 18;
-        const tagY = Math.max(0, y - tagHeight);
+        const tagWidth = textMetrics.width + 14;
+        const tagHeight = 20;
+        const tagY = Math.max(0, y - tagHeight - 2);
 
         ctx.fillStyle = tagBg;
         ctx.fillRect(x, tagY, tagWidth, tagHeight);
 
-        ctx.fillStyle = "#FFFFFF";
+        ctx.fillStyle = "#ffffff";
         ctx.textBaseline = "middle";
-        ctx.fillText(labelText, x + 6, tagY + tagHeight / 2);
+        ctx.fillText(labelText, x + 7, tagY + tagHeight / 2);
+
+        const coordText = `X:${nx.toFixed(2)} Y:${ny.toFixed(2)}`;
+        const coordMetrics = ctx.measureText(coordText);
+        const coordW = coordMetrics.width + 10;
+        const coordH = 16;
+        const coordY = Math.min(height - coordH, y + h + 2);
+
+        ctx.fillStyle = "rgba(6, 14, 32, 0.88)";
+        ctx.fillRect(x, coordY, coordW, coordH);
+        ctx.fillStyle = isFire ? "#ffb5a0" : "#38bdf8";
+        ctx.font = "600 10px ui-monospace, monospace";
+        ctx.fillText(coordText, x + 5, coordY + coordH / 2);
       }
     }
   }, [canvasRef, detections, minConfidence, showFire, showSmoke, renderLabels]);

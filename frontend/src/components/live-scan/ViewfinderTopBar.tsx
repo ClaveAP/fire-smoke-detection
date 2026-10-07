@@ -1,83 +1,121 @@
-import { Camera, Flashlight, Maximize2, Minimize2, Wifi } from "lucide-react";
+import {
+  Camera,
+  CameraSlash,
+  Flashlight,
+  CornersOut,
+  CornersIn,
+  ArrowsLeftRight,
+} from "@phosphor-icons/react/dist/ssr";
 
 interface ViewfinderTopBarProps {
   isWebcam: boolean;
+  isConnectingWebcam?: boolean;
+  webcamLabel?: string;
+  isMirrored?: boolean;
   flashlightOn: boolean;
   isFullscreen: boolean;
   onToggleFlashlight: () => void;
   onToggleWebcam: () => void;
+  onToggleMirror?: () => void;
   onToggleFullscreen: () => void;
 }
 
 export function ViewfinderTopBar({
   isWebcam,
+  isConnectingWebcam = false,
+  webcamLabel = "Webcam Laptop",
+  isMirrored = true,
   flashlightOn,
   isFullscreen,
   onToggleFlashlight,
   onToggleWebcam,
+  onToggleMirror,
   onToggleFullscreen,
 }: ViewfinderTopBarProps) {
   return (
-    <div className="relative z-20 w-full px-4 lg:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 bg-[#060e20]/80 backdrop-blur-md border-b border-[#2d3449]/70">
-      {/* Live Status & Frame-Rate */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#a90111]/30 border border-[#ffb4ab]/50 text-[#ffb4ab] text-[11px] font-mono font-bold">
-          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-          <span className="tracking-widest">
-            {isWebcam ? "LIVE WEBCAM - AKTIF (60 FPS)" : "LIVE CAM 01 - AKTIF (60 FPS)"}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#171f33] border border-[#2d3449] text-[11px] font-mono text-[#dae2fd]">
-          <Wifi className="w-3.5 h-3.5 text-[#ffba38]" />
-          <span className="text-slate-400">LATENSI:</span>
-          <span className="text-[#ffba38] font-bold">12ms</span>
-        </div>
-
-        <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-[#e4beb4]">
-          <Camera className="w-3.5 h-3.5 text-[#ffb5a0]" />
-          <span>NODE: S04-CAM-WEST-PTZ</span>
-        </div>
+    <div className="relative z-20 w-full p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
+      {/* Live Status Pill */}
+      <div className="pointer-events-auto inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-black/70 backdrop-blur-xl border border-white/12 text-xs font-medium text-white shadow-lg">
+        <span
+          className={`w-2 h-2 rounded-full animate-pulse ${
+            isWebcam ? "bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-[#ff5722]"
+          }`}
+        />
+        <span className="truncate max-w-[180px] sm:max-w-[240px]">
+          {isWebcam ? webcamLabel : "Kamera Simulasi"}
+        </span>
+        <span className="text-white/30">·</span>
+        <span className="font-mono text-white/70">60 FPS</span>
       </div>
 
-      {/* Quick Controls */}
-      <div className="flex items-center gap-2">
+      {/* Floating Pill Controls with generous spacing */}
+      <div className="pointer-events-auto flex flex-wrap items-center gap-2.5">
+        <button
+          onClick={onToggleWebcam}
+          disabled={isConnectingWebcam}
+          type="button"
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold backdrop-blur-xl border transition-all duration-300 active:scale-[0.98] shadow-lg ${
+            isWebcam
+              ? "bg-emerald-500/20 hover:bg-red-500/25 text-emerald-300 hover:text-red-200 border-emerald-400/40 hover:border-red-400/50"
+              : "bg-[#ff5722] hover:bg-[#f4511e] text-white border-[#ff7043]/50 shadow-[0_4px_20px_rgba(255,87,34,0.35)]"
+          }`}
+        >
+          {isWebcam ? (
+            <>
+              <CameraSlash weight="duotone" className="w-3.5 h-3.5" />
+              <span>Matikan Webcam</span>
+            </>
+          ) : (
+            <>
+              <Camera weight="duotone" className="w-3.5 h-3.5" />
+              <span>
+                {isConnectingWebcam ? "Menghubungkan..." : "Gunakan Webcam"}
+              </span>
+            </>
+          )}
+        </button>
+
+        {isWebcam && onToggleMirror && (
+          <button
+            onClick={onToggleMirror}
+            type="button"
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium backdrop-blur-xl border transition-all duration-300 ${
+              isMirrored
+                ? "bg-white/15 text-white border-white/25"
+                : "bg-black/70 hover:bg-white/10 text-white/80 border-white/12"
+            }`}
+            title="Cerminkan Kamera (Mirror)"
+          >
+            <ArrowsLeftRight weight="duotone" className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Mirror</span>
+          </button>
+        )}
+
         <button
           onClick={onToggleFlashlight}
           type="button"
-          className={`flex items-center gap-1.5 px-3 py-1 text-[11px] font-mono rounded border transition-all ${
+          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium backdrop-blur-xl border transition-all duration-300 ${
             flashlightOn
-              ? "bg-[#c08600] text-white border-[#ffba38]"
-              : "bg-[#222a3d] hover:bg-[#31394d] text-white border-[#2d3449]"
+              ? "bg-amber-400 text-[#050507] border-amber-300 font-semibold"
+              : "bg-black/70 hover:bg-white/10 text-white/85 border-white/12"
           }`}
-          title="Aktifkan Senter / Iluminasi Tambahan"
+          title="Senter / Kecerahan"
         >
-          <Flashlight className="w-3.5 h-3.5 text-[#ffba38]" />
-          <span className="hidden sm:inline">SENTER</span>
-        </button>
-
-        <button
-          onClick={onToggleWebcam}
-          type="button"
-          className="flex items-center gap-1.5 px-3 py-1 bg-[#222a3d] hover:bg-[#31394d] border border-[#2d3449] text-white text-[11px] font-mono rounded transition-all active:scale-95"
-          title="Beralih Kamera CCTV / Webcam"
-        >
-          <Camera className="w-3.5 h-3.5 text-[#ff5722]" />
-          <span className="hidden sm:inline">
-            {isWebcam ? "GUNAKAN CCTV SIMULASI" : "GANTI KE WEBCAM"}
-          </span>
+          <Flashlight weight="duotone" className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Cahaya</span>
         </button>
 
         <button
           onClick={onToggleFullscreen}
           type="button"
-          className="p-1.5 bg-[#222a3d] hover:bg-[#31394d] border border-[#2d3449] text-white rounded transition-colors"
+          className="w-9 h-9 rounded-full flex items-center justify-center bg-black/70 hover:bg-white/12 backdrop-blur-xl border border-white/12 text-white transition-colors"
           title="Layar Penuh"
+          aria-label="Layar Penuh"
         >
           {isFullscreen ? (
-            <Minimize2 className="w-4 h-4 text-slate-300" />
+            <CornersIn weight="bold" className="w-3.5 h-3.5" />
           ) : (
-            <Maximize2 className="w-4 h-4 text-slate-300" />
+            <CornersOut weight="bold" className="w-3.5 h-3.5" />
           )}
         </button>
       </div>
