@@ -17,7 +17,7 @@ Platform ini dirancang untuk mendeteksi bahaya kebakaran dan kepulan asap secara
 
 Dibangun dengan arsitektur **terpisah (*decoupled*)**:
 - **Frontend (Next.js 16 + React 19):** Antarmuka *Dark Operations Command Center*, overlay *bounding box* berakselerasi perangkat keras via HTML5 2D Canvas, pemindai titik api webcam real-time (`useWebcamScanner`), serta sirine audio sintetis berbasis Web Audio API lokal. Dilengkapi *graceful client fallback* & *mock engine* sehingga aplikasi dapat langsung dijalankan penuh tanpa ketergantungan server backend.
-- **Backend (FastAPI Microservice Template):** Menyediakan kontrak REST API & WebSocket berstandar OpenAPI yang siap diintegrasikan langsung dengan model *deep learning* **YOLOv8 / PyTorch**.
+- **Backend (FastAPI Vision Microservice):** Deteksi api & asap nyata pada gambar, video, dan stream kamera live (REST + WebSocket), log insiden persisten (SQLite), serta registri kamera. Menggunakan engine **YOLO** otomatis bila `weights/best.pt` tersedia, atau engine **OpenCV heuristik** bawaan tanpa model terlatih.
 
 ---
 
@@ -51,7 +51,10 @@ flowchart TD
 
     subgraph Service["Backend Microservice (FastAPI)"]
         API["FastAPI REST & WebSocket Server"]
-        YOLO["YOLOv8 / PyTorch Inference Engine"]
+        Engine{"Engine Selector"}
+        YOLO["YOLO Inference (best.pt)"]
+        Heuristic["OpenCV Heuristic Engine"]
+        DB[("SQLite Incident Store")]
     end
 
     LiveScan --> Webcam
@@ -64,7 +67,10 @@ flowchart TD
 
     Adapter -->|Jika Backend Aktif| API
     Adapter -->|Graceful Fallback| MockEngine
-    API --> YOLO
+    API --> Engine
+    Engine -->|weights tersedia| YOLO
+    Engine -->|fallback| Heuristic
+    API --> DB
 ```
 
 ---
@@ -97,9 +103,15 @@ fire-smoke-detection/
 │   └── tailwind.config.ts
 ├── backend/                                      # Microservice Vision API (FastAPI)
 │   ├── app/
-│   │   ├── main.py                               # Entrypoint FastAPI & router endpoint
-│   │   └── schemas.py                            # Skema Pydantic v2 (selaras dengan frontend types)
-│   ├── openapi.yaml                              # Spesifikasi kontrak OpenAPI 3.0 / Swagger
+│   │   ├── main.py                               # App factory FastAPI, CORS, lifespan
+│   │   ├── config.py                             # Konfigurasi environment FSD_*
+│   │   ├── schemas.py                            # Skema Pydantic v2 (selaras dengan frontend types)
+│   │   ├── detection/                            # Engine deteksi: heuristic (OpenCV), yolo, NMS
+│   │   ├── services/                             # Detection service, incident store (SQLite), kamera
+│   │   └── routers/                              # health, detect, cameras, incidents, WebSocket
+│   ├── tests/                                    # pytest: engine + API + WebSocket
+│   ├── weights/                                  # Tempat best.pt (YOLO, opsional)
+│   ├── openapi.yaml                              # Spesifikasi kontrak OpenAPI (auto-generate)
 │   ├── requirements.txt
 │   └── README.md                                 # Panduan khusus backend & integrasi YOLOv8
 └── README.md                                     # Dokumentasi utama repositori
@@ -129,7 +141,7 @@ Buka [http://localhost:3000](http://localhost:3000) di browser.
 
 ---
 
-### 2. Menjalankan Backend (FastAPI — Opsional / Integrasi Model AI)
+### 2. Menjalankan Backend (FastAPI — Deteksi Api & Asap)
 
 Pastikan [Python](https://python.org/) (versi 3.10+) telah terinstal.
 
@@ -171,28 +183,33 @@ Seluruh endpoint backend didefinisikan di `backend/openapi.yaml` dan sinkron den
 
 | Method | Endpoint | Deskripsi |
 | :--- | :--- | :--- |
-| `GET` | `/api/v1/health` | Memeriksa status kesehatan layanan mikroservis vision. |
-| `GET` | `/api/v1/cameras` | Mengambil daftar kamera aktif beserta status & deteksi terbaru. |
-| `POST` | `/api/v1/detect/image` | Mengunggah gambar (`multipart/form-data`) untuk inferensi *bounding box* `[x, y, w, h]`, kelas (`fire` / `smoke`), dan *confidence*. |
-| `WS` | `/api/v1/ws/cctv/{camera_id}` | Stream WebSocket *real-time* untuk telemetri dan deteksi per frame. |
+| `GET` | `/api/v1/health` | Status layanan & engine deteksi aktif. |
+| `POST` | `/api/v1/detect/image` | Unggah gambar (`multipart/form-data`) → *bounding box* `[x, y, w, h]`, kelas (`fire` / `smoke`), *confidence*. |
+| `POST` | `/api/v1/detect/video` | Unggah video → deteksi per frame sampel + ringkasan per kelas. |
+| `GET` `POST` `DELETE` | `/api/v1/cameras[/{id}]` | Daftar kamera (status & deteksi live), registrasi kamera dengan `streamUrl` (RTSP/file/webcam). |
+| `GET` `POST` `PATCH` `DELETE` | `/api/v1/incidents[/{id}]` | Log insiden persisten (SQLite) + `GET /incidents/stats`. |
+| `WS` | `/api/v1/ws/cctv/{camera_id}` | Deteksi live per frame: server membaca `streamUrl`, atau klien mengirim frame (biner / base64). Insiden dicatat otomatis. |
+
+Detail lengkap & konfigurasi: [`backend/README.md`](backend/README.md).
 
 ---
 
-## 🤖 Integrasi Model YOLOv8 / PyTorch
+## 🤖 Engine Deteksi & Integrasi YOLO
 
-Untuk memasang bobot model hasil training (`best.pt`) ke backend:
+Backend langsung berfungsi tanpa model terlatih menggunakan engine **OpenCV heuristik** (aturan warna api RGB/HSV/YCbCr, analisis tekstur & gerakan untuk asap). Untuk akurasi produksi, pasang bobot YOLO hasil training:
 
-1. Install paket Ultralytics & OpenCV di environment `backend/`:
-   ```bash
-   pip install ultralytics opencv-python-headless
-   ```
-2. Tempatkan file model di `backend/weights/best.pt`.
-3. Muat model di dalam `backend/app/main.py` pada endpoint `/api/v1/detect/image` dan `/api/v1/ws/cctv/{camera_id}` untuk memetakan hasil prediksi ke skema `BoundingBoxSchema`.
+```bash
+cd backend
+pip install -r requirements-yolo.txt
+cp /path/ke/best.pt weights/best.pt
+```
+
+Restart server — engine berganti otomatis ke YOLO (cek `GET /api/v1/health` → `engine`). Kelas bernama `fire`/`flame` dan `smoke` dipetakan otomatis ke skema `BoundingBox`.
 
 ---
 
 ## 🛠️ Tech Stack
 
 - **Frontend:** Next.js 16.3 (App Router), React 19.2, TypeScript 5, Tailwind CSS v4, Lucide React, OGL, HTML5 2D Canvas API, WebRTC (`getUserMedia`), Web Audio API.
-- **Backend:** FastAPI, Pydantic v2, Uvicorn, WebSockets, OpenAPI 3.0.
+- **Backend:** FastAPI, Pydantic v2, Uvicorn, WebSockets, OpenCV, NumPy, SQLite, OpenAPI 3.1, pytest.
 - **AI / Computer Vision Ready:** Ultralytics YOLOv8, PyTorch, OpenCV.

@@ -1,239 +1,809 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: Fire & Smoke Detection Vision Microservice
-  description: Real-time Computer Vision Inference API contract matching the Next.js Command Center frontend platform.
-  version: 1.0.0
-servers:
-  - url: http://localhost:8000
-    description: Local Microservice Development Server
-
+  description: Real-time Computer Vision Inference API for Fire & Smoke Command Center
+  version: 1.1.0
 paths:
   /api/v1/health:
     get:
+      tags:
+      - system
       summary: Health Check
-      description: Probes service availability and status for frontend adapter resilience.
+      description: Health check probe used by frontend detectionAdapter
+      operationId: health_check_api_v1_health_get
       responses:
         '200':
-          description: Service is healthy and online
+          description: Successful Response
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: ok
-                  service:
-                    type: string
-                    example: fire-smoke-vision-service
-                  version:
-                    type: string
-                    example: 1.0.0
-
+              schema: {}
   /api/v1/cameras:
     get:
-      summary: List Camera Feeds
-      description: Returns active CCTV channel feeds, metadata, and live detection boxes.
+      tags:
+      - cameras
+      summary: List Cameras
+      description: Returns registered camera feeds with their latest live detections
+        and status
+      operationId: list_cameras_api_v1_cameras_get
       responses:
         '200':
-          description: List of camera channels
+          description: Successful Response
           content:
             application/json:
               schema:
-                type: array
                 items:
-                  $ref: '#/components/schemas/CameraFeed'
-
+                  $ref: '#/components/schemas/CameraFeedSchema'
+                type: array
+                title: Response List Cameras Api V1 Cameras Get
+    post:
+      tags:
+      - cameras
+      summary: Register Camera
+      description: Register or update a camera. Give it a ``streamUrl`` to let the
+        server pull and analyze frames.
+      operationId: register_camera_api_v1_cameras_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CameraCreateSchema'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CameraFeedSchema'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/cameras/{camera_id}:
+    get:
+      tags:
+      - cameras
+      summary: Get Camera
+      operationId: get_camera_api_v1_cameras__camera_id__get
+      parameters:
+      - name: camera_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Camera Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CameraFeedSchema'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - cameras
+      summary: Delete Camera
+      operationId: delete_camera_api_v1_cameras__camera_id__delete
+      parameters:
+      - name: camera_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Camera Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/incidents:
     get:
-      summary: List Incident Logs
-      description: Returns audit records of fire and smoke detections.
+      tags:
+      - incidents
+      summary: List Incidents
+      description: Returns persisted incident records (newest first) for audit logs
+      operationId: list_incidents_api_v1_incidents_get
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - active
+            - investigating
+            - resolved
+            type: string
+          - type: 'null'
+          title: Status
+      - name: type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - fire
+            - smoke
+            type: string
+          - type: 'null'
+          title: Type
+      - name: cameraId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cameraid
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 1000
+          minimum: 1
+          default: 200
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
       responses:
         '200':
-          description: Incident record list
+          description: Successful Response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/IncidentRecord'
-
-  /api/v1/detect/image:
+                  $ref: '#/components/schemas/IncidentRecordSchema'
+                title: Response List Incidents Api V1 Incidents Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
     post:
-      summary: Detect Fire and Smoke in Image
-      description: Multipart image upload for computer vision inference. Returns bounding box coordinates.
+      tags:
+      - incidents
+      summary: Create Incident
+      description: Record an incident reported by a client (e.g. browser webcam scan
+        or Media Inspector)
+      operationId: create_incident_api_v1_incidents_post
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              type: object
-              required:
-                - file
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: Image file (JPG, PNG, WebP)
+              $ref: '#/components/schemas/IncidentRecordSchema'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentRecordSchema'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/incidents/stats:
+    get:
+      tags:
+      - incidents
+      summary: Incident Stats
+      operationId: incident_stats_api_v1_incidents_stats_get
       responses:
         '200':
-          description: Successful inference result
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/incidents/{incident_id}:
+    get:
+      tags:
+      - incidents
+      summary: Get Incident
+      operationId: get_incident_api_v1_incidents__incident_id__get
+      parameters:
+      - name: incident_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Incident Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentRecordSchema'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - incidents
+      summary: Update Incident
+      description: Change an incident's status (active → investigating → resolved)
+        or notes
+      operationId: update_incident_api_v1_incidents__incident_id__patch
+      parameters:
+      - name: incident_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Incident Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncidentUpdateSchema'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentRecordSchema'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - incidents
+      summary: Delete Incident
+      operationId: delete_incident_api_v1_incidents__incident_id__delete
+      parameters:
+      - name: incident_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Incident Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/detect/image:
+    post:
+      tags:
+      - detection
+      summary: Detect Image
+      description: Detect fire and smoke in an uploaded image (JPG, PNG, WebP, BMP).
+      operationId: detect_image_api_v1_detect_image_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_detect_image_api_v1_detect_image_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DetectionResponse'
-
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/detect/video:
+    post:
+      tags:
+      - detection
+      summary: Detect Video
+      description: Sample frames from an uploaded video (MP4, AVI, MOV, WebM) and
+        detect fire/smoke per frame.
+      operationId: detect_video_api_v1_detect_video_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_detect_video_api_v1_detect_video_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoDetectionResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/ws/cctv/{camera_id}:
     get:
-      summary: Live WebSocket Telemetry Channel
-      description: WebSocket duplex stream transmitting real-time bounding box frames (10-30 FPS).
+      tags:
+      - stream
+      summary: Live WebSocket detection channel
+      description: 'Server pull: if the camera has a streamUrl the server reads frames
+        and pushes a StreamFramePacket per analyzed frame. Client push: otherwise
+        send binary JPEG/PNG/WebP frames or JSON {"type": "frame", "image": "data:image/jpeg;base64,..."}
+        and receive one StreamFramePacket per frame. {"type": "ping"} is answered
+        with {"type": "pong"}.'
       parameters:
-        - name: camera_id
-          in: path
-          required: true
-          schema:
-            type: string
-            example: cam-1
+      - name: camera_id
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         '101':
           description: Switching Protocols to WebSocket
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamFramePacket'
 components:
   schemas:
-    BoundingBox:
+    Body_detect_image_api_v1_detect_image_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
       type: object
       required:
-        - id
-        - label
-        - confidence
-        - bbox
+      - file
+      title: Body_detect_image_api_v1_detect_image_post
+    Body_detect_video_api_v1_detect_video_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+      type: object
+      required:
+      - file
+      title: Body_detect_video_api_v1_detect_video_post
+    BoundingBoxSchema:
       properties:
         id:
+          description: Unique bounding box identifier
+          title: Id
           type: string
-          example: box-101
         label:
+          description: Detected hazard class (fire or smoke)
+          enum:
+          - fire
+          - smoke
+          title: Label
           type: string
-          enum: [fire, smoke]
-          example: fire
         confidence:
-          type: number
-          format: float
-          minimum: 0.0
+          description: Inference confidence probability between 0.0 and 1.0
           maximum: 1.0
-          example: 0.94
+          minimum: 0.0
+          title: Confidence
+          type: number
         bbox:
-          type: array
-          items:
-            type: number
-          minItems: 4
+          description: Normalized coordinates [norm_x, norm_y, norm_w, norm_h] between
+            0.0 and 1.0
           maxItems: 4
-          description: Normalized coordinates [norm_x, norm_y, norm_w, norm_h] (0.0 to 1.0)
-          example: [0.38, 0.42, 0.22, 0.35]
-
-    CameraFeed:
-      type: object
+          minItems: 4
+          prefixItems:
+          - type: number
+          - type: number
+          - type: number
+          - type: number
+          title: Bbox
+          type: array
       required:
-        - id
-        - name
-        - location
-        - status
-        - detections
-        - fps
+      - id
+      - label
+      - confidence
+      - bbox
+      title: BoundingBoxSchema
+      type: object
+    CameraCreateSchema:
       properties:
         id:
           type: string
-          example: cam-1
+          maxLength: 64
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.-]+$
+          title: Id
         name:
           type: string
-          example: Lab Komputer & Robotika
+          title: Name
         location:
           type: string
-          example: Gedung A - Lt. 2
+          title: Location
+          default: ''
         streamUrl:
-          type: string
-          nullable: true
-          example: rtsp://192.168.1.50:554/live/stream1
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Streamurl
+          description: RTSP/HTTP URL, local video path, or webcam index (e.g. '0')
         isWebcam:
           type: boolean
-          example: false
-        status:
-          type: string
-          enum: [safe, warning, critical]
-          example: critical
-        detections:
-          type: array
-          items:
-            $ref: '#/components/schemas/BoundingBox'
+          title: Iswebcam
+          default: false
         fps:
           type: integer
-          example: 30
+          title: Fps
+          default: 30
         resolution:
-          type: string
-          example: 1920x1080
-        latencyMs:
-          type: integer
-          example: 14
-
-    IncidentRecord:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resolution
       type: object
       required:
-        - id
-        - timestamp
-        - cameraId
-        - cameraName
-        - type
-        - confidence
-        - status
+      - id
+      - name
+      title: CameraCreateSchema
+    CameraFeedSchema:
       properties:
         id:
           type: string
-          example: inc-001
-        timestamp:
+          title: Id
+        name:
           type: string
-          format: date-time
-          example: 2026-10-02T15:30:00Z
-        cameraId:
+          title: Name
+        location:
           type: string
-          example: cam-1
-        cameraName:
-          type: string
-          example: Lab Komputer & Robotika
-        type:
-          type: string
-          enum: [fire, smoke]
-          example: fire
-        confidence:
-          type: number
-          format: float
-          example: 0.94
+          title: Location
+        streamUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Streamurl
+        isWebcam:
+          type: boolean
+          title: Iswebcam
+          default: false
         status:
           type: string
-          enum: [active, investigating, resolved]
-          example: active
-        snapshotUrl:
-          type: string
-          nullable: true
-        notes:
-          type: string
-          nullable: true
-          example: Optical flame signature confirmed near workbench 4
-
-    DetectionResponse:
+          enum:
+          - safe
+          - warning
+          - critical
+          title: Status
+          default: safe
+        detections:
+          items:
+            $ref: '#/components/schemas/BoundingBoxSchema'
+          type: array
+          title: Detections
+          default: []
+        fps:
+          type: integer
+          title: Fps
+          default: 30
+        resolution:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resolution
+          default: 1920x1080
+        latencyMs:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Latencyms
+          default: 15
       type: object
       required:
-        - boxes
-        - inferenceTimeMs
-        - timestamp
+      - id
+      - name
+      - location
+      title: CameraFeedSchema
+    DetectionResponse:
       properties:
         boxes:
-          type: array
           items:
-            $ref: '#/components/schemas/BoundingBox'
+            $ref: '#/components/schemas/BoundingBoxSchema'
+          type: array
+          title: Boxes
         inferenceTimeMs:
           type: number
-          format: float
-          example: 14.8
+          title: Inferencetimems
         timestamp:
           type: string
-          format: date-time
-          example: 2026-10-02T15:30:00Z
+          title: Timestamp
+        engine:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Engine
+        imageWidth:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imagewidth
+        imageHeight:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imageheight
+      type: object
+      required:
+      - boxes
+      - inferenceTimeMs
+      - timestamp
+      title: DetectionResponse
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    IncidentRecordSchema:
+      properties:
+        id:
+          type: string
+          title: Id
+        timestamp:
+          type: string
+          title: Timestamp
+        cameraId:
+          type: string
+          title: Cameraid
+        cameraName:
+          type: string
+          title: Cameraname
+        zone:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Zone
+        type:
+          type: string
+          enum:
+          - fire
+          - smoke
+          title: Type
+        secondaryType:
+          anyOf:
+          - type: string
+            enum:
+            - fire
+            - smoke
+          - type: 'null'
+          title: Secondarytype
+        confidence:
+          type: number
+          maximum: 1.0
+          minimum: 0.0
+          title: Confidence
+        smokeConfidence:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          title: Smokeconfidence
+        temperatureC:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Temperaturec
+        smokeDensityDbm:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Smokedensitydbm
+        status:
+          type: string
+          enum:
+          - active
+          - investigating
+          - resolved
+          title: Status
+        snapshotUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Snapshoturl
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        detections:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/BoundingBoxSchema'
+            type: array
+          - type: 'null'
+          title: Detections
+      type: object
+      required:
+      - id
+      - timestamp
+      - cameraId
+      - cameraName
+      - type
+      - confidence
+      - status
+      title: IncidentRecordSchema
+    IncidentUpdateSchema:
+      properties:
+        status:
+          anyOf:
+          - type: string
+            enum:
+            - active
+            - investigating
+            - resolved
+          - type: 'null'
+          title: Status
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+      type: object
+      title: IncidentUpdateSchema
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    VideoDetectionResponse:
+      properties:
+        frames:
+          items:
+            $ref: '#/components/schemas/VideoFrameDetection'
+          type: array
+          title: Frames
+        summary:
+          additionalProperties: true
+          type: object
+          title: Summary
+          description: Peak confidence per class and the number of frames containing
+            it
+        durationMs:
+          type: number
+          title: Durationms
+        sourceFps:
+          type: number
+          title: Sourcefps
+        inferenceTimeMs:
+          type: number
+          title: Inferencetimems
+        timestamp:
+          type: string
+          title: Timestamp
+        engine:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Engine
+      type: object
+      required:
+      - frames
+      - summary
+      - durationMs
+      - sourceFps
+      - inferenceTimeMs
+      - timestamp
+      title: VideoDetectionResponse
+    VideoFrameDetection:
+      properties:
+        frameIndex:
+          type: integer
+          title: Frameindex
+        timestampMs:
+          type: number
+          title: Timestampms
+        boxes:
+          items:
+            $ref: '#/components/schemas/BoundingBoxSchema'
+          type: array
+          title: Boxes
+      type: object
+      required:
+      - frameIndex
+      - timestampMs
+      - boxes
+      title: VideoFrameDetection
+    StreamFramePacket:
+      properties:
+        cameraId:
+          title: Cameraid
+          type: string
+        timestamp:
+          title: Timestamp
+          type: string
+        fps:
+          title: Fps
+          type: number
+        latencyMs:
+          title: Latencyms
+          type: number
+        status:
+          enum:
+          - safe
+          - warning
+          - critical
+          title: Status
+          type: string
+        detections:
+          items:
+            $ref: '#/components/schemas/BoundingBoxSchema'
+          title: Detections
+          type: array
+        incidentId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Incidentid
+      required:
+      - cameraId
+      - timestamp
+      - fps
+      - latencyMs
+      - status
+      - detections
+      title: StreamFramePacket
+      type: object
+servers:
+- url: http://localhost:8000
+  description: Local development server

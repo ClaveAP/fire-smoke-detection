@@ -1,0 +1,6 @@
+[
+  { "id": "cam-1", "name": "Lab Komputer & Robotika", "location": "Gedung A - Lt. 2", "streamUrl": "rtsp://user:pass@192.168.1.50:554/stream1" },
+  { "id": "cam-2", "name": "Server Room & Rack Bay", "location": "Gedung B - Basement 1" },
+  { "id": "cam-3", "name": "Gudang Logistik & Material", "location": "Sektor Barat - Pintu 3", "streamUrl": "samples/warehouse.mp4", "fps": 25 },
+  { "id": "webcam-server", "name": "USB Webcam (server)", "location": "Ruang Kontrol", "streamUrl": "0" }
+]
