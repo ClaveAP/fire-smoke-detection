@@ -16,11 +16,13 @@ export interface DynamicBox {
 interface DetectionHudOverlayProps {
   isWebcam?: boolean;
   webcamFireBox?: DynamicBox | null;
+  webcamSmokeBox?: DynamicBox | null;
 }
 
 export function DetectionHudOverlay({
   isWebcam = false,
   webcamFireBox = null,
+  webcamSmokeBox = null,
 }: DetectionHudOverlayProps) {
   const [layer, setLayer] = useState<FocusLayer>("both");
   const [showDemoBoxesOnWebcam, setShowDemoBoxesOnWebcam] = useState(false);
@@ -32,7 +34,25 @@ export function DetectionHudOverlay({
 
   return (
     <div className="relative z-10 flex-1 w-full h-full p-3 sm:p-5 flex flex-col justify-end pointer-events-none">
-      {/* Dynamic Real-Time Fire Box when Laptop Webcam detects flame chrominance */}
+      {/* Dynamic Real-Time Smoke Box from Backend Vision Engine */}
+      {isWebcam && webcamSmokeBox && showSmoke && (
+        <div
+          style={{
+            left: `${webcamSmokeBox.x * 100}%`,
+            top: `${webcamSmokeBox.y * 100}%`,
+            width: `${webcamSmokeBox.w * 100}%`,
+            height: `${webcamSmokeBox.h * 100}%`,
+          }}
+          className="absolute rounded-xl sm:rounded-2xl border-2 border-dashed border-[#38bdf8] bg-[#38bdf8]/15 p-2 sm:p-3 flex flex-col justify-between text-left transition-all duration-200 shadow-[0_0_24px_rgba(56,189,248,0.35)]"
+        >
+          <div className="self-start inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#38bdf8] text-[#050507] text-[10px] sm:text-xs font-bold font-mono shadow-lg whitespace-nowrap">
+            <Wind weight="bold" className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+            <span>SMOKE · {Math.round(webcamSmokeBox.confidence * 100)}%</span>
+          </div>
+        </div>
+      )}
+
+      {/* Dynamic Real-Time Fire Box when Camera detects flame */}
       {isWebcam && webcamFireBox && showFire && (
         <div
           style={{
@@ -93,7 +113,10 @@ export function DetectionHudOverlay({
         <div className="flex items-center gap-2 min-w-0">
           <span
             className={`w-2 h-2 rounded-full shrink-0 ${
-              isWebcam && !webcamFireBox && !showDemoBoxesOnWebcam
+              isWebcam &&
+              !webcamFireBox &&
+              !webcamSmokeBox &&
+              !showDemoBoxesOnWebcam
                 ? "bg-emerald-400"
                 : "bg-[#ff5722]"
             }`}
@@ -101,10 +124,12 @@ export function DetectionHudOverlay({
           <span className="text-[11px] sm:text-xs font-medium text-white/90 truncate">
             {isWebcam
               ? webcamFireBox
-                ? "Titik api terdeteksi pada kamera laptop!"
+                ? "Titik api terdeteksi pada kamera!"
+                : webcamSmokeBox
+                ? "Kepulan asap terdeteksi pada kamera!"
                 : showDemoBoxesOnWebcam
-                ? "Menampilkan simulasi kotak deteksi pada webcam"
-                : "Memindai kamera laptop secara real-time (Area Aman)"
+                ? "Menampilkan simulasi kotak deteksi pada kamera"
+                : "Memindai kamera secara real-time (Area Aman)"
               : layer === "both"
               ? "Menampilkan deteksi titik api & kepulan asap"
               : layer === "fire"

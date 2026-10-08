@@ -14,6 +14,7 @@ interface TelemetrySidebarProps {
   isWebcam?: boolean;
   webcamLabel?: string;
   webcamFireConfidence?: number;
+  webcamSmokeConfidence?: number;
   alarmActive: boolean;
   alertToast: string | null;
   onEmergencyTrigger: () => void;
@@ -21,8 +22,9 @@ interface TelemetrySidebarProps {
 
 export function TelemetrySidebar({
   isWebcam = false,
-  webcamLabel = "Kamera Laptop",
+  webcamLabel = "Kamera Perangkat",
   webcamFireConfidence = 0,
+  webcamSmokeConfidence = 0,
   alarmActive,
   alertToast,
   onEmergencyTrigger,
@@ -35,7 +37,9 @@ export function TelemetrySidebar({
 
   const firePct = isWebcam ? Math.round(webcamFireConfidence * 100) : 94;
   const smokePct = isWebcam
-    ? webcamFireConfidence > 0.4
+    ? webcamSmokeConfidence > 0
+      ? Math.round(webcamSmokeConfidence * 100)
+      : webcamFireConfidence > 0.4
       ? Math.round(webcamFireConfidence * 72)
       : 4
     : 88;
@@ -45,7 +49,8 @@ export function TelemetrySidebar({
       : "+29°C"
     : "+412°C";
 
-  const hasDanger = !isWebcam || webcamFireConfidence > 0.35;
+  const hasDanger =
+    !isWebcam || webcamFireConfidence > 0.35 || webcamSmokeConfidence > 0.45;
 
   return (
     <aside className="w-full lg:w-[380px] shrink-0 flex flex-col">

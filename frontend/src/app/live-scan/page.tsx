@@ -68,10 +68,15 @@ export default function LiveScanPage() {
     isWebcam,
     isConnectingWebcam,
     webcamLabel,
+    cameraDevices,
+    selectedDeviceId,
     isMirrored,
     setIsMirrored,
     webcamFireBox,
+    webcamSmokeBox,
     handleToggleWebcam,
+    handleSelectCamera,
+    handleSwitchCamera,
   } = useWebcamScanner({
     onShowToast: showToast,
     onAutoAlarmTrigger: handleAutoAlarmTrigger,
@@ -121,7 +126,7 @@ export default function LiveScanPage() {
               Pemindaian Kamera Langsung
             </h1>
             <p className="text-xs sm:text-sm text-white/60">
-              Pantau titik api dan kepulan asap secara real-time melalui kamera laptop atau simulasi.
+              Pantau titik api dan kepulan asap secara real-time melalui kamera asli perangkat atau simulasi.
             </p>
           </div>
         </div>
@@ -142,17 +147,22 @@ export default function LiveScanPage() {
                 isWebcam={isWebcam}
                 isConnectingWebcam={isConnectingWebcam}
                 webcamLabel={webcamLabel}
+                cameraDevices={cameraDevices}
+                selectedDeviceId={selectedDeviceId}
                 isMirrored={isMirrored}
                 flashlightOn={flashlightOn}
                 isFullscreen={isFullscreen}
                 onToggleFlashlight={() => setFlashlightOn(!flashlightOn)}
                 onToggleWebcam={handleToggleWebcam}
+                onSelectCamera={handleSelectCamera}
+                onSwitchCamera={handleSwitchCamera}
                 onToggleMirror={() => setIsMirrored((prev) => !prev)}
                 onToggleFullscreen={toggleFullscreen}
               />
               <DetectionHudOverlay
                 isWebcam={isWebcam}
                 webcamFireBox={webcamFireBox}
+                webcamSmokeBox={webcamSmokeBox}
               />
             </section>
           </div>
@@ -162,6 +172,7 @@ export default function LiveScanPage() {
             isWebcam={isWebcam}
             webcamLabel={webcamLabel}
             webcamFireConfidence={webcamFireBox?.confidence ?? 0}
+            webcamSmokeConfidence={webcamSmokeBox?.confidence ?? 0}
             alarmActive={alarmActive}
             alertToast={alertToast}
             onEmergencyTrigger={handleEmergencyTrigger}
