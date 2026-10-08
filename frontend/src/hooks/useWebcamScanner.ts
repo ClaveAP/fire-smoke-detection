@@ -451,9 +451,10 @@ export function useWebcamScanner({
     localCanvas.height = localH;
     const localCtx = localCanvas.getContext("2d", { willReadFrequently: true });
 
+    // 640x360 matches backend HeuristicDetector WORK_SIZE=640 & YOLO input scale
     const wsCanvas = document.createElement("canvas");
-    wsCanvas.width = 320;
-    wsCanvas.height = 180;
+    wsCanvas.width = 640;
+    wsCanvas.height = 360;
     const wsCtx = wsCanvas.getContext("2d");
 
     if (!localCtx) return;
@@ -461,9 +462,10 @@ export function useWebcamScanner({
     let consecutiveFireFrames = 0;
     let consecutiveClearFrames = 0;
     let awaitingWsReply = false;
-    let latestWsSmokeBox: DynamicBox | null = null;
-    let latestWsFireBox: DynamicBox | null = null;
     let wsConnected = false;
+    let unmounted = false;
+    let ws: WebSocket | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
     const handleDetectionOutcome = (
       fireBox: DynamicBox | null,
@@ -479,7 +481,7 @@ export function useWebcamScanner({
 
         if (
           consecutiveFireFrames >= 2 &&
-          fireBox.confidence >= 0.78 &&
+          fireBox.confidence >= 0.75 &&
           canAutoTriggerAlarm()
         ) {
           onAutoAlarmTrigger();
@@ -541,10 +543,11 @@ export function useWebcamScanner({
       }
     };
 
-    // Connect to FastAPI WebSocket stream (/api/v1/ws/cctv/WEBCAM-01) if backend is running
-    let ws: WebSocket | null = null;
-    const wsUrl = detectionAdapter.getStreamWebSocketUrl("WEBCAM-01");
-    if (wsUrl && typeof WebSocket !== "undefined") {
+    const connectWebSocket = () => {
+      if (unmounted || typeof WebSocket === "undefined") return;
+      const wsUrl = detectionAdapter.getStreamWebSocketUrl("WEBCAM-01");
+      if (!wsUrl) return;
+
       try {
         ws = new WebSocket(wsUrl);
         ws.onopen = () => {
@@ -577,20 +580,15 @@ export function useWebcamScanner({
                   )
                 : null;
 
-            latestWsFireBox = bestFire
+            const fireBox = bestFire
               ? toDynamicBox(bestFire, isMirrored)
               : null;
-            latestWsSmokeBox = bestSmoke
+            const smokeBox = bestSmoke
               ? toDynamicBox(bestSmoke, isMirrored)
               : null;
 
-            if (latestWsFireBox || latestWsSmokeBox) {
-              handleDetectionOutcome(
-                latestWsFireBox,
-                latestWsSmokeBox,
-                packet.incidentId
-              );
-            }
+            // Always update outcome on every WS frame so cleared hazards immediately clear boxes
+            handleDetectionOutcome(fireBox, smokeBox, packet.incidentId);
           } catch {
             // Ignore malformed WS packets
           }
@@ -602,31 +600,37 @@ export function useWebcamScanner({
         ws.onclose = () => {
           wsConnected = false;
           awaitingWsReply = false;
+          if (!unmounted) {
+            reconnectTimer = setTimeout(connectWebSocket, 3000);
+          }
         };
       } catch {
         ws = null;
       }
-    }
+    };
+
+    connectWebSocket();
 
     const interval = setInterval(() => {
       const video = videoRef.current;
       if (!video || video.readyState < 2) return;
 
-      // Push frame to backend WebSocket when connected
+      // Primary path: stream 640x360 frame to FastAPI Vision Backend via WebSocket
       if (ws && wsConnected && ws.readyState === WebSocket.OPEN && wsCtx) {
         if (!awaitingWsReply) {
           awaitingWsReply = true;
           wsCtx.drawImage(video, 0, 0, wsCanvas.width, wsCanvas.height);
-          const dataUrl = wsCanvas.toDataURL("image/jpeg", 0.76);
+          const dataUrl = wsCanvas.toDataURL("image/jpeg", 0.8);
           try {
             ws.send(JSON.stringify({ type: "frame", image: dataUrl }));
           } catch {
             awaitingWsReply = false;
           }
         }
+        return;
       }
 
-      // Run fast client-side flame chrominance scan (works offline & complements backend)
+      // Fallback path (only when backend WebSocket is offline)
       const localFireBox = detectFlameBoxFromFrame(
         localCtx,
         video,
@@ -634,13 +638,15 @@ export function useWebcamScanner({
         localH,
         isMirrored
       );
-
-      const effectiveFireBox = latestWsFireBox || localFireBox;
-      handleDetectionOutcome(effectiveFireBox, latestWsSmokeBox);
+      handleDetectionOutcome(localFireBox, null);
     }, 220);
 
     return () => {
+      unmounted = true;
       clearInterval(interval);
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
       if (ws) {
         try {
           ws.close();
