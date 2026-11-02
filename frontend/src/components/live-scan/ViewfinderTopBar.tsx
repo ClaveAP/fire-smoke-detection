@@ -24,7 +24,7 @@ interface ViewfinderTopBarProps {
   sourceOptions: StreamSourceOption[];
   selectedSource: string;
   onSelectSource: (value: string) => void;
-  /** Detection engine reported by /api/v1/health, e.g. "yolo:fire-smoke-yolov8n/best.pt". */
+  /** Detection engine reported by /api/v1/health, e.g. "yolo:fire-smoke-yolo11n/best.pt". */
   engineLabel?: string;
   isStreamLive?: boolean;
   streamFps?: number;

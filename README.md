@@ -135,7 +135,7 @@ fire-smoke-detection/
 │   ├── tests/                                    # pytest: validasi dataset & overlay anotasi
 │   ├── runs/                                     # Log/metrik hasil training lokal; tidak di-commit
 │   ├── weights/                                  # best.pt hasil training lokal
-│   ├── fire-smoke-yolov8n/                       # Bobot yang dibaca backend (best.pt di luar Git)
+│   ├── fire-smoke-yolo11n/                       # Bobot yang dibaca backend (best.pt di luar Git)
 │   ├── requirements.txt                          # Ultralytics YOLO + PyTorch (venv terpisah dari backend)
 │   └── README.md                                 # Panduan data → training → evaluasi → deploy
 └── README.md                                     # Dokumentasi utama repositori
@@ -243,12 +243,12 @@ Detail lengkap & konfigurasi: [`backend/README.md`](backend/README.md).
 
 ## 🤖 Engine Deteksi & Integrasi YOLO
 
-Backend langsung berfungsi tanpa model terlatih menggunakan engine **OpenCV heuristik**. Untuk model supervised YOLOv8n dengan bounding box, buka `models/notebooks/training_colab.ipynb` di Colab atau jalankan `python -m src.train` dari folder `models/`. Letakkan dataset YOLO Detection **yang sudah dianotasi** di `My Drive/visikom/` (Colab) atau `models/dataset/data/` (lokal); data mentah tanpa label fire/smoke belum cukup untuk training. Notebook memeriksa anotasi/split dan menyimpan `best.pt` serta hasil evaluasi kembali ke Drive.
+Backend langsung berfungsi tanpa model terlatih menggunakan engine **OpenCV heuristik**. Untuk model supervised YOLO11n dengan bounding box, buka `models/notebooks/training_colab.ipynb` di Colab atau jalankan `python -m src.train` dari folder `models/`. Letakkan dataset YOLO Detection **yang sudah dianotasi** di `My Drive/visikom/` (Colab) atau `models/dataset/data/` (lokal); data mentah tanpa label fire/smoke belum cukup untuk training. Notebook memeriksa anotasi/split dan menyimpan `best.pt` serta hasil evaluasi kembali ke Drive.
 
-Salin `best.pt` hasil training ke `models/fire-smoke-yolov8n/best.pt` (checkpoint resmi) atau `models/weights/best.pt` (bobot lokal), lalu aktifkan YOLO di backend:
+Salin `best.pt` hasil training ke `models/fire-smoke-yolo11n/best.pt` (checkpoint resmi) atau `models/weights/best.pt` (bobot lokal), lalu aktifkan YOLO di backend:
 
 ```bash
-cp /path/ke/best.pt models/fire-smoke-yolov8n/best.pt
+cp /path/ke/best.pt models/fire-smoke-yolo11n/best.pt
 cd backend
 pip install -r requirements-yolo.txt
 ```
@@ -267,4 +267,4 @@ Restart server — engine berganti otomatis ke YOLO (cek `GET /api/v1/health` �
 
 - **Frontend:** Next.js 16.3 (App Router), React 19.2, TypeScript 5, Tailwind CSS v4, Lucide React, OGL, HTML5 2D Canvas API, WebRTC (`getUserMedia`), Web Audio API.
 - **Backend:** FastAPI, Pydantic v2, Uvicorn, WebSockets, OpenCV, NumPy, SQLite, OpenAPI 3.1, pytest.
-- **AI / Computer Vision Ready:** Ultralytics YOLOv8, PyTorch, OpenCV.
+- **AI / Computer Vision Ready:** Ultralytics YOLO11, PyTorch, OpenCV.

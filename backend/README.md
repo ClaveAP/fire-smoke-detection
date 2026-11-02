@@ -30,14 +30,14 @@ Backend memilih engine secara otomatis saat startup (`FSD_ENGINE=auto`):
 
 | Engine | Kapan aktif | Keterangan |
 | :--- | :--- | :--- |
-| **YOLO** | `ultralytics` terinstal **dan** `../models/fire-smoke-yolov8n/best.pt` ada | Model hasil notebook training. Kelas berisi `fire`/`flame` → `fire`, `smoke` → `smoke`. |
+| **YOLO** | `ultralytics` terinstal **dan** `../models/fire-smoke-yolo11n/best.pt` ada | Model hasil notebook training. Kelas berisi `fire`/`flame` → `fire`, `smoke` → `smoke`. |
 | **`heuristic-opencv`** | Default / fallback | Tanpa model terlatih. Api: aturan warna RGB + HSV + YCbCr (Chen 2004, Celik 2009) + inti pijar. Asap: piksel abu-abu/biru-keabuan, lebih terang dari latar, bertekstur lembut (Laplacian rendah). Pada stream, gerakan (MOG2) menaikkan skor asap yang bergerak dan menekan permukaan abu-abu statis. |
 
 Engine heuristik ±20–30 ms per frame (640px, CPU) dan lulus uji pada preset `frontend/public/presets`. Ini *baseline*: pantulan cahaya oranye, kulit di bawah cahaya terang, atau dinding abu-abu berkabut bisa memicu *false positive*. Untuk produksi gunakan YOLO:
 
 ```bash
 pip install -r requirements-yolo.txt
-# Salin best.pt hasil training di ../models ke ../models/fire-smoke-yolov8n/best.pt
+# Salin best.pt hasil training di ../models ke ../models/fire-smoke-yolo11n/best.pt
 # Restart server; cek GET /api/v1/health → engine
 ```
 
@@ -105,7 +105,7 @@ Klien `frontend/src/services/streamClient.ts` memakai kedua jalur: `/live-scan` 
 | Variabel | Default | Keterangan |
 | :--- | :--- | :--- |
 | `FSD_ENGINE` | `auto` | `auto` / `yolo` / `heuristic` |
-| `FSD_WEIGHTS` | `../models/fire-smoke-yolov8n/best.pt` (jika ada) | Path bobot YOLO; fallback `../models/weights/best.pt` |
+| `FSD_WEIGHTS` | `../models/fire-smoke-yolo11n/best.pt` (jika ada) | Path bobot YOLO; fallback `../models/weights/best.pt` |
 | `FSD_DEVICE` | *(auto)* | Device YOLO, mis. `cpu`, `0` (GPU) |
 | `FSD_CONFIDENCE` | `0.4` | Ambang confidence minimum |
 | `FSD_IOU` | `0.45` | Ambang IoU untuk NMS |
@@ -126,7 +126,7 @@ Klien `frontend/src/services/streamClient.ts` memakai kedua jalur: `/live-scan` 
 
 Dataset, notebook Colab, script `train` / `evaluate` / `predict_camera`, artefak `runs/`, dan bobot `best.pt`
 berada di folder [`../models`](../models) — terpisah dari microservice ini. Backend hanya **mengkonsumsi** bobot:
-`models/fire-smoke-yolov8n/best.pt` dimuat otomatis saat `FSD_ENGINE=auto` (fallback `models/weights/best.pt`),
+`models/fire-smoke-yolo11n/best.pt` dimuat otomatis saat `FSD_ENGINE=auto` (fallback `models/weights/best.pt`),
 selama paket `ultralytics` terinstal di venv backend.
 
 ```bash

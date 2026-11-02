@@ -16,7 +16,7 @@ models/
 ├── runs/                         # log/metrik/plot hasil training; tidak di-commit
 ├── weights/                      # best.pt hasil training lokal; tidak di-commit
 ├── test-video/                   # video uji lokal; tidak di-commit
-└── fire-smoke-yolov8n/           # bobot yang dibaca backend (best.pt di luar Git)
+└── fire-smoke-yolo11n/           # bobot yang dibaca backend (best.pt di luar Git)
 ```
 
 ## 1. Setup environment
@@ -33,15 +33,15 @@ pip install -r requirements-dev.txt   # + pytest
 
 ## 2. Algoritma yang cocok
 
-Pilih **object detection supervised learning: Ultralytics YOLOv8n (transfer learning)**. Anotasi kotak
-`fire` dan `smoke` membuat model mendeteksi objek sekaligus menghasilkan bounding box; YOLOv8n cukup ringan
-untuk webcam/CCTV real-time. Mulai dari bobot pralatih `yolov8n.pt`, ukur latency di perangkat deployment,
-lalu coba `yolov8s.pt` hanya bila akurasi tambahan sepadan dengan latency. Klasifikasi gambar saja tidak
+Pilih **object detection supervised learning: Ultralytics YOLO11n (transfer learning)**. Anotasi kotak
+`fire` dan `smoke` membuat model mendeteksi objek sekaligus menghasilkan bounding box; YOLO11n cukup ringan
+untuk webcam/CCTV real-time. Mulai dari bobot pralatih `yolo11n.pt`, ukur latency di perangkat deployment,
+lalu coba `yolo11s.pt` hanya bila akurasi tambahan sepadan dengan latency. Klasifikasi gambar saja tidak
 menghasilkan kotak; unsupervised learning bukan pendekatan utama untuk label dan lokasi objek yang telah
 diketahui.
 
 Notebook Colab lengkap: [`notebooks/training_colab.ipynb`](notebooks/training_colab.ipynb).
-Notebook lama [`notebooks/train_fire_smoke.ipynb`](notebooks/train_fire_smoke.ipynb) melatih YOLOv8n dari
+Notebook lama [`notebooks/train_fire_smoke.ipynb`](notebooks/train_fire_smoke.ipynb) melatih YOLO11n dari
 dataset Kaggle [Smoke-Fire-Detection-YOLO](https://www.kaggle.com/datasets/sayedgamal99/smoke-fire-detection-yolo/data)
 (format YOLO, kelas `0=smoke`, `1=fire`, lisensi CC0) dan tetap tersedia sebagai referensi.
 
@@ -73,7 +73,7 @@ dataset Kaggle [Smoke-Fire-Detection-YOLO](https://www.kaggle.com/datasets/sayed
    sesuai trade-off; jangan menyetel berdasarkan test.
 7. **Simpan bobot:** notebook Colab menulis `best.pt` ke Drive, lalu salin ke `models/weights/best.pt` (bobot untuk
    backend) — script training lokal menyalinnya otomatis. Untuk bobot yang dipakai sebagai checkpoint resmi, taruh di
-   `models/fire-smoke-yolov8n/best.pt`; backend memuatnya otomatis saat `FSD_ENGINE=auto`.
+   `models/fire-smoke-yolo11n/best.pt`; backend memuatnya otomatis saat `FSD_ENGINE=auto`.
 8. **Hubungkan ke backend dan frontend.** Dari folder `backend/`: `pip install -r requirements-yolo.txt`, mulai
    FastAPI, lalu cek `GET /api/v1/health` — engine harus menunjukkan `yolo:.../best.pt`. Atur
    `frontend/.env.local`: `NEXT_PUBLIC_BACKEND_URL=http://localhost:8000`. API `/api/v1/detect/image` mengembalikan

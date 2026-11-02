@@ -1,5 +1,6 @@
-# Training / evaluation environment for the fire & smoke model (Ultralytics YOLOv8 + PyTorch).
+# Training / evaluation environment for the fire & smoke model (Ultralytics YOLO11 + PyTorch).
 # Install inside a dedicated venv in models/, separate from the backend serving venv.
-ultralytics>=8.1
+# 8.3 is the first release that ships the yolo11*.pt checkpoints.
+ultralytics>=8.3
 opencv-python>=4.9
 pyyaml>=6.0

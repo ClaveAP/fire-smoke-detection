@@ -13,13 +13,13 @@ from src.utils import validate_dataset
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", type=Path, default=Path("configs/data.yaml"))
-    parser.add_argument("--model", default="yolov8n.pt", help="Pretrained Ultralytics detection checkpoint")
+    parser.add_argument("--model", default="yolo11n.pt", help="Pretrained Ultralytics detection checkpoint")
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--batch", type=int, default=16)
     parser.add_argument("--device", default="auto", help="auto, cpu, or GPU ID such as 0")
     parser.add_argument("--project", type=Path, default=Path("runs"))
-    parser.add_argument("--name", default="fire-smoke-yolov8n")
+    parser.add_argument("--name", default="fire-smoke-yolo11n")
     parser.add_argument("--patience", type=int, default=15)
     args = parser.parse_args()
 

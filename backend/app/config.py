@@ -7,7 +7,7 @@ from typing import List
 BASE_DIR = Path(__file__).resolve().parent.parent
 REPO_DIR = BASE_DIR.parent
 MODELS_DIR = REPO_DIR / "models"
-SHIPPED_WEIGHTS = MODELS_DIR / "fire-smoke-yolov8n" / "best.pt"
+SHIPPED_WEIGHTS = MODELS_DIR / "fire-smoke-yolo11n" / "best.pt"
 LOCAL_WEIGHTS = MODELS_DIR / "weights" / "best.pt"
 
 

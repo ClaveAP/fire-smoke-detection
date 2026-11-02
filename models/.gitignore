@@ -1,4 +1,4 @@
-# Local dataset, training runs, and weights stay out of Git; see models/fire-smoke-yolov8n/
+# Local dataset, training runs, and weights stay out of Git; see models/fire-smoke-yolo11n/
 # for the checkpoint the backend loads.
 venv/
 .venv/
