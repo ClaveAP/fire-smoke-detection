@@ -130,7 +130,7 @@ fire-smoke-detection/
 ├── models/                                       # Dataset, training, evaluasi, dan bobot model
 │   ├── configs/data.yaml                         # Konfigurasi kelas/path dataset YOLO lokal
 │   ├── dataset/data/{train,val,test}/{images,labels}/ # Data lokal; tidak di-commit
-│   ├── notebooks/                                # training_colab.ipynb (utama) + train_fire_smoke.ipynb (lama)
+│   ├── notebooks/                                # training_colab.ipynb (Colab end-to-end)
 │   ├── src/                                      # train.py, evaluate.py, predict_camera.py, utils.py
 │   ├── tests/                                    # pytest: validasi dataset & overlay anotasi
 │   ├── runs/                                     # Log/metrik hasil training lokal; tidak di-commit

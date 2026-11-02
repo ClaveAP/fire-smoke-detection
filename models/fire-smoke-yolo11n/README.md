@@ -1,8 +1,7 @@
 # fire-smoke-yolo11n
 
-Folder bobot keluaran [`../notebooks/training_colab.ipynb`](../notebooks/training_colab.ipynb) (notebook utama);
-[`../notebooks/train_fire_smoke.ipynb`](../notebooks/train_fire_smoke.ipynb) menghasilkan checkpoint dengan
-provenance yang sama dari dataset Kaggle di Drive.
+Folder bobot keluaran [`../notebooks/training_colab.ipynb`](../notebooks/training_colab.ipynb), atau
+`python -m src.train` bila training dijalankan lokal.
 
 - Arsitektur awal: YOLO11n pretrained (`yolo11n.pt`) — penerus langsung YOLOv8n dengan API Ultralytics yang sama.
 - Dataset: [Smoke-Fire-Detection-YOLO](https://www.kaggle.com/datasets/sayedgamal99/smoke-fire-detection-yolo/data).

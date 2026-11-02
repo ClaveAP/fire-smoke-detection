@@ -9,8 +9,7 @@ models/
 ├── configs/data.yaml             # path dataset dan mapping kelas YOLO
 ├── dataset/data/{train,val,test}/{images,labels}/  # lokal; tidak di-commit
 ├── notebooks/
-│   ├── training_colab.ipynb      # Colab utama: Drive → preprocessing → training → evaluasi
-│   └── train_fire_smoke.ipynb    # notebook lama (dataset Kaggle via Drive)
+│   └── training_colab.ipynb      # Colab: Drive → preprocessing → training → evaluasi
 ├── src/                          # train.py, evaluate.py, predict_camera.py, utils.py
 ├── tests/                        # pytest: validasi dataset & ground-truth overlay
 ├── runs/                         # log/metrik/plot hasil training; tidak di-commit
@@ -40,10 +39,11 @@ lalu coba `yolo11s.pt` hanya bila akurasi tambahan sepadan dengan latency. Klasi
 menghasilkan kotak; unsupervised learning bukan pendekatan utama untuk label dan lokasi objek yang telah
 diketahui.
 
-Notebook Colab lengkap: [`notebooks/training_colab.ipynb`](notebooks/training_colab.ipynb).
-Notebook lama [`notebooks/train_fire_smoke.ipynb`](notebooks/train_fire_smoke.ipynb) melatih YOLO11n dari
-dataset Kaggle [Smoke-Fire-Detection-YOLO](https://www.kaggle.com/datasets/sayedgamal99/smoke-fire-detection-yolo/data)
-(format YOLO, kelas `0=smoke`, `1=fire`, lisensi CC0) dan tetap tersedia sebagai referensi.
+Notebook Colab: [`notebooks/training_colab.ipynb`](notebooks/training_colab.ipynb). Butuh data berlabel
+sebelum notebook itu bisa training; kalau hanya ingin membuktikan pipeline berjalan, dataset publik
+[Smoke-Fire-Detection-YOLO](https://www.kaggle.com/datasets/sayedgamal99/smoke-fire-detection-yolo/data)
+(format YOLO, kelas `0=smoke`, `1=fire`, lisensi CC0) bisa dipakai sebagai bahan uji, lalu diganti dataset
+kamera sendiri untuk model produksi.
 
 ## 3. Langkah dari dataset mentah sampai frontend
 
