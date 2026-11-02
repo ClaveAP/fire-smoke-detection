@@ -9,7 +9,7 @@ models/
 ├── configs/data.yaml             # path dataset dan mapping kelas YOLO
 ├── dataset/data/{train,val,test}/{images,labels}/  # lokal; tidak di-commit
 ├── notebooks/
-│   └── training_colab.ipynb      # Colab: Drive → preprocessing → training → evaluasi
+│   └── training_colab.ipynb      # Colab: Drive → preprocessing → training → cross-validation → evaluasi
 ├── src/                          # train.py, evaluate.py, predict_camera.py, utils.py
 ├── tests/                        # pytest: validasi dataset & ground-truth overlay
 ├── runs/                         # log/metrik/plot hasil training; tidak di-commit
@@ -65,12 +65,13 @@ kamera sendiri untuk model produksi.
 5. **Jalankan Colab:** buka notebook, pilih GPU T4 melalui *Runtime → Change runtime type*, lalu *Run all*. Isi
    `DATASET_SOURCE` ke `/content/drive/MyDrive/visikom` (di Colab folder Drive bernama `MyDrive`, tanpa spasi).
    Notebook memvalidasi gambar/label, memperlihatkan sampel bounding box dan distribusi kelas, melatih bobot awal
-   YOLO, mengevaluasi test, lalu menyimpan `best.pt` serta metrik ke Drive. Dataset dan bobot tetap lokal di Drive;
-   jangan commit.
+   YOLO, menjalankan cross-validation K-Fold tergrup per sumber rekaman, mengevaluasi test, lalu menyimpan `best.pt`
+   beserta metrik dan `cv-metrics.json` ke Drive. Dataset dan bobot tetap lokal di Drive; jangan commit.
 6. **Uji sebelum deploy.** Bandingkan per kelas *precision*, *recall*, `mAP@0.5`, dan `mAP@0.5:0.95`, confusion
-   matrix, contoh false positive/negative, serta latency pada kamera/perangkat target. `recall` api/asap rendah
-   berisiko melewatkan bahaya; precision rendah menimbulkan alarm palsu. Pilih confidence threshold di validation
-   sesuai trade-off; jangan menyetel berdasarkan test.
+   matrix, contoh false positive/negative, serta latency pada kamera/perangkat target. Laporkan mean ± std antar fold
+   hasil cross-validation, bukan satu angka holdout saja; selisih antar fold yang besar berarti performa bergantung
+   ke rekaman tertentu. `recall` api/asap rendah berisiko melewatkan bahaya; precision rendah menimbulkan alarm
+   palsu. Pilih confidence threshold di validation sesuai trade-off; jangan menyetel berdasarkan test.
 7. **Simpan bobot:** notebook Colab menulis `best.pt` ke Drive, lalu salin ke `models/weights/best.pt` (bobot untuk
    backend) — script training lokal menyalinnya otomatis. Untuk bobot yang dipakai sebagai checkpoint resmi, taruh di
    `models/fire-smoke-yolo11n/best.pt`; backend memuatnya otomatis saat `FSD_ENGINE=auto`.
