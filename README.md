@@ -243,7 +243,7 @@ Detail lengkap & konfigurasi: [`backend/README.md`](backend/README.md).
 
 ## 🤖 Engine Deteksi & Integrasi YOLO
 
-Backend langsung berfungsi tanpa model terlatih menggunakan engine **OpenCV heuristik**. Untuk model supervised YOLO11n dengan bounding box, buka `models/notebooks/training_colab.ipynb` di Colab atau jalankan `python -m src.train` dari folder `models/`. Letakkan dataset YOLO Detection **yang sudah dianotasi** di `My Drive/visikom/` (Colab) atau `models/dataset/data/` (lokal); data mentah tanpa label fire/smoke belum cukup untuk training. Notebook memeriksa anotasi/split dan menyimpan `best.pt` serta hasil evaluasi kembali ke Drive.
+Backend langsung berfungsi tanpa model terlatih menggunakan engine **OpenCV heuristik**. Untuk model supervised YOLO11n dengan bounding box, buka `models/notebooks/training_colab.ipynb` di Colab atau jalankan `python -m src.train` dari folder `models/`. Letakkan dataset YOLO Detection **yang sudah dianotasi** di `My Drive/visikom/` (Colab) atau `models/dataset/data/` (lokal); data mentah tanpa label fire/smoke belum cukup untuk training. Notebook memeriksa anotasi/split dan menyimpan `best.pt` serta hasil evaluasi kembali ke Drive. Tahapnya mengikuti Machine Learning Lifecycle materi: audit kecukupan data → cleansing & validasi anotasi → feature engineering → data split → training → cross-validation → pemilihan epoch dan ambang di validation → evaluasi test (termasuk matriks Type I/II) → deployment + performance monitoring.
 
 Salin `best.pt` hasil training ke `models/fire-smoke-yolo11n/best.pt` (checkpoint resmi) atau `models/weights/best.pt` (bobot lokal), lalu aktifkan YOLO di backend:
 

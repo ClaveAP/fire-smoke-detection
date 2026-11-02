@@ -9,7 +9,7 @@ models/
 ├── configs/data.yaml             # path dataset dan mapping kelas YOLO
 ├── dataset/data/{train,val,test}/{images,labels}/  # lokal; tidak di-commit
 ├── notebooks/
-│   └── training_colab.ipynb      # Colab: Drive → preprocessing → training → cross-validation → evaluasi
+│   └── training_colab.ipynb      # Colab: audit → split → cleansing → training → CV → tuning → evaluasi → deployment
 ├── src/                          # train.py, evaluate.py, predict_camera.py, utils.py
 ├── tests/                        # pytest: validasi dataset & ground-truth overlay
 ├── runs/                         # log/metrik/plot hasil training; tidak di-commit
@@ -49,11 +49,15 @@ kamera sendiri untuk model produksi.
 
 1. **Kumpulkan data yang mewakili lokasi penggunaan.** Sertakan api, asap, keduanya, serta latar tanpa bahaya;
    variasikan CCTV/kamera, siang-malam, sudut, jarak, cuaca, dan kondisi cahaya. Foto beragam lebih berguna
-   daripada banyak frame hampir identik.
+   daripada banyak frame hampir identik. Notebook mengaudit kecukupan data ini di langkah `1f`: jumlah sumber
+   rekaman, cakupan kelas per split, resolusi, dan hadirnya frame gelap/terang. Data yang kurang lengkap
+   dilengkapi lebih dulu, bukan ditutupi oleh model.
 2. **Bersihkan dan anotasi — tahap data preparation.** Hapus file rusak dan duplikat; periksa kelas/nama konsisten.
    Anotasi *bounding box* api dan asap memakai Label Studio, CVAT, atau Roboflow; ekspor format **YOLO detection**.
    Foto background tanpa bahaya tetap perlu berkas label `.txt` kosong. Dataset hanya berisi gambar tanpa anotasi
-   belum cukup untuk supervised object detection.
+   belum cukup untuk supervised object detection. Anotasi bounding box merupakan *feature construction*, koordinat
+   ternormalisasi 0–1 dan letterbox (langkah 4) merupakan *scaling*, sedangkan augmentasi diatur di notebook
+   langkah `2g` dan hanya dipakai pada data latih.
 3. **Bagi dataset berdasarkan sesi rekaman/kamera**, bukan frame acak: `train` untuk belajar, `val` untuk memilih
    model/ambang, `test` untuk evaluasi final sekali. Contoh pembagian 70/15/15%; hindari video atau frame yang sama
    tersebar lintas split supaya evaluasi tidak bocor. Periksa keseimbangan objek `fire`/`smoke` pada tiap split.
@@ -64,14 +68,19 @@ kamera sendiri untuk model produksi.
    geometri dan bounding box tetap selaras.
 5. **Jalankan Colab:** buka notebook, pilih GPU T4 melalui *Runtime → Change runtime type*, lalu *Run all*. Isi
    `DATASET_SOURCE` ke `/content/drive/MyDrive/visikom` (di Colab folder Drive bernama `MyDrive`, tanpa spasi).
-   Notebook memvalidasi gambar/label, memperlihatkan sampel bounding box dan distribusi kelas, melatih bobot awal
-   YOLO, menjalankan cross-validation K-Fold tergrup per sumber rekaman, mengevaluasi test, lalu menyimpan `best.pt`
-   beserta metrik dan `cv-metrics.json` ke Drive. Dataset dan bobot tetap lokal di Drive; jangan commit.
+   Notebook mengikuti urutan Machine Learning Lifecycle: audit kecukupan data (`1f`) → split (`1a`–`1e`) →
+   cleansing dan validasi anotasi (`2a`–`2d`) → visualisasi ground-truth dan transformasi fitur (`2e`–`2g`) →
+   training (`3a`) → cross-validation K-Fold tergrup per sumber rekaman (`4a`–`4e`) → pemilihan epoch dan ambang
+   confidence di validation (`5a`–`5b`) → evaluasi test termasuk matriks TP/FP/FN (`6a`–`6d`) → ekspor artefak
+   (`7`). Hasil yang tersimpan di Drive: `best.pt`, `test-metrics.json`, `cv-metrics.json`, `val-tuning.json`,
+   dan `error-matrix.json`. Dataset dan bobot tetap lokal di Drive; jangan commit.
 6. **Uji sebelum deploy.** Bandingkan per kelas *precision*, *recall*, `mAP@0.5`, dan `mAP@0.5:0.95`, confusion
    matrix, contoh false positive/negative, serta latency pada kamera/perangkat target. Laporkan mean ± std antar fold
    hasil cross-validation, bukan satu angka holdout saja; selisih antar fold yang besar berarti performa bergantung
    ke rekaman tertentu. `recall` api/asap rendah berisiko melewatkan bahaya; precision rendah menimbulkan alarm
-   palsu. Pilih confidence threshold di validation sesuai trade-off; jangan menyetel berdasarkan test.
+   palsu. Ambang confidence dipilih di split validation (`5a`–`5b`, tersimpan di `val-tuning.json`) — jangan menyetel
+   berdasarkan test. Hitungan alarm palsu (Type I = FP) dan bahaya terlewat (Type II = FN) per kelas ada di
+   `error-matrix.json`.
 7. **Simpan bobot:** notebook Colab menulis `best.pt` ke Drive, lalu salin ke `models/weights/best.pt` (bobot untuk
    backend) — script training lokal menyalinnya otomatis. Untuk bobot yang dipakai sebagai checkpoint resmi, taruh di
    `models/fire-smoke-yolo11n/best.pt`; backend memuatnya otomatis saat `FSD_ENGINE=auto`.
@@ -80,13 +89,15 @@ kamera sendiri untuk model produksi.
    `frontend/.env.local`: `NEXT_PUBLIC_BACKEND_URL=http://localhost:8000`. API `/api/v1/detect/image` mengembalikan
    label/confidence/bounding box ternormalisasi; CCTV RTSP didaftarkan di `/api/v1/cameras` lewat `streamUrl`, lalu
    frontend menerima deteksi live dari `WS /api/v1/ws/cctv/{camera_id}`.
-9. **Pantau setelah deployment.** Catat latency, confidence, alarm palsu/terlewat, input/output dan error; evaluasi
-   ulang data nyata berkala. Perubahan kamera, pencahayaan, lokasi, atau distribusi api/asap mengindikasikan
-   *concept drift* dan perlunya anotasi serta training ulang.
+9. **Pantau setelah deployment** (notebook langkah `8`). Catat latency, confidence, alarm palsu/terlewat, input/output
+   dan error; bandingkan rasio Type I/Type II live dengan `error-matrix.json`. Perubahan kamera, pencahayaan, lokasi,
+   atau distribusi api/asap mengindikasikan *concept drift* dan perlunya anotasi serta training ulang — siklus kembali
+   ke audit data di langkah `1f`, bukan langsung men-training.
 
-Materi perkuliahan tercermin dalam siklus ini: preprocessing/cleaning dan split mencegah masalah data *GIGO*;
-supervised learning memerlukan pasangan gambar-label; evaluasi memakai metrik klasifikasi object detection;
-deployment memerlukan logging dan pemantauan perubahan distribusi.
+Materi perkuliahan tercermin dalam siklus ini: *requirements analysis* dan audit data memastikan kecukupan sampel;
+preprocessing/cleaning, fitur dan split mencegah masalah data *GIGO*; supervised learning memerlukan pasangan
+gambar-label; evaluasi memakai metrik object detection plus cross-validation dan matriks kesalahan; optimisasi model
+(epoch dan ambang) dipilih di validation; deployment memerlukan logging dan pemantauan perubahan distribusi.
 
 ## 4. Jalankan script lokal dari `models/`
 
