@@ -5,6 +5,10 @@ from pathlib import Path
 from typing import List
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+REPO_DIR = BASE_DIR.parent
+MODELS_DIR = REPO_DIR / "models"
+SHIPPED_WEIGHTS = MODELS_DIR / "fire-smoke-yolov8n" / "best.pt"
+LOCAL_WEIGHTS = MODELS_DIR / "weights" / "best.pt"
 
 
 def _env(name: str, default: str) -> str:
@@ -29,11 +33,18 @@ def _env_bool(name: str, default: bool) -> bool:
     return _env(name, "1" if default else "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _default_weights() -> Path:
+    configured = os.getenv("FSD_WEIGHTS")
+    if configured:
+        return Path(configured)
+    return next((path for path in (SHIPPED_WEIGHTS, LOCAL_WEIGHTS) if path.is_file()), SHIPPED_WEIGHTS)
+
+
 @dataclass
 class Settings:
     # Detection engine: "auto" (YOLO when weights + ultralytics exist, else heuristic), "yolo", "heuristic"
     engine: str = field(default_factory=lambda: _env("ENGINE", "auto").lower())
-    weights_path: Path = field(default_factory=lambda: Path(_env("WEIGHTS", str(BASE_DIR / "weights" / "best.pt"))))
+    weights_path: Path = field(default_factory=_default_weights)
     confidence_threshold: float = field(default_factory=lambda: _env_float("CONFIDENCE", 0.4))
     iou_threshold: float = field(default_factory=lambda: _env_float("IOU", 0.45))
     device: str = field(default_factory=lambda: _env("DEVICE", ""))

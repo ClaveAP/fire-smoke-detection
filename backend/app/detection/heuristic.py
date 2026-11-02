@@ -11,7 +11,7 @@ region. In streaming mode an optional motion mask boosts moving plumes and
 suppresses static grey surfaces.
 
 This engine is a dependency-free baseline; drop a YOLO ``best.pt`` into
-``backend/weights/`` for production-grade accuracy.
+``models/weights/`` for production-grade accuracy.
 """
 from typing import List, Optional
 

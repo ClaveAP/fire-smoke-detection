@@ -108,6 +108,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/cameras/{camera_id}/snapshot.jpg:
+    get:
+      tags:
+      - cameras
+      summary: Camera Snapshot
+      description: Latest frame the server analyzed, so the browser can show footage
+        beside its detections.
+      operationId: camera_snapshot_api_v1_cameras__camera_id__snapshot_jpg_get
+      parameters:
+      - name: camera_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Camera Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/incidents:
     get:
       tags:

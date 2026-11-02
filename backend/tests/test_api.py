@@ -122,3 +122,17 @@ def test_websocket_server_pull_from_video_file(client, tmp_path):
         packets = [ws.receive_json() for _ in range(3)]
     assert all(p["cameraId"] == "file-cam" for p in packets)
     assert any(d["label"] == "fire" for d in packets[0]["detections"])
+
+
+def test_camera_snapshot_serves_last_analyzed_frame(client):
+    assert client.get("/api/v1/cameras/cam-1/snapshot.jpg").status_code == 404
+
+    with client.websocket_connect("/api/v1/ws/cctv/cam-1") as ws:
+        ws.send_bytes(encode(synthetic_fire()))
+        assert ws.receive_json()["detections"]
+
+    res = client.get("/api/v1/cameras/cam-1/snapshot.jpg")
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "image/jpeg"
+    frame = cv2.imdecode(np.frombuffer(res.content, np.uint8), cv2.IMREAD_COLOR)
+    assert frame.shape[:2] == (480, 640)

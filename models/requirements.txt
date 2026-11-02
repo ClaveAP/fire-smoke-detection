@@ -1,0 +1,5 @@
+# Training / evaluation environment for the fire & smoke model (Ultralytics YOLOv8 + PyTorch).
+# Install inside a dedicated venv in models/, separate from the backend serving venv.
+ultralytics>=8.1
+opencv-python>=4.9
+pyyaml>=6.0

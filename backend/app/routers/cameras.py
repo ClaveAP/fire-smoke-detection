@@ -23,6 +23,19 @@ async def get_camera(camera_id: str, service: DetectionService = Depends(get_ser
     return camera
 
 
+@router.get(
+    "/{camera_id}/snapshot.jpg",
+    response_class=Response,
+    responses={200: {"content": {"image/jpeg": {"schema": {"type": "string", "format": "binary"}}}}},
+)
+async def camera_snapshot(camera_id: str, service: DetectionService = Depends(get_service)):
+    """Latest frame the server analyzed, so the browser can show footage beside its detections."""
+    frame = service.cameras.latest_frame(camera_id)
+    if frame is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No frame analyzed yet; connect the live stream first")
+    return Response(content=frame, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+
+
 @router.post("", response_model=CameraFeedSchema, status_code=status.HTTP_201_CREATED)
 async def register_camera(payload: CameraCreateSchema, service: DetectionService = Depends(get_service)):
     """Register or update a camera. Give it a ``streamUrl`` to let the server pull and analyze frames."""

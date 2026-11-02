@@ -9,6 +9,15 @@ interface UseWebcamScannerOptions {
   onAutoAlarmTrigger: () => void;
   canAutoTriggerAlarm: () => boolean;
   onResetSilenceLock: () => void;
+  /**
+   * True while the backend WebSocket is analyzing our frames: the browser then only ships JPEG
+   * frames and the local chroma scanner (plus its local incident logging) stands by, so the YOLO
+   * engine on the server stays the single source of truth.
+   */
+  serverLive?: boolean;
+  pushFrame?: (frame: Blob | ArrayBuffer) => boolean;
+  /** Lets the page pick the backend camera id from the click itself, before this hook's state lands. */
+  onWebcamToggle?: (active: boolean) => void;
 }
 
 export function useWebcamScanner({
@@ -16,6 +25,9 @@ export function useWebcamScanner({
   onAutoAlarmTrigger,
   canAutoTriggerAlarm,
   onResetSilenceLock,
+  serverLive = false,
+  pushFrame,
+  onWebcamToggle,
 }: UseWebcamScannerOptions) {
   const [isWebcam, setIsWebcam] = useState(false);
   const [isConnectingWebcam, setIsConnectingWebcam] = useState(false);
@@ -60,6 +72,7 @@ export function useWebcamScanner({
     if (isWebcam) {
       stopWebcamStream();
       setIsWebcam(false);
+      onWebcamToggle?.(false);
       return;
     }
 
@@ -68,6 +81,7 @@ export function useWebcamScanner({
       !navigator.mediaDevices ||
       !navigator.mediaDevices.getUserMedia
     ) {
+      onWebcamToggle?.(false);
       onShowToast("Browser tidak mendukung akses kamera.", 3500);
       return;
     }
@@ -140,8 +154,10 @@ export function useWebcamScanner({
       }
 
       setIsWebcam(true);
+      onWebcamToggle?.(true);
     } catch (err) {
       console.warn("Webcam access denied or unavailable:", err);
+      onWebcamToggle?.(false);
       onShowToast(
         "Izin kamera ditolak atau webcam tidak ditemukan. Pastikan izin kamera aktif di browser.",
         4000
@@ -149,7 +165,7 @@ export function useWebcamScanner({
     } finally {
       setIsConnectingWebcam(false);
     }
-  }, [isWebcam, stopWebcamStream, onShowToast]);
+  }, [isWebcam, stopWebcamStream, onShowToast, onWebcamToggle]);
 
   useEffect(() => {
     if (isWebcam && streamRef.current && videoRef.current) {
@@ -162,6 +178,33 @@ export function useWebcamScanner({
 
   useEffect(() => {
     if (!isWebcam) return;
+
+    if (serverLive && pushFrame) {
+      const sender = document.createElement("canvas");
+      const sctx = sender.getContext("2d");
+      if (!sctx) return;
+
+      let sending = false;
+      const interval = window.setInterval(() => {
+        const video = videoRef.current;
+        if (!video || video.readyState < 2 || !video.videoWidth || sending) return;
+        const width = Math.min(640, video.videoWidth);
+        sender.width = width;
+        sender.height = Math.round((video.videoHeight / video.videoWidth) * width);
+        sctx.drawImage(video, 0, 0, sender.width, sender.height);
+        sending = true;
+        sender.toBlob(
+          (blob) => {
+            sending = false;
+            if (blob) pushFrame(blob);
+          },
+          "image/jpeg",
+          0.72
+        );
+      }, 200);
+
+      return () => window.clearInterval(interval);
+    }
 
     const offscreen = document.createElement("canvas");
     const W = 64;
@@ -280,6 +323,8 @@ export function useWebcamScanner({
     isWebcam,
     isMirrored,
     webcamLabel,
+    serverLive,
+    pushFrame,
     canAutoTriggerAlarm,
     onAutoAlarmTrigger,
     onResetSilenceLock,

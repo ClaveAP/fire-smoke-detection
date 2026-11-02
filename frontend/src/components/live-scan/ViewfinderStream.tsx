@@ -6,6 +6,9 @@ interface ViewfinderStreamProps {
   isMirrored?: boolean;
   alarmActive?: boolean;
   videoRef: RefObject<HTMLVideoElement | null>;
+  /** Snapshot the server analyzed for this CCTV camera, so footage and boxes stay in sync. */
+  previewSrc?: string;
+  showPreview?: boolean;
 }
 
 export function ViewfinderStream({
@@ -14,7 +17,11 @@ export function ViewfinderStream({
   isMirrored = true,
   alarmActive = false,
   videoRef,
+  previewSrc = "",
+  showPreview = false,
 }: ViewfinderStreamProps) {
+  const isLivePreview = showPreview && Boolean(previewSrc);
+
   return (
     <div className="absolute inset-0 w-full h-full z-0 overflow-hidden bg-[#07080d]">
       {/* Always keep <video> mounted in DOM so videoRef.current is never null when attaching webcam stream */}
@@ -24,7 +31,7 @@ export function ViewfinderStream({
         playsInline
         muted
         className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
-          isWebcam
+          isWebcam && !isLivePreview
             ? "opacity-100 z-10"
             : "opacity-0 pointer-events-none z-0"
         } ${flashlightOn ? "brightness-125 contrast-105" : "brightness-100"} ${
@@ -32,13 +39,25 @@ export function ViewfinderStream({
         }`}
       />
 
+      {/* Live CCTV footage pulled and analyzed by the backend */}
+      {isLivePreview && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={previewSrc}
+          alt="CCTV aktif"
+          className={`absolute inset-0 w-full h-full object-cover z-20 ${
+            flashlightOn ? "brightness-125" : "brightness-100"
+          }`}
+        />
+      )}
+
       {/* Simulated Industrial Fire & Smoke Stream */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/hero-fire-smoke.webp"
         alt="Simulasi Kamera Gudang"
         className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-700 ${
-          isWebcam ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"
+          isWebcam || isLivePreview ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"
         } ${flashlightOn ? "brightness-125" : "brightness-95"}`}
       />
 

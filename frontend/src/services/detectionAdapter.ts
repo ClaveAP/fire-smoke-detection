@@ -1,4 +1,4 @@
-import { IncidentRecord, DetectionResult } from "@/types/detection";
+import { BackendHealth, CameraFeed, IncidentRecord, DetectionResult } from "@/types/detection";
 import {
   INITIAL_INCIDENT_RECORDS,
   simulateImageInference,
@@ -12,6 +12,11 @@ export class DetectionAdapter {
 
   constructor(backendUrl: string = BACKEND_URL) {
     this.backendUrl = backendUrl.replace(/\/$/, "");
+  }
+
+  /** Backend origin used for REST and WebSocket calls ("" when no backend is configured). */
+  get baseUrl(): string {
+    return this.backendUrl;
   }
 
   /**
@@ -77,20 +82,48 @@ export class DetectionAdapter {
    * Health check to probe whether real backend microservice is online
    */
   async isBackendHealthy(): Promise<boolean> {
-    if (!this.backendUrl) return false;
+    const health = await this.getHealth();
+    return health !== null;
+  }
+
+  /**
+   * Service info, including which detection engine (YOLO weights or heuristic baseline) is active
+   */
+  async getHealth(): Promise<BackendHealth | null> {
+    if (!this.backendUrl) return null;
 
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-      const res = await fetch(`${this.backendUrl}/api/v1/health`, {
-        signal: controller.signal,
-      });
+      const res = await fetch(`${this.backendUrl}/api/v1/health`, { signal: controller.signal });
       clearTimeout(timeoutId);
-      return res.ok;
+      return res.ok ? ((await res.json()) as BackendHealth) : null;
     } catch {
-      return false;
+      return null;
     }
+  }
+
+  /**
+   * Cameras registered on the server; those with a streamUrl can be pulled live by the backend
+   */
+  async getCameras(): Promise<CameraFeed[]> {
+    if (!this.backendUrl) return [];
+    try {
+      const res = await fetch(`${this.backendUrl}/api/v1/cameras`);
+      if (res.ok) return (await res.json()) as CameraFeed[];
+    } catch {
+      // Offline: the live-scan view falls back to the browser webcam / simulation mode
+    }
+    return [];
+  }
+
+  /** JPEG of the frame the server last analyzed, kept in sync with the detection packets. */
+  snapshotUrl(cameraId: string, stamp: string | number): string {
+    if (!this.backendUrl) return "";
+    return `${this.backendUrl}/api/v1/cameras/${encodeURIComponent(cameraId)}/snapshot.jpg?t=${encodeURIComponent(
+      String(stamp)
+    )}`;
   }
 
   /**

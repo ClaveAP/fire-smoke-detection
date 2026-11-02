@@ -35,6 +35,14 @@ def snapshot_data_url(image: np.ndarray, width: int = 480) -> Optional[str]:
     return f"data:image/jpeg;base64,{base64.b64encode(buf.tobytes()).decode()}" if ok else None
 
 
+def encode_frame(image: np.ndarray, width: int = 800, quality: int = 72) -> Optional[bytes]:
+    """JPEG copy of an analyzed frame, sized for the browser preview."""
+    h, w = image.shape[:2]
+    small = cv2.resize(image, (width, max(1, int(h * width / w))), interpolation=cv2.INTER_AREA) if w > width else image
+    ok, buf = cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, quality])
+    return buf.tobytes() if ok else None
+
+
 class IncidentTrigger:
     """Debounces stream detections into incidents: N consecutive hits, then a per-class cooldown."""
 
@@ -85,7 +93,7 @@ class DetectionService:
         """Update live camera state and log an incident when the trigger fires."""
         status = derive_status(boxes, self.settings.incident_min_confidence)
         h, w = image.shape[:2]
-        self.cameras.update_live(camera_id, boxes, status, fps, latency_ms, f"{w}x{h}")
+        self.cameras.update_live(camera_id, boxes, status, fps, latency_ms, f"{w}x{h}", encode_frame(image))
 
         if not self.settings.auto_incidents:
             return status, None

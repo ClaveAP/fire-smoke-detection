@@ -1,3 +1,4 @@
-# Optional: enables the YOLO engine when backend/weights/best.pt is present
+# Optional: enables YOLO inference in the FastAPI service.
+# Model training and evaluation live in ../models (own requirements.txt).
 -r requirements.txt
 ultralytics>=8.1

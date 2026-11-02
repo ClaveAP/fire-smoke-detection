@@ -55,3 +55,27 @@ export interface DetectionFilterOptions {
   showFire: boolean;
   showSmoke: boolean;
 }
+
+/** One analyzed frame from ``WS /api/v1/ws/cctv/{camera_id}`` (see backend StreamFramePacket). */
+export interface StreamFramePacket {
+  cameraId: string;
+  timestamp: string;
+  fps: number;
+  latencyMs: number;
+  status: CameraStatus;
+  detections: BoundingBox[];
+  incidentId?: string | null;
+}
+
+export type StreamMode = "simulation" | "cctv" | "webcam";
+
+export type ConnectionState = "idle" | "connecting" | "open" | "closed" | "error";
+
+export interface BackendHealth {
+  status: string;
+  service: string;
+  version: string;
+  engine: string;
+  confidenceThreshold: number;
+  uptimeSeconds: number;
+}

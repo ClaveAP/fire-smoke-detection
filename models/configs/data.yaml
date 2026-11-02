@@ -1,0 +1,11 @@
+# Jalankan script dari direktori models: python -m src.train
+# Salin folder images dan labels dari setiap split; buat labels/*.txt kosong untuk gambar negatif.
+path: dataset/data
+train: train/images
+val: val/images
+test: test/images
+
+# Pertahankan urutan ID kelas sesuai anotasi dataset Anda.
+names:
+  0: smoke
+  1: fire
