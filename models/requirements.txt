@@ -1,6 +1,8 @@
 # Training / evaluation environment for the fire & smoke model (Ultralytics YOLO11 + PyTorch).
 # Install inside a dedicated venv in models/, separate from the backend serving venv.
-# 8.3 is the first release that ships the yolo11*.pt checkpoints.
-ultralytics>=8.3
+# 8.3 is the first release that ships the yolo11*.pt checkpoints. The notebook uses the
+# 8.4 augmentation keys (fliplr/flipud), which replaced hflip/vflip, so the range is
+# pinned to 8.4.x to keep the training run reproducible.
+ultralytics>=8.4.1,<8.5
 opencv-python>=4.9
 pyyaml>=6.0
