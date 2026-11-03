@@ -17,7 +17,8 @@ Platform ini dirancang untuk mendeteksi bahaya kebakaran dan kepulan asap secara
 
 Dibangun dengan arsitektur **terpisah (*decoupled*)**:
 - **Frontend (Next.js 16 + React 19):** Antarmuka *Dark Operations Command Center*, overlay *bounding box* berakselerasi perangkat keras via HTML5 2D Canvas, pemindai titik api webcam real-time (`useWebcamScanner`), serta sirine audio sintetis berbasis Web Audio API lokal. Dilengkapi *graceful client fallback* & *mock engine* sehingga aplikasi dapat langsung dijalankan penuh tanpa ketergantungan server backend.
-- **Backend (FastAPI Vision Microservice):** Deteksi api & asap nyata pada gambar, video, dan stream kamera live (REST + WebSocket), log insiden persisten (SQLite), serta registri kamera. Menggunakan engine **YOLO** otomatis bila `weights/best.pt` tersedia, atau engine **OpenCV heuristik** bawaan tanpa model terlatih.
+- **Backend (FastAPI Vision Microservice):** Deteksi api & asap nyata pada gambar, video, dan stream kamera live (REST + WebSocket), log insiden persisten (SQLite), serta registri kamera. Menggunakan engine **YOLO** otomatis bila bobot di `models/` tersedia, atau engine **OpenCV heuristik** bawaan tanpa model terlatih.
+- **Models (dataset & training):** Konfigurasi dataset YOLO, notebook Colab, script `train` / `evaluate` / `predict_camera`, artefak training, dan bobot `best.pt` — terpisah dari runtime API agar venv GPU tidak mencemari microservice.
 
 ---
 
@@ -57,6 +58,13 @@ flowchart TD
         DB[("SQLite Incident Store")]
     end
 
+    subgraph ML["Model & Training (models/)"]
+        Data[("Dataset YOLO berlabel")]
+        Notebook["Notebook Colab / src.train"]
+        Eval["src.evaluate (mAP per kelas)"]
+        Weights["bobot best.pt"]
+    end
+
     LiveScan --> Webcam
     LiveScan --> Canvas
     LiveScan --> Synth
@@ -71,6 +79,11 @@ flowchart TD
     Engine -->|weights tersedia| YOLO
     Engine -->|fallback| Heuristic
     API --> DB
+
+    Data --> Notebook
+    Notebook --> Weights
+    Weights --> Eval
+    Weights -->|best.pt| YOLO
 ```
 
 ---
@@ -101,7 +114,7 @@ fire-smoke-detection/
 │   │   └── types/                                # Kontrak tipe data TypeScript (detection.ts)
 │   ├── package.json
 │   └── tailwind.config.ts
-├── backend/                                      # Microservice Vision API (FastAPI)
+├── backend/                                      # Microservice Vision API (FastAPI) — hanya serving
 │   ├── app/
 │   │   ├── main.py                               # App factory FastAPI, CORS, lifespan
 │   │   ├── config.py                             # Konfigurasi environment FSD_*
@@ -109,11 +122,22 @@ fire-smoke-detection/
 │   │   ├── detection/                            # Engine deteksi: heuristic (OpenCV), yolo, NMS
 │   │   ├── services/                             # Detection service, incident store (SQLite), kamera
 │   │   └── routers/                              # health, detect, cameras, incidents, WebSocket
+│   ├── scripts/                                  # debug_presets.py, export_openapi.py
 │   ├── tests/                                    # pytest: engine + API + WebSocket
-│   ├── weights/                                  # Tempat best.pt (YOLO, opsional)
 │   ├── openapi.yaml                              # Spesifikasi kontrak OpenAPI (auto-generate)
-│   ├── requirements.txt
-│   └── README.md                                 # Panduan khusus backend & integrasi YOLOv8
+│   ├── requirements.txt                          # Dependensi serving (inferensi YOLO: requirements-yolo.txt)
+│   └── README.md                                 # Panduan API, WebSocket, dan konfigurasi
+├── models/                                       # Dataset, training, evaluasi, dan bobot model
+│   ├── configs/data.yaml                         # Konfigurasi kelas/path dataset YOLO lokal
+│   ├── dataset/data/{train,val,test}/{images,labels}/ # Data lokal; tidak di-commit
+│   ├── notebooks/                                # training_colab.ipynb (Colab end-to-end)
+│   ├── src/                                      # train.py, evaluate.py, predict_camera.py, utils.py
+│   ├── tests/                                    # pytest: validasi dataset & overlay anotasi
+│   ├── runs/                                     # Log/metrik hasil training lokal; tidak di-commit
+│   ├── weights/                                  # best.pt hasil training lokal
+│   ├── fire-smoke-yolo11n/                       # Bobot yang dibaca backend (best.pt di luar Git)
+│   ├── requirements.txt                          # Ultralytics YOLO + PyTorch (venv terpisah dari backend)
+│   └── README.md                                 # Panduan data → training → evaluasi → deploy
 └── README.md                                     # Dokumentasi utama repositori
 ```
 
@@ -165,6 +189,28 @@ Dokumentasi interaktif Swagger UI tersedia di: [http://localhost:8000/docs](http
 
 ---
 
+### 3. Menjalankan Training Model (folder `models/`)
+
+```bash
+# 1. Masuk ke direktori model
+cd models
+
+# 2. Virtual environment khusus training (dependensi GPU tidak masuk ke backend)
+python3 -m venv venv
+source venv/bin/activate       # macOS / Linux
+# venv\Scripts\activate        # Windows
+pip install -r requirements.txt
+
+# 3. Salin dataset YOLO berlabel ke dataset/data/{train,val,test}/{images,labels}/ lalu latih
+python -m src.train --epochs 50 --imgsz 640
+python -m src.evaluate --weights weights/best.pt --split test
+```
+
+`best.pt` hasil training tersimpan di `models/weights/` dan otomatis dibaca backend. Panduan lengkap
+(termasuk notebook Colab): [`models/README.md`](models/README.md).
+
+---
+
 ## ⚙️ Konfigurasi Environment Variables
 
 Untuk menghubungkan frontend dengan backend FastAPI, buat file `.env.local` pada direktori `frontend/`:
@@ -187,6 +233,7 @@ Seluruh endpoint backend didefinisikan di `backend/openapi.yaml` dan sinkron den
 | `POST` | `/api/v1/detect/image` | Unggah gambar (`multipart/form-data`) → *bounding box* `[x, y, w, h]`, kelas (`fire` / `smoke`), *confidence*. |
 | `POST` | `/api/v1/detect/video` | Unggah video → deteksi per frame sampel + ringkasan per kelas. |
 | `GET` `POST` `DELETE` | `/api/v1/cameras[/{id}]` | Daftar kamera (status & deteksi live), registrasi kamera dengan `streamUrl` (RTSP/file/webcam). |
+| `GET` | `/api/v1/cameras/{id}/snapshot.jpg` | Frame terakhir yang dianalisis server, untuk pratinjau CCTV di browser. |
 | `GET` `POST` `PATCH` `DELETE` | `/api/v1/incidents[/{id}]` | Log insiden persisten (SQLite) + `GET /incidents/stats`. |
 | `WS` | `/api/v1/ws/cctv/{camera_id}` | Deteksi live per frame: server membaca `streamUrl`, atau klien mengirim frame (biner / base64). Insiden dicatat otomatis. |
 
@@ -196,15 +243,23 @@ Detail lengkap & konfigurasi: [`backend/README.md`](backend/README.md).
 
 ## 🤖 Engine Deteksi & Integrasi YOLO
 
-Backend langsung berfungsi tanpa model terlatih menggunakan engine **OpenCV heuristik** (aturan warna api RGB/HSV/YCbCr, analisis tekstur & gerakan untuk asap). Untuk akurasi produksi, pasang bobot YOLO hasil training:
+Backend langsung berfungsi tanpa model terlatih menggunakan engine **OpenCV heuristik**. Untuk model supervised YOLO11n dengan bounding box, buka `models/notebooks/training_colab.ipynb` di Colab atau jalankan `python -m src.train` dari folder `models/`. Letakkan dataset YOLO Detection **yang sudah dianotasi** di `My Drive/visikom/` (Colab) atau `models/dataset/data/` (lokal); data mentah tanpa label fire/smoke belum cukup untuk training. Notebook memeriksa anotasi/split dan menyimpan `best.pt` serta hasil evaluasi kembali ke Drive. Tahapnya mengikuti Machine Learning Lifecycle materi: audit kecukupan data → cleansing & validasi anotasi → feature engineering → data split → training → cross-validation → pemilihan epoch dan ambang di validation → evaluasi test (termasuk matriks Type I/II) → deployment + performance monitoring.
+
+Salin `best.pt` hasil training ke `models/fire-smoke-yolo11n/best.pt` (checkpoint resmi) atau `models/weights/best.pt` (bobot lokal), lalu aktifkan YOLO di backend:
 
 ```bash
+cp /path/ke/best.pt models/fire-smoke-yolo11n/best.pt
 cd backend
 pip install -r requirements-yolo.txt
-cp /path/ke/best.pt weights/best.pt
 ```
 
-Restart server — engine berganti otomatis ke YOLO (cek `GET /api/v1/health` → `engine`). Kelas bernama `fire`/`flame` dan `smoke` dipetakan otomatis ke skema `BoundingBox`.
+Restart server — engine berganti otomatis ke YOLO (cek `GET /api/v1/health` → `engine`). `Media Inspector` dan `Live Scan` memakai FastAPI selama `NEXT_PUBLIC_BACKEND_URL` tersedia.
+
+`Live Scan` sudah tersambung ke `WS /api/v1/ws/cctv/{camera_id}` melalui `frontend/src/services/streamClient.ts` + `hooks/useCameraStream.ts`:
+
+* **Jalur A — server menarik stream.** Pilih kamera yang punya `streamUrl` pada dropdown *Sumber kamera*; server membaca RTSP/file/webcam, mengirim satu paket deteksi per frame, dan browser menampilkan frame hasil server lewat `snapshot.jpg` sehingga kotak deteksi cocok dengan gambar.
+* **Jalur B — browser mendorong frame.** Tombol *Gunakan Webcam* mengirim JPEG (≤640 px, ±5 fps) ke WebSocket yang sama; selama stream server hidup, pemindai heuristik browser berhenti dan engine server menjadi satu-satunya sumber deteksi (insiden hanya dicatat server, tidak dobel).
+* **Ketahanan.** Socket putus → reconnect bertahap 1–15 detik lalu percobaan tiap 30 detik dengan pesan status; backend mati → kembali ke pemindai lokal/simulasi dan daftar kamera diisi ulang otomatis begitu backend hidup lagi.
 
 ---
 
@@ -212,4 +267,4 @@ Restart server — engine berganti otomatis ke YOLO (cek `GET /api/v1/health` �
 
 - **Frontend:** Next.js 16.3 (App Router), React 19.2, TypeScript 5, Tailwind CSS v4, Lucide React, OGL, HTML5 2D Canvas API, WebRTC (`getUserMedia`), Web Audio API.
 - **Backend:** FastAPI, Pydantic v2, Uvicorn, WebSockets, OpenCV, NumPy, SQLite, OpenAPI 3.1, pytest.
-- **AI / Computer Vision Ready:** Ultralytics YOLOv8, PyTorch, OpenCV.
+- **AI / Computer Vision Ready:** Ultralytics YOLO11, PyTorch, OpenCV.

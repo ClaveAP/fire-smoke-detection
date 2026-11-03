@@ -9,12 +9,24 @@ import {
   BellRingingIcon,
 } from "@phosphor-icons/react";
 import { SpecularButton } from "@/components/common/SpecularButton";
+import { CameraStatus } from "@/types/detection";
+
+interface StreamTelemetry {
+  isLive: boolean;
+  status: CameraStatus;
+  fireConfidence: number;
+  smokeConfidence: number;
+  fps: number;
+  latencyMs: number;
+  zoneLabel: string;
+}
 
 interface TelemetrySidebarProps {
   isWebcam?: boolean;
   webcamLabel?: string;
   webcamFireConfidence?: number;
-  webcamSmokeConfidence?: number;
+  /** Real numbers from the backend engine; null while running the local simulation. */
+  stream?: StreamTelemetry | null;
   alarmActive: boolean;
   alertToast: string | null;
   onEmergencyTrigger: () => void;
@@ -22,9 +34,9 @@ interface TelemetrySidebarProps {
 
 export function TelemetrySidebar({
   isWebcam = false,
-  webcamLabel = "Kamera Perangkat",
+  webcamLabel = "Kamera Laptop",
   webcamFireConfidence = 0,
-  webcamSmokeConfidence = 0,
+  stream = null,
   alarmActive,
   alertToast,
   onEmergencyTrigger,
@@ -35,22 +47,37 @@ export function TelemetrySidebar({
     e.currentTarget.style.setProperty("--my", `${e.clientY - rect.top}px`);
   };
 
-  const firePct = isWebcam ? Math.round(webcamFireConfidence * 100) : 94;
-  const smokePct = isWebcam
-    ? webcamSmokeConfidence > 0
-      ? Math.round(webcamSmokeConfidence * 100)
-      : webcamFireConfidence > 0.4
+  const isLive = Boolean(stream?.isLive);
+
+  const firePct = isLive
+    ? Math.round((stream?.fireConfidence ?? 0) * 100)
+    : isWebcam
+    ? Math.round(webcamFireConfidence * 100)
+    : 94;
+  const smokePct = isLive
+    ? Math.round((stream?.smokeConfidence ?? 0) * 100)
+    : isWebcam
+    ? webcamFireConfidence > 0.4
       ? Math.round(webcamFireConfidence * 72)
       : 4
     : 88;
-  const tempDisplay = isWebcam
+  const tempDisplay = isLive
+    ? (stream?.fireConfidence ?? 0) > 0
+      ? `+${Math.round(140 + (stream?.fireConfidence ?? 0) * 260)}°C`
+      : "+29°C"
+    : isWebcam
     ? webcamFireConfidence > 0.35
       ? `+${Math.round(140 + webcamFireConfidence * 260)}°C`
       : "+29°C"
     : "+412°C";
 
-  const hasDanger =
-    !isWebcam || webcamFireConfidence > 0.35 || webcamSmokeConfidence > 0.45;
+  const hasDanger = isLive ? (stream?.status ?? "safe") !== "safe" : !isWebcam || webcamFireConfidence > 0.35;
+  const zoneLabel = isLive ? stream?.zoneLabel ?? "" : isWebcam ? webcamLabel : "Zona Gudang 04-A";
+  const statusBadge = !hasDanger
+    ? "Area Aman"
+    : stream?.status === "warning"
+    ? "Waspada"
+    : "Bahaya Terdeteksi";
 
   return (
     <aside className="w-full lg:w-[380px] shrink-0 flex flex-col">
@@ -62,9 +89,7 @@ export function TelemetrySidebar({
               <h2 className="font-display text-lg sm:text-xl font-bold text-white">
                 Status Deteksi
               </h2>
-              <p className="text-xs text-white/55 truncate">
-                {isWebcam ? webcamLabel : "Zona Gudang 04-A"}
-              </p>
+              <p className="text-xs text-white/55 truncate">{zoneLabel}</p>
             </div>
             <span
               className={`shrink-0 px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold border transition-colors ${
@@ -73,9 +98,23 @@ export function TelemetrySidebar({
                   : "bg-emerald-500/15 text-emerald-400 border-emerald-500/35"
               }`}
             >
-              {hasDanger ? "Bahaya Terdeteksi" : "Area Aman"}
+              {statusBadge}
             </span>
           </div>
+
+          {isLive && (
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-white/60">
+              <span className="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10">
+                {stream?.fps.toFixed(1) ?? "0.0"} FPS
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10">
+                {Math.round(stream?.latencyMs ?? 0)} ms
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300">
+                Engine server
+              </span>
+            </div>
+          )}
 
           {/* 3 Clean Metric Cards: 1-col on Mobile, 3-col Row on Tablet, 1-col Stack in Desktop Sidebar */}
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-1 gap-3 sm:gap-3.5">

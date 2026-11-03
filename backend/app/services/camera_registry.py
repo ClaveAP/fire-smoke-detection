@@ -29,6 +29,7 @@ class CameraRegistry:
     def __init__(self, cameras_file: Optional[Path] = None):
         self._lock = threading.Lock()
         self._cameras: Dict[str, CameraFeedSchema] = {}
+        self._frames: Dict[str, bytes] = {}
         seed = DEFAULT_CAMERAS
         if cameras_file and cameras_file.is_file():
             try:
@@ -68,8 +69,14 @@ class CameraRegistry:
             ))
         return camera
 
+    def latest_frame(self, camera_id: str) -> Optional[bytes]:
+        """Most recent JPEG analyzed for this camera, for the browser preview."""
+        with self._lock:
+            return self._frames.get(camera_id)
+
     def remove(self, camera_id: str) -> bool:
         with self._lock:
+            self._frames.pop(camera_id, None)
             return self._cameras.pop(camera_id, None) is not None
 
     def update_live(
@@ -80,6 +87,7 @@ class CameraRegistry:
         fps: Optional[float] = None,
         latency_ms: Optional[float] = None,
         resolution: Optional[str] = None,
+        frame_jpeg: Optional[bytes] = None,
     ) -> None:
         with self._lock:
             camera = self._cameras.get(camera_id)
@@ -93,3 +101,5 @@ class CameraRegistry:
             if resolution:
                 update["resolution"] = resolution
             self._cameras[camera_id] = camera.model_copy(update=update)
+            if frame_jpeg is not None:
+                self._frames[camera_id] = frame_jpeg

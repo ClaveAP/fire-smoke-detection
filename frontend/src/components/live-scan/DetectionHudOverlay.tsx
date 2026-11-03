@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Fire, Wind, Stack, Eye, EyeSlash } from "@phosphor-icons/react";
+import { BoundingBox, DetectionClass } from "@/types/detection";
 
 type FocusLayer = "both" | "fire" | "smoke";
 
@@ -16,13 +17,35 @@ export interface DynamicBox {
 interface DetectionHudOverlayProps {
   isWebcam?: boolean;
   webcamFireBox?: DynamicBox | null;
-  webcamSmokeBox?: DynamicBox | null;
+  /** Detections measured by the backend engine on the frame currently on screen. */
+  serverBoxes?: BoundingBox[];
+  /** True while WebSocket packets are arriving; the server is then the source of truth. */
+  isStreamLive?: boolean;
+  /** Flip X for a CSS-mirrored webcam preview so boxes track what the user sees. */
+  mirrored?: boolean;
 }
+
+const BOX_STYLES: Record<DetectionClass, { border: string; fill: string; chip: string; chipText: string }> = {
+  fire: {
+    border: "border-[#ff5722]",
+    fill: "bg-[#ff5722]/15",
+    chip: "bg-[#ff5722] text-white",
+    chipText: "FIRE",
+  },
+  smoke: {
+    border: "border-[#38bdf8]",
+    fill: "bg-[#38bdf8]/10",
+    chip: "bg-[#38bdf8] text-[#050507]",
+    chipText: "SMOKE",
+  },
+};
 
 export function DetectionHudOverlay({
   isWebcam = false,
   webcamFireBox = null,
-  webcamSmokeBox = null,
+  serverBoxes = [],
+  isStreamLive = false,
+  mirrored = false,
 }: DetectionHudOverlayProps) {
   const [layer, setLayer] = useState<FocusLayer>("both");
   const [showDemoBoxesOnWebcam, setShowDemoBoxesOnWebcam] = useState(false);
@@ -30,30 +53,49 @@ export function DetectionHudOverlay({
   const showFire = layer === "both" || layer === "fire";
   const showSmoke = layer === "both" || layer === "smoke";
 
-  const shouldRenderStaticBoxes = !isWebcam || showDemoBoxesOnWebcam;
+  const liveBoxes = serverBoxes.filter((box) =>
+    box.label === "fire" ? showFire : showSmoke
+  );
+
+  const shouldRenderStaticBoxes = !isStreamLive && (!isWebcam || showDemoBoxesOnWebcam);
 
   return (
     <div className="relative z-10 flex-1 w-full h-full p-3 sm:p-5 flex flex-col justify-end pointer-events-none">
-      {/* Dynamic Real-Time Smoke Box from Backend Vision Engine */}
-      {isWebcam && webcamSmokeBox && showSmoke && (
-        <div
-          style={{
-            left: `${webcamSmokeBox.x * 100}%`,
-            top: `${webcamSmokeBox.y * 100}%`,
-            width: `${webcamSmokeBox.w * 100}%`,
-            height: `${webcamSmokeBox.h * 100}%`,
-          }}
-          className="absolute rounded-xl sm:rounded-2xl border-2 border-dashed border-[#38bdf8] bg-[#38bdf8]/15 p-2 sm:p-3 flex flex-col justify-between text-left transition-all duration-200 shadow-[0_0_24px_rgba(56,189,248,0.35)]"
-        >
-          <div className="self-start inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#38bdf8] text-[#050507] text-[10px] sm:text-xs font-bold font-mono shadow-lg whitespace-nowrap">
-            <Wind weight="bold" className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-            <span>SMOKE · {Math.round(webcamSmokeBox.confidence * 100)}%</span>
-          </div>
-        </div>
-      )}
+      {/* Detections measured by the backend engine for the frame currently on screen */}
+      {isStreamLive &&
+        liveBoxes.map((box) => {
+          const [x, y, w, h] = box.bbox;
+          const style = BOX_STYLES[box.label];
+          const Icon = box.label === "fire" ? Fire : Wind;
+          const left = mirrored ? 1 - x - w : x;
+          return (
+            <div
+              key={box.id}
+              style={{
+                left: `${left * 100}%`,
+                top: `${y * 100}%`,
+                width: `${w * 100}%`,
+                height: `${h * 100}%`,
+              }}
+              className={`absolute rounded-xl sm:rounded-2xl border-2 ${style.border} ${style.fill} p-2 sm:p-3 flex flex-col justify-between text-left transition-all duration-150`}
+            >
+              <div
+                className={`self-start inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full ${style.chip} text-[10px] sm:text-xs font-bold font-mono shadow-lg whitespace-nowrap`}
+              >
+                <Icon
+                  weight={box.label === "fire" ? "fill" : "bold"}
+                  className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0"
+                />
+                <span>
+                  {style.chipText} · {Math.round(box.confidence * 100)}%
+                </span>
+              </div>
+            </div>
+          );
+        })}
 
-      {/* Dynamic Real-Time Fire Box when Camera detects flame */}
-      {isWebcam && webcamFireBox && showFire && (
+      {/* Dynamic Real-Time Fire Box when Laptop Webcam detects flame chrominance */}
+      {!isStreamLive && isWebcam && webcamFireBox && showFire && (
         <div
           style={{
             left: `${webcamFireBox.x * 100}%`,
@@ -113,23 +155,28 @@ export function DetectionHudOverlay({
         <div className="flex items-center gap-2 min-w-0">
           <span
             className={`w-2 h-2 rounded-full shrink-0 ${
-              isWebcam &&
-              !webcamFireBox &&
-              !webcamSmokeBox &&
-              !showDemoBoxesOnWebcam
+              isStreamLive
+                ? liveBoxes.length > 0
+                  ? "bg-[#ff5722]"
+                  : "bg-emerald-400"
+                : isWebcam && !webcamFireBox && !showDemoBoxesOnWebcam
                 ? "bg-emerald-400"
                 : "bg-[#ff5722]"
             }`}
           />
           <span className="text-[11px] sm:text-xs font-medium text-white/90 truncate">
-            {isWebcam
+            {isStreamLive
+              ? liveBoxes.length > 0
+                ? `${Array.from(new Set(liveBoxes.map((box) => (box.label === "fire" ? "Api" : "Asap")))).join(
+                    " + "
+                  )} terdeteksi engine server`
+                : "Stream server aktif — area aman pada frame ini"
+              : isWebcam
               ? webcamFireBox
-                ? "Titik api terdeteksi pada kamera!"
-                : webcamSmokeBox
-                ? "Kepulan asap terdeteksi pada kamera!"
+                ? "Titik api terdeteksi pada kamera laptop!"
                 : showDemoBoxesOnWebcam
-                ? "Menampilkan simulasi kotak deteksi pada kamera"
-                : "Memindai kamera secara real-time (Area Aman)"
+                ? "Menampilkan simulasi kotak deteksi pada webcam"
+                : "Memindai kamera laptop secara real-time (Area Aman)"
               : layer === "both"
               ? "Menampilkan deteksi titik api & kepulan asap"
               : layer === "fire"

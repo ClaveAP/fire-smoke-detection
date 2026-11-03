@@ -30,14 +30,15 @@ Backend memilih engine secara otomatis saat startup (`FSD_ENGINE=auto`):
 
 | Engine | Kapan aktif | Keterangan |
 | :--- | :--- | :--- |
-| **`yolo:best.pt`** | `ultralytics` terinstal **dan** `weights/best.pt` ada | Akurasi produksi. Kelas berisi `fire`/`flame` → `fire`, `smoke` → `smoke`. |
+| **YOLO** | `ultralytics` terinstal **dan** `../models/fire-smoke-yolo11n/best.pt` ada | Model hasil notebook training. Kelas berisi `fire`/`flame` → `fire`, `smoke` → `smoke`. |
 | **`heuristic-opencv`** | Default / fallback | Tanpa model terlatih. Api: aturan warna RGB + HSV + YCbCr (Chen 2004, Celik 2009) + inti pijar. Asap: piksel abu-abu/biru-keabuan, lebih terang dari latar, bertekstur lembut (Laplacian rendah). Pada stream, gerakan (MOG2) menaikkan skor asap yang bergerak dan menekan permukaan abu-abu statis. |
 
 Engine heuristik ±20–30 ms per frame (640px, CPU) dan lulus uji pada preset `frontend/public/presets`. Ini *baseline*: pantulan cahaya oranye, kulit di bawah cahaya terang, atau dinding abu-abu berkabut bisa memicu *false positive*. Untuk produksi gunakan YOLO:
 
 ```bash
 pip install -r requirements-yolo.txt
-cp /path/ke/best.pt weights/best.pt   # restart server → engine berganti otomatis
+# Salin best.pt hasil training di ../models ke ../models/fire-smoke-yolo11n/best.pt
+# Restart server; cek GET /api/v1/health → engine
 ```
 
 ---
@@ -51,6 +52,7 @@ cp /path/ke/best.pt weights/best.pt   # restart server → engine berganti otoma
 | `POST` | `/detect/video` | `multipart/form-data` field `file` (MP4/AVI/MOV/WebM) → deteksi per frame sampel + ringkasan (`peakConfidence`, `frames`, `firstSeenMs`). |
 | `GET` | `/cameras` | Daftar kamera + status (`safe`/`warning`/`critical`) dan deteksi terbaru dari stream live. |
 | `GET` `POST` `DELETE` | `/cameras/{id}` · `/cameras` | Detail, registrasi (dengan `streamUrl`), hapus kamera. |
+| `GET` | `/cameras/{id}/snapshot.jpg` | JPEG frame terakhir yang dianalisis server (`404` sebelum stream jalan). |
 | `GET` | `/incidents` | Log insiden terbaru; filter `?status=&type=&cameraId=&limit=&offset=`. |
 | `GET` | `/incidents/stats` | Total insiden per tipe & status. |
 | `POST` | `/incidents` | Simpan insiden dari klien (Live Scan webcam / Media Inspector). |
@@ -94,6 +96,8 @@ Paket frame:
 ```
 Insiden otomatis dicatat (dengan snapshot JPEG base64) setelah `FSD_INCIDENT_CONFIRM_FRAMES` frame berturut-turut ≥ `FSD_INCIDENT_MIN_CONFIDENCE`, lalu *cooldown* `FSD_INCIDENT_COOLDOWN_S` per kamera per kelas.
 
+Klien `frontend/src/services/streamClient.ts` memakai kedua jalur: `/live-scan` menarik paket untuk kamera ber-`streamUrl` (server pull) dan mendorong JPEG webcam (client push), dengan reconnect otomatis saat koneksi putus.
+
 ---
 
 ## 4. Konfigurasi (Environment Variables)
@@ -101,7 +105,7 @@ Insiden otomatis dicatat (dengan snapshot JPEG base64) setelah `FSD_INCIDENT_CON
 | Variabel | Default | Keterangan |
 | :--- | :--- | :--- |
 | `FSD_ENGINE` | `auto` | `auto` / `yolo` / `heuristic` |
-| `FSD_WEIGHTS` | `weights/best.pt` | Path bobot YOLO |
+| `FSD_WEIGHTS` | `../models/fire-smoke-yolo11n/best.pt` (jika ada) | Path bobot YOLO; fallback `../models/weights/best.pt` |
 | `FSD_DEVICE` | *(auto)* | Device YOLO, mis. `cpu`, `0` (GPU) |
 | `FSD_CONFIDENCE` | `0.4` | Ambang confidence minimum |
 | `FSD_IOU` | `0.45` | Ambang IoU untuk NMS |
@@ -118,7 +122,22 @@ Insiden otomatis dicatat (dengan snapshot JPEG base64) setelah `FSD_INCIDENT_CON
 
 ---
 
-## 5. Struktur & Pengujian
+## 5. Model & Training
+
+Dataset, notebook Colab, script `train` / `evaluate` / `predict_camera`, artefak `runs/`, dan bobot `best.pt`
+berada di folder [`../models`](../models) — terpisah dari microservice ini. Backend hanya **mengkonsumsi** bobot:
+`models/fire-smoke-yolo11n/best.pt` dimuat otomatis saat `FSD_ENGINE=auto` (fallback `models/weights/best.pt`),
+selama paket `ultralytics` terinstal di venv backend.
+
+```bash
+pip install -r requirements-yolo.txt   # hanya menambah wrapper YOLO untuk inferensi
+```
+
+Alur lengkap dari dataset mentah sampai tersaji di frontend: [`../models/README.md`](../models/README.md).
+
+---
+
+## 6. Struktur & Pengujian
 
 ```text
 backend/
@@ -138,11 +157,16 @@ backend/
 │   └── routers/                # system, detection, cameras, incidents, stream (WS)
 ├── scripts/                    # debug_presets.py, export_openapi.py
 ├── tests/                      # pytest: engine + API + WebSocket
-└── weights/                    # Taruh best.pt di sini
+├── cameras.example.json        # contoh daftar kamera (cameras.json di-ignore)
+├── data/incidents.db           # SQLite runtime; dibuat otomatis, di-ignore
+├── openapi.yaml                # kontrak API (regenerasi: python -m scripts.export_openapi)
+└── requirements*.txt           # serving / +yolo (inferensi) / dev (pytest)
 ```
+
+Dataset, training, dan bobot model tidak ada di folder ini; lihat [`../models`](../models).
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest                         # 21 tes
+python -m pytest                         # engine + API + WebSocket
 python -m scripts.debug_presets --save out/   # lihat bounding box pada gambar preset
 ```

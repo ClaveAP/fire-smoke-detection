@@ -22,7 +22,7 @@ class YoloDetector:
         from ultralytics import YOLO  # imported lazily: optional dependency
 
         self.model = YOLO(str(weights))
-        self.name = f"yolo:{weights.name}"
+        self.name = f"yolo:{weights.parent.name}/{weights.name}" if weights.parent.name else f"yolo:{weights.name}"
         self.confidence_threshold = confidence_threshold
         self.iou_threshold = iou_threshold
         self.device = device or None

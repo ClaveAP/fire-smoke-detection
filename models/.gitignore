@@ -1,0 +1,39 @@
+# Local dataset, training runs, and weights stay out of Git; see models/fire-smoke-yolo11n/
+# for the checkpoint the backend loads.
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Selected local weights (best.pt is an optional commit)
+weights/*
+!weights/README.md
+!weights/best.pt
+
+# Training logs, plots, and metrics
+runs/*
+!runs/.gitkeep
+
+# Demo videos
+test-video/*
+!test-video/README.md
+
+# YOLO dataset: keep the folder skeleton only
+dataset/**
+!dataset/data/
+!dataset/data/train/
+!dataset/data/train/images/
+!dataset/data/train/images/.gitkeep
+!dataset/data/train/labels/
+!dataset/data/train/labels/.gitkeep
+!dataset/data/val/
+!dataset/data/val/images/
+!dataset/data/val/images/.gitkeep
+!dataset/data/val/labels/
+!dataset/data/val/labels/.gitkeep
+!dataset/data/test/
+!dataset/data/test/images/
+!dataset/data/test/images/.gitkeep
+!dataset/data/test/labels/
+!dataset/data/test/labels/.gitkeep

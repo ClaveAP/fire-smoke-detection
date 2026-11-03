@@ -1,28 +1,11 @@
-import {
-  IncidentRecord,
-  DetectionResult,
-  BoundingBox,
-  CameraStatus,
-} from "@/types/detection";
+import { BackendHealth, CameraFeed, IncidentRecord, DetectionResult } from "@/types/detection";
 import {
   INITIAL_INCIDENT_RECORDS,
   simulateImageInference,
 } from "./mockDetection";
 
-const DEFAULT_BACKEND_URL = "http://localhost:8000";
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL?.trim() || DEFAULT_BACKEND_URL;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 const CUSTOM_INCIDENTS_KEY = "aegisflame_custom_incidents_v1";
-
-export interface StreamFrameResponse {
-  cameraId: string;
-  timestamp: string;
-  fps: number;
-  latencyMs: number;
-  status: CameraStatus;
-  detections: BoundingBox[];
-  incidentId?: string | null;
-}
 
 export class DetectionAdapter {
   private backendUrl: string;
@@ -31,13 +14,9 @@ export class DetectionAdapter {
     this.backendUrl = backendUrl.replace(/\/$/, "");
   }
 
-  /**
-   * Build WebSocket URL for live camera frame streaming (/api/v1/ws/cctv/{cameraId})
-   */
-  getStreamWebSocketUrl(cameraId: string = "WEBCAM-01"): string | null {
-    if (!this.backendUrl) return null;
-    const wsBase = this.backendUrl.replace(/^http/i, "ws");
-    return `${wsBase}/api/v1/ws/cctv/${encodeURIComponent(cameraId)}`;
+  /** Backend origin used for REST and WebSocket calls ("" when no backend is configured). */
+  get baseUrl(): string {
+    return this.backendUrl;
   }
 
   /**
@@ -59,28 +38,22 @@ export class DetectionAdapter {
   }
 
   /**
-   * Save a newly detected incident into local storage and forward to backend API
+   * Save a newly detected incident (from Live Scan webcam or Media Lab) into local storage
+   * and forward to backend API if configured
    */
-  recordIncident(
-    incident: IncidentRecord,
-    skipBackendPost = false
-  ): IncidentRecord[] {
+  recordIncident(incident: IncidentRecord): IncidentRecord[] {
     if (typeof window !== "undefined") {
       try {
         const raw = window.localStorage.getItem(CUSTOM_INCIDENTS_KEY);
         const existing: IncidentRecord[] = raw ? JSON.parse(raw) : [];
-        const deduplicated = existing.filter((item) => item.id !== incident.id);
-        const updated = [incident, ...deduplicated].slice(0, 25);
-        window.localStorage.setItem(
-          CUSTOM_INCIDENTS_KEY,
-          JSON.stringify(updated)
-        );
+        const updated = [incident, ...existing].slice(0, 25);
+        window.localStorage.setItem(CUSTOM_INCIDENTS_KEY, JSON.stringify(updated));
       } catch {
         // Ignore storage quota errors
       }
     }
 
-    if (this.backendUrl && !skipBackendPost) {
+    if (this.backendUrl) {
       fetch(`${this.backendUrl}/api/v1/incidents`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -92,7 +65,7 @@ export class DetectionAdapter {
   }
 
   /**
-   * Update an incident's status (active -> investigating -> resolved) in local storage and backend SQLite
+   * Update an incident's status in browser storage, then PATCH the backend when one is configured
    */
   async updateIncidentStatus(
     incidentId: string,
@@ -137,7 +110,7 @@ export class DetectionAdapter {
   }
 
   /**
-   * Delete an incident record from local storage and backend SQLite
+   * Drop an incident from browser storage and delete it on the backend when one is configured
    */
   async deleteIncident(incidentId: string): Promise<boolean> {
     if (typeof window !== "undefined") {
@@ -188,108 +161,94 @@ export class DetectionAdapter {
    * Health check to probe whether real backend microservice is online
    */
   async isBackendHealthy(): Promise<boolean> {
-    if (!this.backendUrl) return false;
+    const health = await this.getHealth();
+    return health !== null;
+  }
+
+  /**
+   * Service info, including which detection engine (YOLO weights or heuristic baseline) is active
+   */
+  async getHealth(): Promise<BackendHealth | null> {
+    if (!this.backendUrl) return null;
 
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-      const res = await fetch(`${this.backendUrl}/api/v1/health`, {
-        signal: controller.signal,
-      });
+      const res = await fetch(`${this.backendUrl}/api/v1/health`, { signal: controller.signal });
       clearTimeout(timeoutId);
-      return res.ok;
+      return res.ok ? ((await res.json()) as BackendHealth) : null;
     } catch {
-      return false;
+      return null;
     }
   }
 
   /**
-   * Fetch incident logs from backend SQLite store and merge with local/seed records
+   * Cameras registered on the server; those with a streamUrl can be pulled live by the backend
+   */
+  async getCameras(): Promise<CameraFeed[]> {
+    if (!this.backendUrl) return [];
+    try {
+      const res = await fetch(`${this.backendUrl}/api/v1/cameras`);
+      if (res.ok) return (await res.json()) as CameraFeed[];
+    } catch {
+      // Offline: the live-scan view falls back to the browser webcam / simulation mode
+    }
+    return [];
+  }
+
+  /** JPEG of the frame the server last analyzed, kept in sync with the detection packets. */
+  snapshotUrl(cameraId: string, stamp: string | number): string {
+    if (!this.backendUrl) return "";
+    return `${this.backendUrl}/api/v1/cameras/${encodeURIComponent(cameraId)}/snapshot.jpg?t=${encodeURIComponent(
+      String(stamp)
+    )}`;
+  }
+
+  /**
+   * Fetch incident logs or fallback to local + mock dataset
    */
   async getIncidentRecords(): Promise<IncidentRecord[]> {
-    const localRecords = this.getStoredIncidents();
-
     if (this.backendUrl) {
       try {
         const res = await fetch(`${this.backendUrl}/api/v1/incidents`);
         if (res.ok) {
-          const backendData = (await res.json()) as IncidentRecord[];
-          if (Array.isArray(backendData)) {
-            const seenIds = new Set(backendData.map((item) => item.id));
-            const merged = [
-              ...backendData,
-              ...localRecords.filter((item) => !seenIds.has(item.id)),
-            ];
-            return merged;
-          }
+          const data = await res.json();
+          return data;
         }
       } catch {
         // Fall back seamlessly to local + mock
       }
     }
-    return localRecords;
+    return this.getStoredIncidents();
   }
 
   /**
-   * Run inference on an uploaded image or video file via FastAPI backend
+   * Run inference on an uploaded image file
    */
   async detectImage(file: File): Promise<DetectionResult> {
     if (this.backendUrl) {
-      const isVideo = file.type.startsWith("video/");
-      const endpoint = isVideo
-        ? `${this.backendUrl}/api/v1/detect/video`
-        : `${this.backendUrl}/api/v1/detect/image`;
-
       try {
         const formData = new FormData();
         formData.append("file", file);
 
         const startTime = performance.now();
-        const res = await fetch(endpoint, {
+        const res = await fetch(`${this.backendUrl}/api/v1/detect/image`, {
           method: "POST",
           body: formData,
         });
 
         if (res.ok) {
           const data = await res.json();
-          const inferenceTimeMs = Number(
-            (data.inferenceTimeMs ?? performance.now() - startTime).toFixed(1)
-          );
-
-          if (isVideo && Array.isArray(data.frames)) {
-            // Pick the frame with the highest number of detections / peak confidence
-            let bestBoxes: BoundingBox[] = [];
-            let bestScore = -1;
-            for (const frame of data.frames) {
-              const boxes: BoundingBox[] = frame.boxes || [];
-              const score = boxes.reduce(
-                (sum, b) => sum + (b.confidence || 0),
-                0
-              );
-              if (score > bestScore) {
-                bestScore = score;
-                bestBoxes = boxes;
-              }
-            }
-            return {
-              boxes: bestBoxes,
-              inferenceTimeMs,
-              timestamp: data.timestamp || new Date().toISOString(),
-            };
-          }
-
+          const inferenceTimeMs = Number((performance.now() - startTime).toFixed(1));
           return {
             boxes: data.boxes || [],
-            inferenceTimeMs,
+            inferenceTimeMs: data.inferenceTimeMs || inferenceTimeMs,
             timestamp: data.timestamp || new Date().toISOString(),
           };
         }
       } catch (err) {
-        console.warn(
-          "Backend inference unreachable, switching to mock adapter:",
-          err
-        );
+        console.warn("Backend inference unreachable, switching to mock adapter:", err);
       }
     }
 

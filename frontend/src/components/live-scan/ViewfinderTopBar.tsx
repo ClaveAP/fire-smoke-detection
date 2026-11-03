@@ -1,32 +1,35 @@
-"use client";
-
-import { useState, useRef, useEffect } from "react";
 import {
   Camera,
   CameraSlash,
-  CameraRotate,
-  CaretDown,
-  Check,
   Flashlight,
   CornersOut,
   CornersIn,
   ArrowsLeftRight,
-} from "@phosphor-icons/react";
-import { CameraDeviceOption } from "@/hooks/useWebcamScanner";
+} from "@phosphor-icons/react/dist/ssr";
+
+export interface StreamSourceOption {
+  value: string;
+  label: string;
+  disabled?: boolean;
+}
 
 interface ViewfinderTopBarProps {
   isWebcam: boolean;
   isConnectingWebcam?: boolean;
   webcamLabel?: string;
-  cameraDevices?: CameraDeviceOption[];
-  selectedDeviceId?: string;
   isMirrored?: boolean;
   flashlightOn: boolean;
   isFullscreen: boolean;
+  /** Available sources: the simulation, the browser webcam, and every camera registered on the server. */
+  sourceOptions: StreamSourceOption[];
+  selectedSource: string;
+  onSelectSource: (value: string) => void;
+  /** Detection engine reported by /api/v1/health, e.g. "yolo:fire-smoke-yolo11n/best.pt". */
+  engineLabel?: string;
+  isStreamLive?: boolean;
+  streamFps?: number;
   onToggleFlashlight: () => void;
   onToggleWebcam: () => void;
-  onSelectCamera?: (deviceId: string) => void;
-  onSwitchCamera?: () => void;
   onToggleMirror?: () => void;
   onToggleFullscreen: () => void;
 }
@@ -34,150 +37,69 @@ interface ViewfinderTopBarProps {
 export function ViewfinderTopBar({
   isWebcam,
   isConnectingWebcam = false,
-  webcamLabel = "Kamera Perangkat",
-  cameraDevices = [],
-  selectedDeviceId = "",
+  webcamLabel = "Webcam Laptop",
   isMirrored = true,
   flashlightOn,
   isFullscreen,
+  sourceOptions,
+  selectedSource,
+  onSelectSource,
+  engineLabel = "",
+  isStreamLive = false,
+  streamFps = 0,
   onToggleFlashlight,
   onToggleWebcam,
-  onSelectCamera,
-  onSwitchCamera,
   onToggleMirror,
   onToggleFullscreen,
 }: ViewfinderTopBarProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [menuOpen]);
+  const activeLabel = isWebcam
+    ? webcamLabel
+    : sourceOptions.find((option) => option.value === selectedSource)?.label ?? "Kamera Simulasi";
 
   return (
     <div className="relative z-20 w-full p-3 sm:p-5 flex flex-wrap items-center justify-between gap-2 sm:gap-3 pointer-events-none">
-      {/* Live Status Pill + Camera Picker Dropdown */}
-      <div ref={dropdownRef} className="relative pointer-events-auto">
-        <button
-          type="button"
-          onClick={() => {
-            if (isWebcam && cameraDevices.length > 0) {
-              setMenuOpen((prev) => !prev);
-            }
-          }}
-          className={`inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-black/70 backdrop-blur-xl border border-white/12 text-[11px] sm:text-xs font-medium text-white shadow-lg transition-colors ${
-            isWebcam && cameraDevices.length > 0
-              ? "hover:bg-black/85 hover:border-white/25 cursor-pointer"
-              : "cursor-default"
+      {/* Live Status Pill */}
+      <div className="pointer-events-auto inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-black/70 backdrop-blur-xl border border-white/12 text-[11px] sm:text-xs font-medium text-white shadow-lg">
+        <span
+          className={`w-2 h-2 rounded-full shrink-0 animate-pulse ${
+            isStreamLive
+              ? "bg-emerald-400 shadow-[0_0_8px_#34d399]"
+              : isWebcam
+              ? "bg-emerald-400 shadow-[0_0_8px_#34d399]"
+              : "bg-[#ff5722]"
           }`}
-          title={
-            isWebcam && cameraDevices.length > 0
-              ? "Klik untuk memilih perangkat kamera"
-              : undefined
-          }
-        >
-          <span
-            className={`w-2 h-2 rounded-full shrink-0 animate-pulse ${
-              isWebcam
-                ? "bg-emerald-400 shadow-[0_0_8px_#34d399]"
-                : "bg-[#ff5722]"
-            }`}
-          />
-          <span className="truncate max-w-[140px] sm:max-w-[240px]">
-            {isWebcam ? webcamLabel : "Kamera Simulasi"}
+        />
+        <span className="truncate max-w-[130px] sm:max-w-[240px]">{activeLabel}</span>
+        <span className="hidden sm:inline text-white/30">·</span>
+        <span className="hidden sm:inline font-mono text-white/70">
+          {isStreamLive ? `${streamFps.toFixed(1)} FPS` : "60 FPS"}
+        </span>
+        {engineLabel && (
+          <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.07] border border-white/12 font-mono text-[10px] text-white/70 max-w-[190px] truncate">
+            {engineLabel}
           </span>
-          {isWebcam && cameraDevices.length > 0 && (
-            <CaretDown
-              weight="bold"
-              className={`w-3 h-3 text-white/70 transition-transform duration-200 ${
-                menuOpen ? "rotate-180" : ""
-              }`}
-            />
-          )}
-          <span className="hidden sm:inline text-white/30">·</span>
-          <span className="hidden sm:inline font-mono text-white/70">
-            60 FPS
-          </span>
-        </button>
-
-        {/* Camera Device Dropdown Menu */}
-        {isWebcam && menuOpen && cameraDevices.length > 0 && (
-          <div className="absolute left-0 mt-2 w-72 sm:w-80 rounded-2xl bg-[#0b0d14]/95 backdrop-blur-2xl border border-white/15 shadow-2xl p-1.5 z-50">
-            <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-white/45 border-b border-white/10 mb-1">
-              Pilih Perangkat Kamera ({cameraDevices.length})
-            </div>
-            <div className="max-h-60 overflow-y-auto flex flex-col gap-1">
-              {cameraDevices.map((cam, idx) => {
-                const isSelected =
-                  (selectedDeviceId && cam.deviceId === selectedDeviceId) ||
-                  (!selectedDeviceId && cam.label === webcamLabel);
-                return (
-                  <button
-                    key={cam.deviceId || idx}
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      if (cam.deviceId && onSelectCamera) {
-                        onSelectCamera(cam.deviceId);
-                      }
-                    }}
-                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-left text-xs transition-colors ${
-                      isSelected
-                        ? "bg-white/12 text-white font-semibold"
-                        : "text-white/75 hover:bg-white/[0.06] hover:text-white"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Camera
-                        weight={isSelected ? "fill" : "duotone"}
-                        className={`w-3.5 h-3.5 shrink-0 ${
-                          isSelected ? "text-emerald-400" : "text-white/50"
-                        }`}
-                      />
-                      <span className="truncate">{cam.label}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                          cam.isVirtual
-                            ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
-                            : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                        }`}
-                      >
-                        {cam.isVirtual ? "Virtual" : "Asli"}
-                      </span>
-                      {isSelected && (
-                        <Check
-                          weight="bold"
-                          className="w-3.5 h-3.5 text-emerald-400"
-                        />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         )}
       </div>
 
       {/* Floating Pill Controls with generous spacing */}
       <div className="pointer-events-auto flex flex-wrap items-center gap-1.5 sm:gap-2.5">
+        <label className="sr-only" htmlFor="stream-source-picker">
+          Sumber kamera
+        </label>
+        <select
+          id="stream-source-picker"
+          value={selectedSource}
+          onChange={(event) => onSelectSource(event.target.value)}
+          className="max-w-[190px] px-3 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-medium bg-black/70 backdrop-blur-xl border border-white/12 text-white/85 hover:bg-white/10 focus:outline-none focus:border-white/30 transition-colors cursor-pointer"
+        >
+          {sourceOptions.map((option) => (
+            <option key={option.value} value={option.value} disabled={option.disabled} className="bg-[#0b0d14]">
+              {option.label}
+            </option>
+          ))}
+        </select>
         <button
-          onClick={() => {
-            setMenuOpen(false);
-            onToggleWebcam();
-          }}
+          onClick={onToggleWebcam}
           disabled={isConnectingWebcam}
           type="button"
           className={`inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold backdrop-blur-xl border transition-all duration-300 active:scale-[0.98] shadow-lg ${
@@ -189,30 +111,17 @@ export function ViewfinderTopBar({
           {isWebcam ? (
             <>
               <CameraSlash weight="duotone" className="w-3.5 h-3.5 shrink-0" />
-              <span>Matikan Kamera</span>
+              <span>Matikan Webcam</span>
             </>
           ) : (
             <>
               <Camera weight="duotone" className="w-3.5 h-3.5 shrink-0" />
               <span>
-                {isConnectingWebcam ? "Menghubungkan..." : "Gunakan Kamera"}
+                {isConnectingWebcam ? "Menghubungkan..." : "Gunakan Webcam"}
               </span>
             </>
           )}
         </button>
-
-        {isWebcam && onSwitchCamera && (
-          <button
-            onClick={onSwitchCamera}
-            disabled={isConnectingWebcam}
-            type="button"
-            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-xs font-medium bg-black/70 hover:bg-white/10 text-white/85 border border-white/12 backdrop-blur-xl transition-all duration-300"
-            title="Ganti Kamera (Kamera Asli / Depan / Belakang)"
-          >
-            <CameraRotate weight="duotone" className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Ganti Kamera</span>
-          </button>
-        )}
 
         {isWebcam && onToggleMirror && (
           <button
