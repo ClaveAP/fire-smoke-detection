@@ -154,7 +154,10 @@ export function SnapshotModal({
             <Camera weight="duotone" className="w-3.5 h-3.5 text-[#ff5a1f] shrink-0" />
             <span className="truncate">{incident.cameraName}</span>
             <span className="hidden sm:inline text-zinc-600">•</span>
-            <span className="hidden sm:inline text-zinc-400 tabular-nums shrink-0">
+            <span
+              suppressHydrationWarning
+              className="hidden sm:inline text-zinc-400 tabular-nums shrink-0"
+            >
               {new Date(incident.timestamp).toLocaleString("id-ID")}
             </span>
           </div>
@@ -241,6 +244,33 @@ export function SnapshotModal({
             <div className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.06] text-xs text-zinc-300 leading-relaxed">
               <span className="font-semibold text-white mr-2">Catatan:</span>
               {incident.notes}
+            </div>
+          )}
+
+          {incident.operator && (
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.06] flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-3 min-w-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={
+                    incident.operator.avatar ||
+                    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&h=120&q=80"
+                  }
+                  alt={incident.operator.name}
+                  className="w-8 h-8 rounded-full border border-white/15 object-cover shrink-0"
+                />
+                <div className="flex flex-col min-w-0">
+                  <div className="font-semibold text-white truncate">
+                    {incident.operator.name}
+                  </div>
+                  <div className="text-[11px] text-zinc-400 truncate">
+                    {incident.operator.roleTitle || incident.operator.role}
+                  </div>
+                </div>
+              </div>
+              <span className="shrink-0 text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-white/[0.05] border border-white/10 text-zinc-300">
+                {incident.operator.role}
+              </span>
             </div>
           )}
 

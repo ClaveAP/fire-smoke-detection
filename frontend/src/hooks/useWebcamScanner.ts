@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { detectionAdapter } from "@/services/detectionAdapter";
 import { DynamicBox } from "@/components/live-scan/DetectionHudOverlay";
+import { IncidentRecord } from "@/types/detection";
 
 interface UseWebcamScannerOptions {
   onShowToast: (message: string, duration?: number) => void;
@@ -277,6 +278,27 @@ export function useWebcamScanner({
         ) {
           lastIncidentLoggedAtRef.current = now;
           const snapUrl = captureWebcamSnapshot();
+
+          let activeOperator: IncidentRecord["operator"] = undefined;
+          if (typeof window !== "undefined") {
+            try {
+              const rawUser = window.localStorage.getItem("aegisflame_auth_user");
+              if (rawUser) {
+                const u = JSON.parse(rawUser);
+                activeOperator = {
+                  id: u.id,
+                  name: u.name,
+                  email: u.email,
+                  role: u.role,
+                  roleTitle: u.roleTitle,
+                  avatar: u.avatar,
+                };
+              }
+            } catch {
+              // Ignore storage error
+            }
+          }
+
           detectionAdapter.recordIncident({
             id: `inc-${String(now).slice(-4)}`,
             timestamp: new Date(now).toISOString(),
@@ -289,6 +311,7 @@ export function useWebcamScanner({
             smokeDensityDbm: 1.8,
             status: "active",
             snapshotUrl: snapUrl,
+            operator: activeOperator,
             notes: `Deteksi titik api otomatis dari ${webcamLabel} dengan akurasi ${(
               conf * 100
             ).toFixed(1)}%.`,

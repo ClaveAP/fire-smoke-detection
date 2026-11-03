@@ -26,6 +26,15 @@ export interface CameraFeed {
   latencyMs?: number;
 }
 
+export interface IncidentOperator {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  roleTitle?: string;
+  avatar?: string;
+}
+
 export interface IncidentRecord {
   id: string;
   timestamp: string;
@@ -42,6 +51,7 @@ export interface IncidentRecord {
   snapshotUrl?: string;
   notes?: string;
   detections?: BoundingBox[];
+  operator?: IncidentOperator;
 }
 
 export interface DetectionResult {

@@ -118,6 +118,22 @@ export function IncidentTable({
                           {item.notes}
                         </p>
                       )}
+                      {item.operator && (
+                        <div className="mt-2 flex items-center gap-1.5 text-[11px] text-zinc-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#ff5a1f] shrink-0" />
+                          <span>
+                            Petugas:{" "}
+                            <strong className="text-zinc-200 font-medium">
+                              {item.operator.name}
+                            </strong>
+                            {item.operator.role && (
+                              <span className="text-zinc-500 text-[10px] ml-1">
+                                ({item.operator.role})
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      )}
                     </td>
 
                     {/* Column 3: Fire & Smoke Hazard Badges */}

@@ -6,7 +6,7 @@ import { MediaUploader } from "@/components/inspector/MediaUploader";
 import { PlaybackControls } from "@/components/inspector/PlaybackControls";
 import { DetectionTable } from "@/components/inspector/DetectionTable";
 import { InspectorPreviewCanvas } from "@/components/inspector/InspectorPreviewCanvas";
-import { BoundingBox } from "@/types/detection";
+import { BoundingBox, IncidentRecord } from "@/types/detection";
 import { detectionAdapter } from "@/services/detectionAdapter";
 import {
   INSPECTOR_PRESET_SAMPLES,
@@ -83,6 +83,26 @@ export default function MediaInspectorPage() {
               reader.readAsDataURL(file);
             });
 
+            let activeOperator: IncidentRecord["operator"] = undefined;
+            if (typeof window !== "undefined") {
+              try {
+                const rawUser = window.localStorage.getItem("aegisflame_auth_user");
+                if (rawUser) {
+                  const u = JSON.parse(rawUser);
+                  activeOperator = {
+                    id: u.id,
+                    name: u.name,
+                    email: u.email,
+                    role: u.role,
+                    roleTitle: u.roleTitle,
+                    avatar: u.avatar,
+                  };
+                }
+              } catch {
+                // Ignore storage error
+              }
+            }
+
             detectionAdapter.recordIncident({
               id: `inc-${String(now).slice(-4)}`,
               timestamp: new Date(now).toISOString(),
@@ -98,6 +118,7 @@ export default function MediaInspectorPage() {
               smokeDensityDbm: smokeBox ? 3.1 : 1.2,
               status: "active",
               snapshotUrl: snapshotDataUrl || localPreviewUrl || "/presets/preset-dual.webp",
+              operator: activeOperator,
               notes: `Hasil uji deteksi file "${file.name}" di Media Lab (${res.boxes.length} objek terdeteksi dalam ${res.inferenceTimeMs} ms).`,
               detections: res.boxes,
             });

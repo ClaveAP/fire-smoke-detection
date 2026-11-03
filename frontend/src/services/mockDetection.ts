@@ -90,6 +90,15 @@ export const INITIAL_INCIDENT_RECORDS: IncidentRecord[] = [
     snapshotUrl: "/presets/preset-dual.webp",
     notes:
       "Dual signature: Titik api aktif (+412°C) disertai kepulan asap pirolisis pekat di dekat panel distribusi utama.",
+    operator: {
+      id: "usr-operator-01",
+      name: "Budi Santoso",
+      email: "budi.santoso@safety.aegisflame.id",
+      role: "Operator",
+      roleTitle: "Operator Jaga Shift 1",
+      avatar:
+        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&h=120&q=80",
+    },
     detections: [
       { id: "d-1", label: "fire", confidence: 0.962, bbox: [0.44, 0.45, 0.17, 0.25] },
       { id: "d-2", label: "smoke", confidence: 0.918, bbox: [0.35, 0.04, 0.30, 0.42] },
@@ -109,7 +118,16 @@ export const INITIAL_INCIDENT_RECORDS: IncidentRecord[] = [
     status: "investigating",
     snapshotUrl: "/presets/preset-smoke.webp",
     notes:
-      "Ekspansi asap volumetrik terdeteksi di atas tumpukan kemasan kardus; tim respons sedang memverifikasi sumber panas.",
+      "Ekspansi asap volumetrik terdeteksi di atas tumpukan kemasan kardus — tim respons sedang memverifikasi sumber panas.",
+    operator: {
+      id: "usr-supervisor-01",
+      name: "Rian Pratama, S.T.",
+      email: "rian.pratama@hse.aegisflame.id",
+      role: "Supervisor K3",
+      roleTitle: "Lead Safety & HSE Officer",
+      avatar:
+        "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=120&h=120&q=80",
+    },
     detections: [
       { id: "d-3", label: "smoke", confidence: 0.934, bbox: [0.31, 0.14, 0.41, 0.48] },
     ],
@@ -129,7 +147,7 @@ export const INITIAL_INCIDENT_RECORDS: IncidentRecord[] = [
     status: "active",
     snapshotUrl: "/presets/preset-dual.webp",
     notes:
-      "Anomali nyala api pendek pada jalur pipa ekstraksi diikuti residu asap tipis; katup isolasi otomatis telah dikunci.",
+      "Anomali nyala api pendek pada jalur pipa ekstraksi diikuti residu asap tipis — katup isolasi otomatis telah dikunci.",
     detections: [
       { id: "d-4", label: "fire", confidence: 0.948, bbox: [0.44, 0.45, 0.17, 0.25] },
       { id: "d-5", label: "smoke", confidence: 0.884, bbox: [0.35, 0.04, 0.30, 0.42] },
@@ -148,7 +166,7 @@ export const INITIAL_INCIDENT_RECORDS: IncidentRecord[] = [
     status: "resolved",
     snapshotUrl: "/presets/preset-fire.webp",
     notes:
-      "Titik nyala api murni tanpa asap terdeteksi pada meja uji termal; diverifikasi aman oleh supervisor lapangan.",
+      "Titik nyala api murni tanpa asap terdeteksi pada meja uji termal — diverifikasi aman oleh supervisor lapangan.",
     detections: [
       { id: "d-6", label: "fire", confidence: 0.974, bbox: [0.45, 0.36, 0.14, 0.30] },
     ],
@@ -167,7 +185,7 @@ export const INITIAL_INCIDENT_RECORDS: IncidentRecord[] = [
     status: "resolved",
     snapshotUrl: "/presets/preset-smoke.webp",
     notes:
-      "Emisi kepulan asap sekunder di lorong gudang; ventilasi exhaust telah menormalkan kepekatan partikel.",
+      "Emisi kepulan asap sekunder di lorong gudang — ventilasi exhaust telah menormalkan kepekatan partikel.",
     detections: [
       { id: "d-7", label: "smoke", confidence: 0.815, bbox: [0.14, 0.20, 0.17, 0.26] },
     ],
