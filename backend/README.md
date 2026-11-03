@@ -170,3 +170,100 @@ pip install -r requirements-dev.txt
 python -m pytest                         # engine + API + WebSocket
 python -m scripts.debug_presets --save out/   # lihat bounding box pada gambar preset
 ```
+
+---
+
+## 6. 🤝 Panduan Integrasi Frontend (Konteks Khusus Rekan Backend)
+
+Bagian ini ditulis khusus agar rekan tim yang bertanggung jawab di sisi backend memahami arsitektur data, status terkini frontend, serta apa yang perlu diimplementasikan pada **Tahap 3 (Integrasi Penuh)**.
+
+### 📌 Ringkasan Status Frontend Terkini (Langkah 1 & 2 Selesai)
+1. **Frontend Bersifat Mandiri (*Decoupled with Graceful Fallback*)**:
+   - Frontend (`Next.js 16`) memiliki adaptor pintar di `frontend/src/services/detectionAdapter.ts`.
+   - Jika backend FastAPI aktif di `http://localhost:8000`, frontend akan memanggil endpoint REST backend.
+   - Jika backend mati atau belum terhubung, frontend otomatis jatuh tempo ke *mock engine* & `localStorage` tanpa menimbulkan crash pada UI.
+2. **Autentikasi & Simulasi Peran (Langkah 1 Selesai)**:
+   - Frontend sudah memiliki modal **Google Sign-In** (`AuthModal.tsx`) dan state reaktif global (`AuthContext.tsx`).
+   - Sesi pengguna tersimpan di `localStorage` dengan key `aegisflame_auth_user`.
+   - Tersedia simulasi peran (*role-based access*):
+     - **Operator Lapangan**: `usr-operator-01` (*Budi Santoso - Operator Jaga Shift 1*)
+     - **Supervisor K3**: `usr-supervisor-01` (*Rian Pratama, S.T. - Lead Safety & HSE Officer*)
+   - Navbar (`HeaderNav.tsx`) menampilkan avatar, nama, status shift, dan tombol logout dinamis.
+3. **Pencatatan Insiden Otomatis**:
+   - Di halaman `/live-scan`, saat api terdeteksi dari webcam laptop atau feed CCTV simulasi, frontend men-trigger penyimpanan insiden beserta snapshot visual (base64 JPEG).
+   - Di halaman `/inspector`, unggahan media yang mendeteksi api/asap dapat langsung dikirimkan ke log insiden.
+
+---
+
+### 📋 Roadmap Backend (Tugas Rekan Backend — Langkah 3)
+
+Berikut adalah daftar pekerjaan dan peningkatan yang diharapkan dari sisi backend:
+
+#### 1. Verifikasi Google OAuth Token (`POST /api/v1/auth/google`) *(Opsional / Rekomendasi)*
+Saat frontend dihubungkan dengan Google Cloud Console Client ID nyata:
+- Frontend mengirimkan ID Token:
+  ```json
+  { "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6..." }
+  ```
+- Backend dapat memverifikasi token menggunakan library resmi Python:
+  ```bash
+  pip install google-auth requests
+  ```
+  ```python
+  from google.oauth2 import id_token
+  from google.auth.transport import requests
+  
+  idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
+  user_email = idinfo['email']
+  user_name = idinfo['name']
+  user_picture = idinfo['picture']
+  ```
+- Backend membuat sesi JWT atau mengembalikan profil pengguna + peran (`operator` / `supervisor`).
+
+#### 2. Penyimpanan Metadata Operator pada Insiden (`POST /api/v1/incidents`)
+Saat ini skema insiden di backend (`backend/app/schemas.py`) sudah sangat selaras dengan frontend. Rekan backend dapat memperluas tabel SQLite (`app/services/incident_store.py`) untuk menyimpan metadata operator yang sedang bertugas saat insiden tercatat:
+```python
+# app/schemas.py (opsional penambahan)
+class OperatorInfo(BaseModel):
+    id: str
+    name: str
+    email: str
+    role: str
+
+class IncidentRecordSchema(BaseModel):
+    # ... field yang sudah ada ...
+    operator: Optional[OperatorInfo] = None
+```
+
+#### 3. Endpoint Manajemen Status Insiden (`PATCH /api/v1/incidents/{id}`)
+Frontend memanggil endpoint ini ketika Operator atau Supervisor memperbarui status tiket insiden dari halaman `/incidents`:
+```http
+PATCH /api/v1/incidents/{incident_id}
+Content-Type: application/json
+
+{
+  "status": "investigating",  // pilihan: "active" | "investigating" | "resolved"
+  "notes": "Tim pemadam telah dikerahkan ke lokasi."
+}
+```
+Pastikan backend memperbarui record di SQLite dan mengembalikan data insiden terbarunya.
+
+#### 4. Uji Coba Integrasi Langsung dengan Frontend
+Untuk menguji apakah backend Anda berhasil menerima request dari frontend:
+1. Jalankan backend:
+   ```bash
+   cd backend
+   source venv/bin/activate
+   uvicorn app.main:app --reload --port 8000
+   ```
+2. Di terminal kedua, jalankan frontend:
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+3. Buka browser di [http://localhost:3000](http://localhost:3000).
+4. Lakukan pengujian:
+   - Buka `/inspector`, upload gambar api/asap → periksa log FastAPI `POST /api/v1/detect/image`.
+   - Buka `/live-scan`, izinkan webcam → picu deteksi api → periksa log FastAPI `POST /api/v1/incidents`.
+   - Buka `/incidents`, periksa apakah data dari SQLite tampil di tabel antarmuka.
+

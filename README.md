@@ -13,11 +13,11 @@ Platform pemantauan dan deteksi dini anomali api (*fire*) serta kepulan asap (*s
 
 ## 📌 Ringkasan Proyek
 
-Platform ini dirancang untuk mendeteksi bahaya kebakaran dan kepulan asap secara *real-time* melalui umpan kamera CCTV, pemindaian **Live Webcam** langsung dari browser, maupun analisis file media statis (gambar/video).
+Platform ini dirancang untuk mendeteksi bahaya kebakaran dan kepulan asap secara *real-time* melalui umpan kamera CCTV, pemindaian **Live Webcam** langsung dari browser pengguna, maupun analisis berkas media statis (gambar/video).
 
 Dibangun dengan arsitektur **terpisah (*decoupled*)**:
-- **Frontend (Next.js 16 + React 19):** Antarmuka *Dark Operations Command Center*, overlay *bounding box* berakselerasi perangkat keras via HTML5 2D Canvas, pemindai titik api webcam real-time (`useWebcamScanner`), serta sirine audio sintetis berbasis Web Audio API lokal. Dilengkapi *graceful client fallback* & *mock engine* sehingga aplikasi dapat langsung dijalankan penuh tanpa ketergantungan server backend.
-- **Backend (FastAPI Vision Microservice):** Deteksi api & asap nyata pada gambar, video, dan stream kamera live (REST + WebSocket), log insiden persisten (SQLite), serta registri kamera. Menggunakan engine **YOLO** otomatis bila bobot di `models/` tersedia, atau engine **OpenCV heuristik** bawaan tanpa model terlatih.
+- **Frontend (Next.js 16 + React 19):** Antarmuka *Dark Operations Command Center*, overlay *bounding box* berakselerasi perangkat keras via HTML5 2D Canvas, pemindai titik api webcam real-time (`useWebcamScanner`), sirine audio sintetis berbasis Web Audio API lokal, serta sistem **Autentikasi & Manajemen Sesi Peran** (Operator & Supervisor K3). Dilengkapi *graceful client fallback* & *mock engine* sehingga aplikasi dapat langsung dijalankan penuh tanpa ketergantungan server backend.
+- **Backend (FastAPI Vision Microservice):** Deteksi api & asap nyata pada gambar, video, dan stream kamera live (REST + WebSocket), penyimpanan log insiden persisten (SQLite), serta registri kamera. Menggunakan engine **YOLO** otomatis bila bobot di `models/` atau `weights/best.pt` tersedia, atau engine **OpenCV heuristik** bawaan tanpa model terlatih.
 - **Models (dataset & training):** Konfigurasi dataset YOLO, notebook Colab, script `train` / `evaluate` / `predict_camera`, artefak training, dan bobot `best.pt` — terpisah dari runtime API agar venv GPU tidak mencemari microservice.
 
 ---
@@ -30,6 +30,7 @@ Dibangun dengan arsitektur **terpisah (*decoupled*)**:
 | 🛡️ **Live Scan Command Center (`/live-scan`)** | • **Real-Time Webcam Fire Scanner**: Deteksi titik api langsung dari kamera laptop (`useWebcamScanner`) dengan pemilihan kamera fisik otomatis (bypass virtual camera/OBS).<br>• **Simulated CCTV Streams**: Mode simulasi skenario kebakaran, asap, dan kondisi aman.<br>• **HUD Overlay & Telemetry Sidebar**: Tampilan koordinat *bounding box* dinamis, metrik suhu/kepadatan asap, sirine audio Web Audio API, dan *auto-incident logging*. |
 | 🔬 **Media Inspector (`/inspector`)** | • **Drag & Drop + One-Click Presets**: Unggah gambar/video sendiri atau uji cepat dengan sampel preset bawaan (*Fire*, *Smoke*, *Dual Detection*).<br>• **Interactive Threshold & Class Controls**: Slider *confidence threshold* (10% – 95%) dan filter kelas secara *real-time*.<br>• **Annotated Snapshot Export**: Unduh hasil tangkapan layar lengkap dengan gambar *bounding box* dan label akurasi. |
 | 📋 **Incident Logs & Audit Trail (`/incidents`)** | • **Auto-Recorded Webcam & CCTV Incidents**: Menyimpan otomatis tangkapan layar (*snapshot*) saat api terdeteksi di Live Scan.<br>• **Stat Cards & Advanced Filters**: Ringkasan metrik insiden, filter berdasarkan tingkat keparahan, status, dan pencarian kata kunci.<br>• **Snapshot Inspection Modal & CSV Export**: Pratinjau detail koordinat deteksi per insiden dan unduh laporan audit dalam format CSV. |
+| 🔐 **Authentication & Operator Roles** | • **Google Sign-In Simulation Modal**: Autentikasi Google terintegrasi dengan pemilih profil peran.<br>• **Multi-Role Support**: Akses untuk **Operator Lapangan** (Shift 1) dan **Supervisor K3** (Lead Safety Officer).<br>• **Persistent Reactive Session**: Sesi pengguna tersimpan di `localStorage` dan tersinkronisasi di seluruh komponen melalui `AuthContext`. |
 
 ---
 
@@ -38,7 +39,9 @@ Dibangun dengan arsitektur **terpisah (*decoupled*)**:
 ```mermaid
 flowchart TD
     subgraph Client["Frontend (Next.js 16 + React 19)"]
-        Home["Landing Page & Hero Scanner Demo (/)"]
+        Nav["HeaderNav & Profile Dropdown"]
+        AuthCtx["AuthContext (Google Sign-In & Roles)"]
+        Home["Landing Page & Hero Scanner (/)"]
         LiveScan["Live Scan Viewfinder & HUD (/live-scan)"]
         Inspector["Media Lab & Preset Inspector (/inspector)"]
         Incidents["Incident Audit Trail & Modal (/incidents)"]
@@ -65,6 +68,7 @@ flowchart TD
         Weights["bobot best.pt"]
     end
 
+    Nav --> AuthCtx
     LiveScan --> Webcam
     LiveScan --> Canvas
     LiveScan --> Synth
@@ -73,7 +77,7 @@ flowchart TD
     Inspector --> Adapter
     Incidents --> Adapter
 
-    Adapter -->|Jika Backend Aktif| API
+    Adapter -->|Jika Backend Aktif (HTTP / WS)| API
     Adapter -->|Graceful Fallback| MockEngine
     API --> Engine
     Engine -->|weights tersedia| YOLO
@@ -85,6 +89,45 @@ flowchart TD
     Weights --> Eval
     Weights -->|best.pt| YOLO
 ```
+
+---
+
+## 👥 Pembagian Kerja & Roadmap Integrasi Tim
+
+Proyek ini dikerjakan secara kolaboratif antara tim **Frontend** dan **Backend**:
+
+```mermaid
+flowchart LR
+    subgraph FE["Frontend Developer (Telah Selesai — Langkah 1 & 2)"]
+        direction TB
+        F1["UI/UX Dark Command Center Modern"]
+        F2["Simulasi Google Sign-In & Peran Operator/Supervisor"]
+        F3["Deteksi Api Webcam Real-Time (useWebcamScanner)"]
+        F4["Adaptor Data Tangguh (Graceful Fallback & LocalStorage)"]
+    end
+
+    subgraph BE["Backend Developer (Tugas Rekan Backend — Langkah 3)"]
+        direction TB
+        B1["Verifikasi Token Google OAuth (google-auth library)"]
+        B2["Persistensi Akun Pengguna & Log Insiden SQLite/PostgreSQL"]
+        B3["Endpoint Pengelolaan Status Insiden (PATCH /incidents/:id)"]
+        B4["Optimasi Model YOLOv8 (weights/best.pt)"]
+    end
+
+    FE -.->|NEXT_PUBLIC_BACKEND_URL| BE
+```
+
+### 1. Telah Selesai di Sisi Frontend (Langkah 1 & 2):
+- **Antarmuka & Pengalaman Pengguna**: Desain Command Center terbebas dari *nested card* berlebihan, tombol CTA proporsional, dan penstabilan pergeseran horizontal navbar via `scrollbar-gutter: stable`.
+- **Autentikasi Sesi**: Context provider `AuthContext` terpasang di root layout, modal Google Sign-In (`AuthModal`), serta profil demo *Operator* dan *Supervisor K3*.
+- **Pencatatan Insiden Otomatis**: Deteksi api pada Live Scan otomatis menyimpan snapshot dan memicu penyimpanan insiden ke adaptor.
+- **Resilient Fallback**: Sistem dapat langsung didemokan dan diuji 100% tanpa perlu menyalakan backend FastAPI.
+
+### 2. Tanggung Jawab Rekan Backend (Langkah 3):
+- **Verifikasi Token Google OAuth**: Menyediakan endpoint `POST /api/v1/auth/google` yang memvalidasi Google ID Token menggunakan pustaka `google-auth` Python.
+- **Penyimpanan Terpusat**: Menyimpan log insiden (termasuk atribusi ID dan peran operator yang sedang bertugas) ke database SQLite atau PostgreSQL.
+- **Update Status Tiket**: Mendukung endpoint `PATCH /api/v1/incidents/{id}` untuk mengubah status insiden (`active` ➔ `investigating` ➔ `resolved`).
+- **Engine Komputasi Vision**: Menjalankan inferensi model YOLOv8 (`weights/best.pt`) pada endpoint `POST /api/v1/detect/image` dan stream WebSocket.
 
 ---
 
@@ -103,12 +146,14 @@ fire-smoke-detection/
 │   ├── src/
 │   │   ├── app/                                  # Routing halaman (/, /live-scan, /inspector, /incidents)
 │   │   ├── components/
+│   │   │   ├── auth/                             # AuthModal (Simulasi Google Sign-In & Peran Pengguna)
 │   │   │   ├── common/                           # HeaderNav, Footer, SpecularButton
 │   │   │   ├── home/                             # HeroSection, HeroScannerDemo, Architecture, Benchmark, Workflow
 │   │   │   ├── live-scan/                        # ViewfinderStream, ViewfinderTopBar, DetectionHudOverlay, TelemetrySidebar
 │   │   │   ├── inspector/                        # MediaUploader, InspectorPreviewCanvas, PlaybackControls, DetectionTable
 │   │   │   ├── incidents/                        # IncidentStatCards, IncidentFilters, IncidentTable, SnapshotModal
 │   │   │   └── command-center/                   # DetectionCanvas
+│   │   ├── context/                              # AuthContext.tsx (Global auth state & demo profiles)
 │   │   ├── hooks/                                # useWebcamScanner, useDetectionCanvas, useAlarmSound
 │   │   ├── services/                             # detectionAdapter.ts & mockDetection.ts
 │   │   └── types/                                # Kontrak tipe data TypeScript (detection.ts)
@@ -126,7 +171,7 @@ fire-smoke-detection/
 │   ├── tests/                                    # pytest: engine + API + WebSocket
 │   ├── openapi.yaml                              # Spesifikasi kontrak OpenAPI (auto-generate)
 │   ├── requirements.txt                          # Dependensi serving (inferensi YOLO: requirements-yolo.txt)
-│   └── README.md                                 # Panduan API, WebSocket, dan konfigurasi
+│   └── README.md                                 # Panduan khusus backend & panduan integrasi frontend
 ├── models/                                       # Dataset, training, evaluasi, dan bobot model
 │   ├── configs/data.yaml                         # Konfigurasi kelas/path dataset YOLO lokal
 │   ├── dataset/data/{train,val,test}/{images,labels}/ # Data lokal; tidak di-commit
@@ -161,7 +206,7 @@ npm run dev
 ```
 
 Buka [http://localhost:3000](http://localhost:3000) di browser.
-> 💡 **Tips:** Frontend dapat langsung dijalankan secara penuh (termasuk fitur **Live Webcam Scanner**, **Preset Inspector**, dan **Incident Logging**) tanpa perlu menyalakan server backend terlebih dahulu.
+> 💡 **Tips:** Frontend dapat langsung dijalankan secara penuh (termasuk fitur **Simulasi Login Google**, **Live Webcam Scanner**, **Preset Inspector**, dan **Incident Logging**) tanpa perlu menyalakan server backend terlebih dahulu.
 
 ---
 
@@ -237,7 +282,7 @@ Seluruh endpoint backend didefinisikan di `backend/openapi.yaml` dan sinkron den
 | `GET` `POST` `PATCH` `DELETE` | `/api/v1/incidents[/{id}]` | Log insiden persisten (SQLite) + `GET /incidents/stats`. |
 | `WS` | `/api/v1/ws/cctv/{camera_id}` | Deteksi live per frame: server membaca `streamUrl`, atau klien mengirim frame (biner / base64). Insiden dicatat otomatis. |
 
-Detail lengkap & konfigurasi: [`backend/README.md`](backend/README.md).
+Detail lengkap panduan rekan backend: [`backend/README.md`](backend/README.md).
 
 ---
 
@@ -265,6 +310,6 @@ Restart server — engine berganti otomatis ke YOLO (cek `GET /api/v1/health` �
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** Next.js 16.3 (App Router), React 19.2, TypeScript 5, Tailwind CSS v4, Lucide React, OGL, HTML5 2D Canvas API, WebRTC (`getUserMedia`), Web Audio API.
+- **Frontend:** Next.js 16.3 (App Router), React 19.2, TypeScript 5, Tailwind CSS v4, Phosphor Icons, Lucide React, HTML5 2D Canvas API, WebRTC (`getUserMedia`), Web Audio API.
 - **Backend:** FastAPI, Pydantic v2, Uvicorn, WebSockets, OpenCV, NumPy, SQLite, OpenAPI 3.1, pytest.
 - **AI / Computer Vision Ready:** Ultralytics YOLO11, PyTorch, OpenCV.
