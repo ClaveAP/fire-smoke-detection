@@ -62,6 +62,27 @@ export default function IncidentsPage() {
     setStatusFilter("all");
   }, []);
 
+  const handleUpdateStatus = useCallback(
+    async (incidentId: string, status: IncidentRecord["status"]) => {
+      setIncidents((prev) =>
+        prev.map((item) =>
+          item.id === incidentId ? { ...item, status } : item
+        )
+      );
+      setInspectingIncident((prev) =>
+        prev && prev.id === incidentId ? { ...prev, status } : prev
+      );
+      await detectionAdapter.updateIncidentStatus(incidentId, status);
+    },
+    []
+  );
+
+  const handleDeleteIncident = useCallback(async (incidentId: string) => {
+    setIncidents((prev) => prev.filter((item) => item.id !== incidentId));
+    setInspectingIncident(null);
+    await detectionAdapter.deleteIncident(incidentId);
+  }, []);
+
   const exportCsv = useCallback(() => {
     const headers = [
       "ID",
@@ -173,6 +194,8 @@ export default function IncidentsPage() {
       <SnapshotModal
         incident={inspectingIncident}
         onClose={() => setInspectingIncident(null)}
+        onUpdateStatus={handleUpdateStatus}
+        onDelete={handleDeleteIncident}
       />
     </div>
   );

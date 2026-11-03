@@ -65,6 +65,85 @@ export class DetectionAdapter {
   }
 
   /**
+   * Update an incident's status in browser storage, then PATCH the backend when one is configured
+   */
+  async updateIncidentStatus(
+    incidentId: string,
+    status: IncidentRecord["status"]
+  ): Promise<IncidentRecord | null> {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = window.localStorage.getItem(CUSTOM_INCIDENTS_KEY);
+        if (raw) {
+          const existing: IncidentRecord[] = JSON.parse(raw);
+          const updated = existing.map((item) =>
+            item.id === incidentId ? { ...item, status } : item
+          );
+          window.localStorage.setItem(
+            CUSTOM_INCIDENTS_KEY,
+            JSON.stringify(updated)
+          );
+        }
+      } catch {
+        // Ignore storage errors
+      }
+    }
+
+    if (this.backendUrl) {
+      try {
+        const res = await fetch(
+          `${this.backendUrl}/api/v1/incidents/${encodeURIComponent(incidentId)}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status }),
+          }
+        );
+        if (res.ok) {
+          return (await res.json()) as IncidentRecord;
+        }
+      } catch {
+        // Fallback to local update
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Drop an incident from browser storage and delete it on the backend when one is configured
+   */
+  async deleteIncident(incidentId: string): Promise<boolean> {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = window.localStorage.getItem(CUSTOM_INCIDENTS_KEY);
+        if (raw) {
+          const existing: IncidentRecord[] = JSON.parse(raw);
+          const filtered = existing.filter((item) => item.id !== incidentId);
+          window.localStorage.setItem(
+            CUSTOM_INCIDENTS_KEY,
+            JSON.stringify(filtered)
+          );
+        }
+      } catch {
+        // Ignore storage errors
+      }
+    }
+
+    if (this.backendUrl) {
+      try {
+        const res = await fetch(
+          `${this.backendUrl}/api/v1/incidents/${encodeURIComponent(incidentId)}`,
+          { method: "DELETE" }
+        );
+        return res.ok || res.status === 204;
+      } catch {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * Clear custom simulated incidents and restore initial dummy dataset
    */
   clearCustomIncidents(): IncidentRecord[] {

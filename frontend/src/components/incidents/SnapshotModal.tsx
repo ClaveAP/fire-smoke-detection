@@ -7,9 +7,19 @@ import { X, Fire, Wind, ShieldWarning, Thermometer, Camera } from "@phosphor-ico
 interface SnapshotModalProps {
   incident: IncidentRecord | null;
   onClose: () => void;
+  onUpdateStatus?: (
+    incidentId: string,
+    status: IncidentRecord["status"]
+  ) => void;
+  onDelete?: (incidentId: string) => void;
 }
 
-export function SnapshotModal({ incident, onClose }: SnapshotModalProps) {
+export function SnapshotModal({
+  incident,
+  onClose,
+  onUpdateStatus,
+  onDelete,
+}: SnapshotModalProps) {
   const [showFireBox, setShowFireBox] = useState(true);
   const [showSmokeBox, setShowSmokeBox] = useState(true);
 
@@ -37,6 +47,28 @@ export function SnapshotModal({ incident, onClose }: SnapshotModalProps) {
     if (b.label === "smoke" && !showSmokeBox) return false;
     return true;
   });
+
+  const statusOptions: Array<{
+    value: IncidentRecord["status"];
+    label: string;
+    activeClass: string;
+  }> = [
+    {
+      value: "active",
+      label: "Aktif",
+      activeClass: "bg-[#ff5a1f]/20 text-[#ff8c42] border-[#ff5a1f]/50",
+    },
+    {
+      value: "investigating",
+      label: "Investigasi",
+      activeClass: "bg-amber-500/20 text-amber-300 border-amber-500/50",
+    },
+    {
+      value: "resolved",
+      label: "Selesai",
+      activeClass: "bg-emerald-500/20 text-emerald-300 border-emerald-500/50",
+    },
+  ];
 
   return (
     <div
@@ -209,6 +241,46 @@ export function SnapshotModal({ incident, onClose }: SnapshotModalProps) {
             <div className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.06] text-xs text-zinc-300 leading-relaxed">
               <span className="font-semibold text-white mr-2">Catatan:</span>
               {incident.notes}
+            </div>
+          )}
+
+          {/* Production Incident Workflow Actions (PATCH & DELETE /api/v1/incidents/{id}) */}
+          {(onUpdateStatus || onDelete) && (
+            <div className="pt-2 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-2.5">
+              {onUpdateStatus && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] text-zinc-400 mr-1">
+                    Status Penanganan:
+                  </span>
+                  {statusOptions.map((opt) => {
+                    const active = incident.status === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => onUpdateStatus(incident.id, opt.value)}
+                        className={`px-3 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                          active
+                            ? opt.activeClass
+                            : "bg-white/[0.03] hover:bg-white/[0.08] text-zinc-400 hover:text-white border-white/10"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={() => onDelete(incident.id)}
+                  className="px-3 py-1 rounded-full text-[11px] font-medium bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 transition-colors ml-auto"
+                >
+                  Hapus Rekaman
+                </button>
+              )}
             </div>
           )}
         </div>
