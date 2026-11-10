@@ -80,7 +80,7 @@ export function MediaUploader({
         <input
           ref={inputRef}
           type="file"
-          accept="image/*,video/*"
+          accept="video/mp4,video/*,image/webp,image/jpeg,image/png,image/*"
           onChange={handleFileChange}
           className="hidden"
         />
@@ -88,10 +88,10 @@ export function MediaUploader({
           <UploadSimple weight="duotone" className="w-4 h-4" />
         </div>
         <div className="text-xs font-semibold text-white">
-          Unggah Foto atau Video
+          Unggah Video MP4 atau Gambar
         </div>
         <div className="text-[11px] text-white/50 mt-0.5">
-          Klik atau tarik file WEBP, JPG, PNG, MP4 ke sini
+          Tarik atau klik untuk memilih file MP4, WebP, JPG, atau PNG
         </div>
       </div>
 

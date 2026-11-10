@@ -10,6 +10,7 @@ interface DetectionCanvasProps {
   minConfidence?: number;
   showFire?: boolean;
   showSmoke?: boolean;
+  mediaRef?: React.RefObject<HTMLVideoElement | HTMLImageElement | null>;
 }
 
 export function DetectionCanvas({
@@ -18,12 +19,14 @@ export function DetectionCanvas({
   minConfidence = 0.2,
   showFire = true,
   showSmoke = true,
+  mediaRef,
 }: DetectionCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  useDetectionCanvas({
+  const { drawDetections } = useDetectionCanvas({
     canvasRef,
     detections,
+    mediaRef,
     options: {
       minConfidence,
       renderLabels: true,
@@ -39,8 +42,11 @@ export function DetectionCanvas({
     const updateSize = () => {
       const rect = canvas.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
-        canvas.width = rect.width;
-        canvas.height = rect.height;
+        if (canvas.width !== rect.width || canvas.height !== rect.height) {
+          canvas.width = rect.width;
+          canvas.height = rect.height;
+          drawDetections();
+        }
       }
     };
 
@@ -49,7 +55,7 @@ export function DetectionCanvas({
     observer.observe(canvas);
 
     return () => observer.disconnect();
-  }, []);
+  }, [drawDetections]);
 
   return (
     <canvas

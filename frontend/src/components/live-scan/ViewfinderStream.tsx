@@ -24,13 +24,14 @@ export function ViewfinderStream({
 
   return (
     <div className="absolute inset-0 w-full h-full z-0 overflow-hidden bg-[#07080d]">
-      {/* Always keep <video> mounted in DOM so videoRef.current is never null when attaching webcam stream */}
+      {/* Always keep <video> mounted in DOM so videoRef.current is never null when attaching webcam stream.
+          Uses object-contain to strictly preserve video aspect ratio (e.g. 9:16 portrait) with dark space on borders. */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
+        className={`absolute inset-0 w-full h-full object-contain transition-all duration-300 ${
           isWebcam && !isLivePreview
             ? "opacity-100 z-10"
             : "opacity-0 pointer-events-none z-0"
@@ -45,7 +46,7 @@ export function ViewfinderStream({
         <img
           src={previewSrc}
           alt="CCTV aktif"
-          className={`absolute inset-0 w-full h-full object-cover z-20 ${
+          className={`absolute inset-0 w-full h-full object-contain z-20 ${
             flashlightOn ? "brightness-125" : "brightness-100"
           }`}
         />

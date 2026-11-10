@@ -60,6 +60,22 @@ export interface DetectionResult {
   timestamp: string;
 }
 
+export interface VideoFrameDetection {
+  frameIndex: number;
+  timestampMs: number;
+  boxes: BoundingBox[];
+}
+
+export interface VideoDetectionResult {
+  frames: VideoFrameDetection[];
+  summary: Record<string, { peakConfidence: number; frames: number; firstSeenMs?: number }>;
+  durationMs: number;
+  sourceFps: number;
+  inferenceTimeMs: number;
+  timestamp: string;
+  engine?: string;
+}
+
 export interface DetectionFilterOptions {
   minConfidence: number;
   showFire: boolean;

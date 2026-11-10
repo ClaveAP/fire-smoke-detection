@@ -1,4 +1,10 @@
-import { BackendHealth, CameraFeed, IncidentRecord, DetectionResult } from "@/types/detection";
+import {
+  BackendHealth,
+  CameraFeed,
+  IncidentRecord,
+  DetectionResult,
+  VideoDetectionResult,
+} from "@/types/detection";
 import {
   INITIAL_INCIDENT_RECORDS,
   simulateImageInference,
@@ -368,6 +374,53 @@ export class DetectionAdapter {
 
     // Default resilient fallback
     return simulateImageInference(file);
+  }
+
+  /**
+   * Run inference on an uploaded video file (MP4, AVI, MOV, WebM)
+   */
+  async detectVideo(file: File): Promise<VideoDetectionResult> {
+    if (this.backendUrl) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const startTime = performance.now();
+        const res = await fetch(`${this.backendUrl}/api/v1/detect/video`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const elapsed = Number((performance.now() - startTime).toFixed(1));
+          return {
+            frames: data.frames || [],
+            summary: data.summary || {},
+            durationMs: data.durationMs || 0,
+            sourceFps: data.sourceFps || 25,
+            inferenceTimeMs: data.inferenceTimeMs || elapsed,
+            timestamp: data.timestamp || new Date().toISOString(),
+            engine: data.engine,
+          };
+        } else {
+          const errorData = await res.json().catch(() => ({}));
+          console.warn("Backend video inference returned error status:", res.status, errorData);
+        }
+      } catch (err) {
+        console.warn("Backend video inference unreachable:", err);
+      }
+    }
+
+    // Fallback if backend is offline or failed
+    return {
+      frames: [],
+      summary: {},
+      durationMs: 0,
+      sourceFps: 25,
+      inferenceTimeMs: 0,
+      timestamp: new Date().toISOString(),
+    };
   }
 }
 

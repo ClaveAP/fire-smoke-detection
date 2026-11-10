@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { CornersIn } from "@phosphor-icons/react";
 import { HeaderNav } from "@/components/common/HeaderNav";
 import { useAlarmSound } from "@/hooks/useAlarmSound";
 import { useCameraStream } from "@/hooks/useCameraStream";
@@ -35,6 +36,7 @@ export default function LiveScanPage() {
   const [webcamRequested, setWebcamRequested] = useState(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const viewfinderRef = useRef<HTMLElement | null>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const alarmActiveRef = useRef(false);
   const autoSilencedRef = useRef(false);
@@ -151,14 +153,19 @@ export default function LiveScanPage() {
     webcamLabel,
     isMirrored,
     setIsMirrored,
+    facingMode,
+    activeDeviceId,
+    availableCameras,
     webcamFireBox,
+    flipCamera,
+    switchCamera,
     handleToggleWebcam,
   } = useWebcamScanner({
     onShowToast: showToast,
     onAutoAlarmTrigger: handleAutoAlarmTrigger,
     canAutoTriggerAlarm,
     onResetSilenceLock: handleResetSilenceLock,
-    serverLive: stream.isLive,
+    serverLive: stream.state === "open",
     pushFrame: stream.pushFrame,
     onWebcamToggle: setWebcamRequested,
   });
@@ -173,22 +180,46 @@ export default function LiveScanPage() {
     [cameras, selectedCameraId]
   );
 
-  const sourceOptions = useMemo<StreamSourceOption[]>(
-    () => [
-      { value: SIMULATION_SOURCE, label: "Kamera Simulasi" },
-      {
+  const selectedSourceValue = useMemo(() => {
+    if (isWebcam) {
+      if (activeDeviceId && availableCameras.some((c) => c.deviceId === activeDeviceId)) {
+        return `device:${activeDeviceId}`;
+      }
+      return WEBCAM_SOURCE;
+    }
+    return selectedCameraId ?? SIMULATION_SOURCE;
+  }, [isWebcam, activeDeviceId, availableCameras, selectedCameraId]);
+
+  const sourceOptions = useMemo<StreamSourceOption[]>(() => {
+    const options: StreamSourceOption[] = [
+      { value: SIMULATION_SOURCE, label: "Kamera Simulasi (Bawaan)" },
+    ];
+
+    if (availableCameras.length > 0) {
+      availableCameras.forEach((cam) => {
+        options.push({
+          value: `device:${cam.deviceId}`,
+          label: cam.label,
+        });
+      });
+    } else {
+      options.push({
         value: WEBCAM_SOURCE,
-        label: isWebcam ? webcamLabel : "Webcam Laptop (Browser)",
-      },
-      ...cameras
-        .filter((camera) => Boolean(camera.streamUrl))
-        .map((camera) => ({
+        label: isWebcam ? webcamLabel : "Kamera Perangkat (HP / Tablet / Laptop)",
+      });
+    }
+
+    cameras
+      .filter((camera) => Boolean(camera.streamUrl))
+      .forEach((camera) => {
+        options.push({
           value: camera.id,
           label: `${camera.name} · ${camera.location}`,
-        })),
-    ],
-    [cameras, isWebcam, webcamLabel]
-  );
+        });
+      });
+
+    return options;
+  }, [cameras, availableCameras, isWebcam, webcamLabel]);
 
   const toggleWebcamSource = useCallback(() => {
     const next = !isWebcam;
@@ -201,14 +232,32 @@ export default function LiveScanPage() {
 
   const handleSelectSource = useCallback(
     (value: string) => {
-      const nextIsWebcam = value === WEBCAM_SOURCE;
-      setSelectedCameraId(nextIsWebcam || value === SIMULATION_SOURCE ? null : value);
-      setWebcamRequested(nextIsWebcam);
-      if (nextIsWebcam !== isWebcam) {
-        void handleToggleWebcam();
+      if (value.startsWith("device:")) {
+        const devId = value.replace("device:", "");
+        setSelectedCameraId(null);
+        setWebcamRequested(true);
+        void switchCamera(devId);
+      } else if (value === WEBCAM_SOURCE) {
+        setSelectedCameraId(null);
+        setWebcamRequested(true);
+        if (!isWebcam) {
+          void handleToggleWebcam();
+        }
+      } else if (value === SIMULATION_SOURCE) {
+        if (isWebcam) {
+          void handleToggleWebcam();
+        }
+        setSelectedCameraId(null);
+        setWebcamRequested(false);
+      } else {
+        if (isWebcam) {
+          void handleToggleWebcam();
+        }
+        setSelectedCameraId(value);
+        setWebcamRequested(false);
       }
     },
-    [isWebcam, handleToggleWebcam]
+    [isWebcam, handleToggleWebcam, switchCamera]
   );
 
   const telemetry = useMemo(() => {
@@ -246,15 +295,29 @@ export default function LiveScanPage() {
     });
   }, [playAlert, stopAlarm, showToast]);
 
-  const toggleFullscreen = () => {
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen?.();
-      setIsFullscreen(true);
+      if (viewfinderRef.current?.requestFullscreen) {
+        viewfinderRef.current.requestFullscreen().catch(() => {});
+      }
     } else {
-      document.exitFullscreen?.();
-      setIsFullscreen(false);
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
     }
-  };
+  }, []);
 
   const engineLabel = !detectionAdapter.baseUrl
     ? "mode simulasi lokal"
@@ -286,7 +349,7 @@ export default function LiveScanPage() {
               Pemindaian Kamera Langsung
             </h1>
             <p className="text-xs sm:text-sm text-white/60">
-              Pantau titik api dan kepulan asap secara real-time melalui kamera laptop atau simulasi.
+              Pantau titik api dan kepulan asap secara real-time melalui kamera perangkat (HP, tablet, laptop) atau CCTV.
             </p>
           </div>
           {streamNotice && (
@@ -304,7 +367,15 @@ export default function LiveScanPage() {
         <div className="flex-1 flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* Left Camera Stage */}
           <div className="flex-1 flex flex-col min-h-[380px] sm:min-h-[480px] lg:min-h-[600px]">
-            <section className="relative flex-1 rounded-2xl sm:rounded-3xl border border-white/10 overflow-hidden bg-[#0a0b10] flex flex-col">
+            <section
+              ref={viewfinderRef}
+              onDoubleClick={toggleFullscreen}
+              className={`relative flex-1 overflow-hidden flex flex-col transition-all select-none ${
+                isFullscreen
+                  ? "bg-black rounded-none border-none w-screen h-screen"
+                  : "rounded-2xl sm:rounded-3xl border border-white/10 bg-[#0a0b10]"
+              }`}
+            >
               <ViewfinderStream
                 isWebcam={isWebcam}
                 flashlightOn={flashlightOn}
@@ -314,30 +385,49 @@ export default function LiveScanPage() {
                 previewSrc={stream.snapshotSrc}
                 showPreview={isCctvLive}
               />
-              <ViewfinderTopBar
-                isWebcam={isWebcam}
-                isConnectingWebcam={isConnectingWebcam}
-                webcamLabel={webcamLabel}
-                isMirrored={isMirrored}
-                flashlightOn={flashlightOn}
-                isFullscreen={isFullscreen}
-                sourceOptions={sourceOptions}
-                selectedSource={webcamRequested ? WEBCAM_SOURCE : selectedCameraId ?? SIMULATION_SOURCE}
-                onSelectSource={handleSelectSource}
-                engineLabel={engineLabel}
-                isStreamLive={stream.isLive}
-                streamFps={stream.packet?.fps ?? 0}
-                onToggleFlashlight={() => setFlashlightOn(!flashlightOn)}
-                onToggleWebcam={toggleWebcamSource}
-                onToggleMirror={() => setIsMirrored((prev) => !prev)}
-                onToggleFullscreen={toggleFullscreen}
-              />
+
+              {isFullscreen ? (
+                <div className="absolute top-4 right-4 z-30 pointer-events-auto">
+                  <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    className="px-3.5 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white/90 hover:text-white text-xs font-mono flex items-center gap-2 transition-all shadow-2xl hover:scale-105 active:scale-95 cursor-pointer"
+                    title="Keluar Layar Penuh (Tekan ESC)"
+                  >
+                    <CornersIn weight="bold" className="w-3.5 h-3.5 text-[#ff5722]" />
+                    <span className="text-[11px] font-sans font-medium">Keluar Fullscreen (ESC)</span>
+                  </button>
+                </div>
+              ) : (
+                <ViewfinderTopBar
+                  isWebcam={isWebcam}
+                  isConnectingWebcam={isConnectingWebcam}
+                  webcamLabel={webcamLabel}
+                  isMirrored={isMirrored}
+                  flashlightOn={flashlightOn}
+                  isFullscreen={isFullscreen}
+                  sourceOptions={sourceOptions}
+                  selectedSource={selectedSourceValue}
+                  onSelectSource={handleSelectSource}
+                  engineLabel={engineLabel}
+                  isStreamLive={stream.isLive}
+                  streamFps={stream.packet?.fps ?? 0}
+                  onFlipCamera={flipCamera}
+                  onToggleFlashlight={() => setFlashlightOn(!flashlightOn)}
+                  onToggleWebcam={toggleWebcamSource}
+                  onToggleMirror={() => setIsMirrored((prev) => !prev)}
+                  onToggleFullscreen={toggleFullscreen}
+                />
+              )}
+
               <DetectionHudOverlay
                 isWebcam={isWebcam}
                 webcamFireBox={localFireBox}
                 serverBoxes={stream.boxes}
                 isStreamLive={stream.isLive}
                 mirrored={isWebcam && isMirrored}
+                videoRef={videoRef}
+                isFullscreen={isFullscreen}
               />
             </section>
           </div>

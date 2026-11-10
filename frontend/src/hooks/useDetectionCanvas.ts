@@ -2,10 +2,12 @@
 
 import { useEffect, useCallback } from "react";
 import { BoundingBox, DetectionFilterOptions } from "@/types/detection";
+import { getMediaContentRect, getMediaNaturalDimensions } from "@/lib/mediaGeometry";
 
 interface UseDetectionCanvasProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   detections: BoundingBox[];
+  mediaRef?: React.RefObject<HTMLVideoElement | HTMLImageElement | null>;
   options?: Partial<DetectionFilterOptions> & {
     renderLabels?: boolean;
   };
@@ -14,6 +16,7 @@ interface UseDetectionCanvasProps {
 export function useDetectionCanvas({
   canvasRef,
   detections,
+  mediaRef,
   options = {},
 }: UseDetectionCanvasProps) {
   const {
@@ -35,6 +38,14 @@ export function useDetectionCanvas({
 
     ctx.clearRect(0, 0, width, height);
 
+    const dims = getMediaNaturalDimensions(mediaRef?.current);
+    const { offsetX, offsetY, renderWidth, renderHeight } = getMediaContentRect(
+      width,
+      height,
+      dims?.width,
+      dims?.height
+    );
+
     const filtered = detections.filter((box) => {
       if (box.confidence < minConfidence) return false;
       if (box.label === "fire" && !showFire) return false;
@@ -44,10 +55,10 @@ export function useDetectionCanvas({
 
     for (const box of filtered) {
       const [nx, ny, nw, nh] = box.bbox;
-      const x = nx * width;
-      const y = ny * height;
-      const w = nw * width;
-      const h = nh * height;
+      const x = offsetX + nx * renderWidth;
+      const y = offsetY + ny * renderHeight;
+      const w = nw * renderWidth;
+      const h = nh * renderHeight;
 
       const isFire = box.label === "fire";
       const strokeColor = isFire ? "#ff5722" : "#38bdf8";
@@ -102,7 +113,7 @@ export function useDetectionCanvas({
         const textMetrics = ctx.measureText(labelText);
         const tagWidth = textMetrics.width + 14;
         const tagHeight = 20;
-        const tagY = Math.max(0, y - tagHeight - 2);
+        const tagY = Math.max(offsetY, y - tagHeight - 2);
 
         ctx.fillStyle = tagBg;
         ctx.fillRect(x, tagY, tagWidth, tagHeight);
@@ -115,7 +126,7 @@ export function useDetectionCanvas({
         const coordMetrics = ctx.measureText(coordText);
         const coordW = coordMetrics.width + 10;
         const coordH = 16;
-        const coordY = Math.min(height - coordH, y + h + 2);
+        const coordY = Math.min(offsetY + renderHeight - coordH, y + h + 2);
 
         ctx.fillStyle = "rgba(6, 14, 32, 0.88)";
         ctx.fillRect(x, coordY, coordW, coordH);
@@ -124,7 +135,7 @@ export function useDetectionCanvas({
         ctx.fillText(coordText, x + 5, coordY + coordH / 2);
       }
     }
-  }, [canvasRef, detections, minConfidence, showFire, showSmoke, renderLabels]);
+  }, [canvasRef, detections, mediaRef, minConfidence, showFire, showSmoke, renderLabels]);
 
   useEffect(() => {
     const render = () => {
@@ -133,6 +144,25 @@ export function useDetectionCanvas({
     const animId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animId);
   }, [drawDetections]);
+
+  useEffect(() => {
+    const el = mediaRef?.current;
+    if (!el) return;
+
+    const handleUpdate = () => {
+      drawDetections();
+    };
+
+    el.addEventListener("loadedmetadata", handleUpdate);
+    el.addEventListener("resize", handleUpdate);
+    el.addEventListener("load", handleUpdate);
+
+    return () => {
+      el.removeEventListener("loadedmetadata", handleUpdate);
+      el.removeEventListener("resize", handleUpdate);
+      el.removeEventListener("load", handleUpdate);
+    };
+  }, [mediaRef, drawDetections]);
 
   return { drawDetections };
 }

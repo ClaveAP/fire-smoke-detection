@@ -26,7 +26,8 @@ export function PlaybackControls({
   smokeCount = 0,
 }: PlaybackControlsProps) {
   const thresholdPresets = [
-    { label: "Sensitif 25%", value: 0.25 },
+    { label: "Optimal 20%", value: 0.2 },
+    { label: "Sensitif 30%", value: 0.3 },
     { label: "Seimbang 50%", value: 0.5 },
     { label: "Ketat 80%", value: 0.8 },
   ];
