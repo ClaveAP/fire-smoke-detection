@@ -4,6 +4,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+except ImportError:
+    pass
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 REPO_DIR = BASE_DIR.parent
 MODELS_DIR = REPO_DIR / "models"
@@ -60,6 +66,9 @@ class Settings:
     video_sample_fps: float = field(default_factory=lambda: _env_float("VIDEO_SAMPLE_FPS", 2.0))
     video_max_frames: int = field(default_factory=lambda: _env_int("VIDEO_MAX_FRAMES", 120))
     stream_max_fps: float = field(default_factory=lambda: _env_float("STREAM_MAX_FPS", 8.0))
+
+    # Google OAuth Client ID for token audience verification
+    google_client_id: str = field(default_factory=lambda: _env("GOOGLE_CLIENT_ID", ""))
 
     # Automatic incident logging for live streams
     auto_incidents: bool = field(default_factory=lambda: _env_bool("AUTO_INCIDENTS", True))

@@ -5,3 +5,5 @@ __pycache__/
 .pytest_cache/
 data/
 cameras.json
+.env*
+!.env.example

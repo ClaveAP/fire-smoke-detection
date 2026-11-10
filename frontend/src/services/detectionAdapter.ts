@@ -3,6 +3,7 @@ import {
   INITIAL_INCIDENT_RECORDS,
   simulateImageInference,
 } from "./mockDetection";
+import { supabase, isSupabaseConfigured, getSupabase } from "@/lib/supabase";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 const CUSTOM_INCIDENTS_KEY = "aegisflame_custom_incidents_v1";
@@ -38,21 +39,55 @@ export class DetectionAdapter {
   }
 
   /**
-   * Save a newly detected incident (from Live Scan webcam or Media Lab) into local storage
-   * and forward to backend API if configured
+   * Save a newly detected incident into:
+   * 1. Supabase database (if configured)
+   * 2. Browser local storage (for instant offline response)
+   * 3. FastAPI backend (if running)
    */
   recordIncident(incident: IncidentRecord): IncidentRecord[] {
+    // 1. Supabase Persistence
+    const client = getSupabase() || supabase;
+    if (isSupabaseConfigured() && client) {
+      client
+        .from("incidents")
+        .insert({
+          id: incident.id,
+          timestamp: incident.timestamp,
+          camera_id: incident.cameraId,
+          camera_name: incident.cameraName,
+          zone: incident.zone || null,
+          type: incident.type,
+          secondary_type: incident.secondaryType || null,
+          confidence: incident.confidence,
+          smoke_confidence: incident.smokeConfidence || null,
+          temperature_c: incident.temperatureC || null,
+          smoke_density_dbm: incident.smokeDensityDbm || null,
+          status: incident.status,
+          snapshot_url: incident.snapshotUrl || null,
+          notes: incident.notes || null,
+          detections: incident.detections || [],
+          operator: incident.operator || null,
+        })
+        .then(({ error }) => {
+          if (error) {
+            console.warn("Supabase recordIncident error:", error.message);
+          }
+        });
+    }
+
+    // 2. Local Storage
     if (typeof window !== "undefined") {
       try {
         const raw = window.localStorage.getItem(CUSTOM_INCIDENTS_KEY);
         const existing: IncidentRecord[] = raw ? JSON.parse(raw) : [];
-        const updated = [incident, ...existing].slice(0, 25);
+        const updated = [incident, ...existing].slice(0, 50);
         window.localStorage.setItem(CUSTOM_INCIDENTS_KEY, JSON.stringify(updated));
       } catch {
         // Ignore storage quota errors
       }
     }
 
+    // 3. Backend API
     if (this.backendUrl) {
       fetch(`${this.backendUrl}/api/v1/incidents`, {
         method: "POST",
@@ -65,12 +100,26 @@ export class DetectionAdapter {
   }
 
   /**
-   * Update an incident's status in browser storage, then PATCH the backend when one is configured
+   * Update an incident's status in Supabase, local storage, and backend
    */
   async updateIncidentStatus(
     incidentId: string,
     status: IncidentRecord["status"]
   ): Promise<IncidentRecord | null> {
+    // 1. Update in Supabase
+    const client = getSupabase() || supabase;
+    if (isSupabaseConfigured() && client) {
+      try {
+        await client
+          .from("incidents")
+          .update({ status })
+          .eq("id", incidentId);
+      } catch (err) {
+        console.warn("Supabase status update failed:", err);
+      }
+    }
+
+    // 2. Update in Local Storage
     if (typeof window !== "undefined") {
       try {
         const raw = window.localStorage.getItem(CUSTOM_INCIDENTS_KEY);
@@ -89,6 +138,7 @@ export class DetectionAdapter {
       }
     }
 
+    // 3. Update in Backend API
     if (this.backendUrl) {
       try {
         const res = await fetch(
@@ -110,9 +160,20 @@ export class DetectionAdapter {
   }
 
   /**
-   * Drop an incident from browser storage and delete it on the backend when one is configured
+   * Drop an incident from Supabase, browser storage, and backend
    */
   async deleteIncident(incidentId: string): Promise<boolean> {
+    // 1. Delete from Supabase
+    const client = getSupabase() || supabase;
+    if (isSupabaseConfigured() && client) {
+      try {
+        await client.from("incidents").delete().eq("id", incidentId);
+      } catch (err) {
+        console.warn("Supabase delete failed:", err);
+      }
+    }
+
+    // 2. Delete from Local Storage
     if (typeof window !== "undefined") {
       try {
         const raw = window.localStorage.getItem(CUSTOM_INCIDENTS_KEY);
@@ -129,6 +190,7 @@ export class DetectionAdapter {
       }
     }
 
+    // 3. Delete from Backend
     if (this.backendUrl) {
       try {
         const res = await fetch(
@@ -206,20 +268,72 @@ export class DetectionAdapter {
   }
 
   /**
-   * Fetch incident logs or fallback to local + mock dataset
+   * Fetch incident logs:
+   * When isOfficialUser is true (logged in with Google):
+   *   Strictly queries the Supabase database. If empty, returns [] (never mock data).
+   * When isOfficialUser is false (demo profile / guest):
+   *   Falls back to local dummy mock dataset.
    */
-  async getIncidentRecords(): Promise<IncidentRecord[]> {
+  async getIncidentRecords(isOfficialUser: boolean = false): Promise<IncidentRecord[]> {
+    // 1. Try Supabase
+    const client = getSupabase() || supabase;
+    if (isSupabaseConfigured() && client) {
+      try {
+        const { data, error } = await client
+          .from("incidents")
+          .select("*")
+          .order("timestamp", { ascending: false })
+          .limit(100);
+
+        if (!error && data) {
+          // If official user, return whatever is in Supabase (even if 0 records)
+          if (isOfficialUser || data.length > 0) {
+            return data.map((row) => ({
+              id: row.id,
+              timestamp: row.timestamp,
+              cameraId: row.camera_id,
+              cameraName: row.camera_name,
+              zone: row.zone || undefined,
+              type: row.type,
+              secondaryType: row.secondary_type || undefined,
+              confidence: Number(row.confidence),
+              smokeConfidence: row.smoke_confidence ? Number(row.smoke_confidence) : undefined,
+              temperatureC: row.temperature_c ? Number(row.temperature_c) : undefined,
+              smokeDensityDbm: row.smoke_density_dbm ? Number(row.smoke_density_dbm) : undefined,
+              status: row.status,
+              snapshotUrl: row.snapshot_url || undefined,
+              notes: row.notes || undefined,
+              detections: row.detections || undefined,
+              operator: row.operator || undefined,
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn("Supabase getIncidentRecords error, fallback:", err);
+      }
+    }
+
+    // For official Google user: NEVER fall back to demo data
+    if (isOfficialUser) {
+      return [];
+    }
+
+    // 2. Try FastAPI Backend
     if (this.backendUrl) {
       try {
         const res = await fetch(`${this.backendUrl}/api/v1/incidents`);
         if (res.ok) {
           const data = await res.json();
-          return data;
+          if (Array.isArray(data) && data.length > 0) {
+            return data;
+          }
         }
       } catch {
         // Fall back seamlessly to local + mock
       }
     }
+
+    // 3. Fallback to Local Storage + Demo dataset
     return this.getStoredIncidents();
   }
 

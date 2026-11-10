@@ -95,3 +95,16 @@ class StreamFramePacket(BaseModel):
     status: CameraStatus
     detections: List[BoundingBoxSchema]
     incidentId: Optional[str] = None
+
+
+class GoogleAuthRequest(BaseModel):
+    credential: str = Field(..., description="Google ID Token (JWT credential from Google Identity Services)")
+
+
+class UserProfileResponse(BaseModel):
+    id: str
+    name: str
+    email: str
+    avatar: str
+    role: Literal["Operator", "Supervisor K3", "Admin"] = "Operator"
+    roleTitle: str = "Operator Jaga Shift 1"

@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import Settings
 from .detection.engine import build_detector
-from .routers import cameras, detection, incidents, stream, system
+from .routers import auth, cameras, detection, incidents, stream, system
 from .services.camera_registry import CameraRegistry
 from .services.detection_service import DetectionService
 from .services.incident_store import IncidentStore
@@ -49,7 +49,7 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         allow_headers=["*"],
     )
 
-    for module in (system, cameras, incidents, detection, stream):
+    for module in (system, auth, cameras, incidents, detection, stream):
         app.include_router(module.router, prefix=API_PREFIX)
     return app
 

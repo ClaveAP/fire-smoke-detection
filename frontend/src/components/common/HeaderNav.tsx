@@ -12,11 +12,13 @@ import {
 } from "@phosphor-icons/react";
 import { useAuth } from "@/context/AuthContext";
 import { AuthModal, GoogleLogo } from "@/components/auth/AuthModal";
+import { LogoutConfirmModal } from "@/components/auth/LogoutConfirmModal";
 
 export function HeaderNav() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { user, openAuthModal, logout } = useAuth();
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -143,9 +145,9 @@ export function HeaderNav() {
                       type="button"
                       onClick={() => {
                         setUserDropdownOpen(false);
-                        logout();
+                        setIsLogoutModalOpen(true);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-red-300 hover:bg-red-500/15 border border-transparent hover:border-red-500/30 transition-all text-left"
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-red-300 hover:bg-red-500/15 border border-transparent hover:border-red-500/30 transition-all text-left cursor-pointer"
                     >
                       <SignOut weight="bold" className="w-4 h-4 text-red-400 shrink-0" />
                       <span>Keluar (Logout)</span>
@@ -274,7 +276,7 @@ export function HeaderNav() {
                   type="button"
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    logout();
+                    setIsLogoutModalOpen(true);
                   }}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-xs font-semibold text-red-300 transition-colors"
                 >
@@ -301,6 +303,16 @@ export function HeaderNav() {
 
       {/* Auth Modal Global Dialog */}
       <AuthModal />
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => {
+          setIsLogoutModalOpen(false);
+          logout();
+        }}
+      />
     </>
   );
 }

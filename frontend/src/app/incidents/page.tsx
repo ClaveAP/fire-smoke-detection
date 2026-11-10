@@ -16,6 +16,7 @@ import { SnapshotModal } from "@/components/incidents/SnapshotModal";
 import { IncidentRecord } from "@/types/detection";
 import { INITIAL_INCIDENT_RECORDS } from "@/services/mockDetection";
 import { detectionAdapter } from "@/services/detectionAdapter";
+import { getSupabase, supabase } from "@/lib/supabase";
 import {
   DownloadSimple,
   LockKey,
@@ -32,7 +33,9 @@ const emptySubscribe = () => () => {};
 export default function IncidentsPage() {
   const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const { user, openAuthModal } = useAuth();
-  const [incidents, setIncidents] = useState<IncidentRecord[]>(INITIAL_INCIDENT_RECORDS);
+  const isOfficialUser = Boolean(user && !user.id.startsWith("usr-"));
+  const [incidents, setIncidents] = useState<IncidentRecord[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -40,11 +43,40 @@ export default function IncidentsPage() {
   const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
 
+  const fetchIncidents = useCallback(async () => {
+    setIsLoading(true);
+    const records = await detectionAdapter.getIncidentRecords(isOfficialUser);
+    setIncidents(records);
+    setIsLoading(false);
+  }, [isOfficialUser]);
+
   useEffect(() => {
-    detectionAdapter.getIncidentRecords().then((records) => {
-      setIncidents(records);
-    });
-  }, []);
+    fetchIncidents();
+  }, [fetchIncidents]);
+
+  // Realtime synchronization with Supabase Database for official users
+  useEffect(() => {
+    if (!isOfficialUser) return;
+    const client = getSupabase() || supabase;
+    if (!client) return;
+
+    const channel = client
+      .channel("incidents-realtime-listener")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "incidents" },
+        () => {
+          detectionAdapter.getIncidentRecords(true).then((records) => {
+            setIncidents(records);
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      client.removeChannel(channel);
+    };
+  }, [isOfficialUser]);
 
   // Close export dropdown when clicking outside
   useEffect(() => {
