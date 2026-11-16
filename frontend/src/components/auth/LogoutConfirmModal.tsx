@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { SignOut, X, WarningCircle } from "@phosphor-icons/react";
+import { X } from "@phosphor-icons/react";
 import { useAuth } from "@/context/AuthContext";
 
 interface LogoutConfirmModalProps {
@@ -46,70 +46,52 @@ export function LogoutConfirmModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="logout-confirm-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xl animate-[fadeIn_0.15s_ease-out] overflow-hidden"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#181916]/35 backdrop-blur-[3px] animate-[fadeIn_0.15s_ease-out] overflow-hidden"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm my-auto rounded-3xl bg-[#0b0d14] border border-white/12 shadow-[0_24px_90px_rgba(0,0,0,0.85)] p-6 relative flex flex-col gap-4 text-center overflow-hidden select-none"
+        className="w-full max-w-[350px] my-auto rounded-[16px] bg-white border border-[#e9e8e3] shadow-[0_20px_50px_rgba(24,25,22,0.14)] p-5 relative flex flex-col text-left select-none text-[#292b27]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Subtle red accent glow */}
-        <div
-          className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-40 rounded-full opacity-25"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(239,68,68,0.35) 0%, transparent 70%)",
-          }}
-        />
-
-        {/* Close Button top-right */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 w-7 h-7 rounded-full bg-white/[0.05] hover:bg-white/15 text-zinc-400 hover:text-white border border-white/10 flex items-center justify-center transition-colors cursor-pointer"
-          aria-label="Tutup"
-        >
-          <X weight="bold" className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Warning Icon Badge */}
-        <div className="relative z-10 mx-auto w-12 h-12 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 mt-1">
-          <WarningCircle weight="duotone" className="w-6 h-6" />
-        </div>
-
-        {/* Text Details */}
-        <div className="relative z-10 flex flex-col gap-1.5">
+        <div className="flex items-start justify-between gap-3">
           <h3
             id="logout-confirm-title"
-            className="text-base font-bold text-white tracking-tight"
+            className="text-[15px] font-semibold text-[#292b27] tracking-[-0.02em] leading-snug"
           >
-            Konfirmasi Keluar Sesi
+            Keluar dari akun?
           </h3>
-          <p className="text-xs text-white/60 leading-relaxed">
-            Apakah Anda yakin ingin keluar dari akun{" "}
-            <span className="text-white font-medium">
-              {user?.name || "pengguna"}
-            </span>
-            ? Sesi aktif Anda akan ditutup.
-          </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="relative z-10 grid grid-cols-2 gap-2.5 pt-2">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white/80 hover:text-white text-xs font-semibold transition-all active:scale-[0.98] cursor-pointer"
+            className="w-7 h-7 -mt-0.5 -mr-1 rounded-full hover:bg-[#f4f3ef] text-[#85877f] hover:text-[#292b27] flex items-center justify-center transition-colors cursor-pointer focus:outline-none focus-visible:outline-2 focus-visible:outline-[#bd4338] focus-visible:outline-offset-2"
+            aria-label="Tutup"
+          >
+            <X weight="bold" className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <p className="mt-1.5 text-[12px] text-[#777971] leading-relaxed">
+          Sesi{" "}
+          <span className="text-[#292b27] font-medium">
+            {user?.name || "Anda"}
+          </span>{" "}
+          akan ditutup.
+        </p>
+
+        <div className="mt-5 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-9 px-4 rounded-[10px] bg-white hover:bg-[#f6f5f2] border border-[#e4e1d9] text-[#555750] text-[12px] font-medium transition-colors active:scale-[0.98] cursor-pointer focus:outline-none focus-visible:outline-2 focus-visible:outline-[#bd4338] focus-visible:outline-offset-2"
           >
             Batal
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="px-4 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-red-600/20 active:scale-[0.98] cursor-pointer"
+            className="h-9 px-4 rounded-[10px] bg-[#c83f32] hover:bg-[#b7392e] text-white text-[12px] font-medium transition-colors active:scale-[0.98] cursor-pointer focus:outline-none focus-visible:outline-2 focus-visible:outline-[#bd4338] focus-visible:outline-offset-2"
           >
-            <SignOut weight="bold" className="w-3.5 h-3.5" />
-            <span>Ya, Keluar</span>
+            Keluar
           </button>
         </div>
       </div>

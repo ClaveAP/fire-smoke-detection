@@ -9,6 +9,7 @@ import React, {
   useEffect,
   useSyncExternalStore,
 } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { supabase, isSupabaseConfigured, getSupabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
@@ -43,6 +44,18 @@ export const DEMO_USERS: UserProfile[] = [
   },
 ];
 
+export interface RegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+  role?: UserProfile["role"];
+}
+
+export interface RegisterResult {
+  error: string | null;
+  needsEmailConfirmation?: boolean;
+}
+
 interface AuthContextType {
   user: UserProfile | null;
   isLoading: boolean;
@@ -51,18 +64,104 @@ interface AuthContextType {
   openAuthModal: () => void;
   closeAuthModal: () => void;
   /** Legacy demo login by index */
-  login: (userIndex?: number) => Promise<void>;
-  /** Google OAuth via Supabase */
-  loginWithGoogle: () => Promise<void>;
+  login: (userIndex?: number, rememberMe?: boolean) => Promise<void>;
+  /** Google OAuth via Supabase (with local demo fallback) */
+  loginWithGoogle: (rememberMe?: boolean) => Promise<void>;
+  /** Email/username and password login */
+  loginWithPassword: (identifier: string, password: string, rememberMe?: boolean) => Promise<string | null>;
+  /** Register a new account */
+  registerWithPassword: (payload: RegisterPayload) => Promise<RegisterResult>;
+  /** Send password recovery email via Supabase */
+  resetPassword: (email: string) => Promise<string | null>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const STORAGE_KEY = "aegisflame_auth_user";
+const LOCAL_USERS_KEY = "aegisflame_local_users";
+const REMEMBER_COOKIE_KEY = "aegisflame_remember_me";
+const AUTH_COOKIE_KEY = "aegisflame_session";
 const AUTH_CHANGE_EVENT = "aegisflame_auth_change";
 const IDLE_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 Jam (7.200.000 ms)
 const LAST_ACTIVITY_KEY = "aegisflame_last_activity";
+const PUBLIC_PATHS = ["/login", "/auth/callback", "/auth/reset-password"];
+const emptySubscribe = () => () => {};
+
+function setCookie(name: string, value: string, days?: number) {
+  if (typeof document === "undefined") return;
+  const maxAge = days ? `; max-age=${days * 86400}` : "";
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/${maxAge}; SameSite=Lax`;
+}
+
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const prefix = `${name}=`;
+  const parts = document.cookie.split("; ");
+  for (const part of parts) {
+    if (part.startsWith(prefix)) {
+      return decodeURIComponent(part.slice(prefix.length));
+    }
+  }
+  return null;
+}
+
+function deleteCookie(name: string) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
+}
+
+interface StoredLocalAccount {
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+  name: string;
+  role: UserProfile["role"];
+  roleTitle: string;
+  avatar: string;
+}
+
+const DEMO_CREDENTIALS: StoredLocalAccount[] = [
+  {
+    id: "usr-admin-01",
+    username: "admin",
+    email: "admin@aegisflame.id",
+    password: "admin123",
+    name: "Admin AegisFlame",
+    role: "Admin",
+    roleTitle: "System Administrator",
+    avatar:
+      "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=120&h=120&q=80",
+  },
+  {
+    id: "usr-operator-01",
+    username: "operator",
+    email: "operator@aegisflame.id",
+    password: "operator123",
+    name: "Budi Santoso",
+    role: "Operator",
+    roleTitle: "Operator Jaga Shift 1",
+    avatar:
+      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&h=120&q=80",
+  },
+];
+
+function getLocalUsers(): StoredLocalAccount[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(LOCAL_USERS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalUsers(users: StoredLocalAccount[]) {
+  localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+}
 
 function subscribe(callback: () => void) {
   if (typeof window === "undefined") return () => {};
@@ -77,7 +176,11 @@ function subscribe(callback: () => void) {
 function getSnapshot(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return localStorage.getItem(STORAGE_KEY);
+    return (
+      sessionStorage.getItem(STORAGE_KEY) ||
+      localStorage.getItem(STORAGE_KEY) ||
+      getCookie(AUTH_COOKIE_KEY)
+    );
   } catch {
     return null;
   }
@@ -87,14 +190,28 @@ function getServerSnapshot(): string | null {
   return null;
 }
 
-function saveUser(profile: UserProfile) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+function saveUser(profile: UserProfile, rememberMe = true) {
+  const serialized = JSON.stringify(profile);
+  if (rememberMe) {
+    localStorage.setItem(STORAGE_KEY, serialized);
+    sessionStorage.removeItem(STORAGE_KEY);
+    setCookie(REMEMBER_COOKIE_KEY, "1", 30);
+    setCookie(AUTH_COOKIE_KEY, serialized, 30);
+  } else {
+    sessionStorage.setItem(STORAGE_KEY, serialized);
+    localStorage.removeItem(STORAGE_KEY);
+    deleteCookie(REMEMBER_COOKIE_KEY);
+    setCookie(AUTH_COOKIE_KEY, serialized);
+  }
   window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
 }
 
 function clearUser() {
   localStorage.removeItem(STORAGE_KEY);
+  sessionStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(LAST_ACTIVITY_KEY);
+  deleteCookie(REMEMBER_COOKIE_KEY);
+  deleteCookie(AUTH_COOKIE_KEY);
   window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
 }
 
@@ -174,15 +291,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    clearUser();
     try {
       const client = getSupabase() || supabase;
       if (client) {
         await client.auth.signOut();
       }
-      clearUser();
     } catch (e) {
       console.warn("Failed to remove auth state", e);
-      clearUser();
     }
   }, []);
 
@@ -240,12 +356,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, logout]);
 
   /* ---------- Demo login (simulation profiles) ---------- */
-  const login = useCallback(async (userIndex = 0): Promise<void> => {
+  const login = useCallback(async (userIndex = 0, rememberMe = true): Promise<void> => {
     setIsLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 350));
     const selected = DEMO_USERS[userIndex] || DEMO_USERS[0];
     try {
-      saveUser(selected);
+      saveUser(selected, rememberMe);
     } catch (e) {
       console.warn("Failed to save auth state", e);
     }
@@ -254,11 +370,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /* ---------- Real Google OAuth via Supabase ---------- */
-  const loginWithGoogle = useCallback(async (): Promise<void> => {
+  const loginWithGoogle = useCallback(async (rememberMe = true): Promise<void> => {
     const client = getSupabase() || supabase;
     if (!client) {
       console.warn("Supabase belum dikonfigurasi. Menggunakan login simulasi.");
-      login(0);
+      await login(0, rememberMe);
       return;
     }
 
@@ -291,8 +407,201 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [login]);
 
+  const loginWithPassword = useCallback(async (identifier: string, password: string, rememberMe = true) => {
+    const normalized = identifier.trim().toLowerCase();
+    const localAccounts = [...DEMO_CREDENTIALS, ...getLocalUsers()];
+    const matchedLocal = localAccounts.find(
+      (acc) =>
+        (acc.email.toLowerCase() === normalized ||
+          acc.username.toLowerCase() === normalized) &&
+        acc.password === password
+    );
+
+    const client = getSupabase() || supabase;
+    if (client && normalized.includes("@")) {
+      setIsLoading(true);
+      try {
+        const { data, error } = await client.auth.signInWithPassword({
+          email: normalized,
+          password,
+        });
+        if (!error) {
+          if (data.user) {
+            saveUser(mapSupabaseUser(data.user), rememberMe);
+          }
+          return null;
+        }
+        if (matchedLocal) {
+          saveUser({
+            id: matchedLocal.id,
+            name: matchedLocal.name,
+            email: matchedLocal.email,
+            role: matchedLocal.role,
+            roleTitle: matchedLocal.roleTitle,
+            avatar: matchedLocal.avatar,
+          }, rememberMe);
+          return null;
+        }
+        return error.message;
+      } catch {
+        if (matchedLocal) {
+          saveUser({
+            id: matchedLocal.id,
+            name: matchedLocal.name,
+            email: matchedLocal.email,
+            role: matchedLocal.role,
+            roleTitle: matchedLocal.roleTitle,
+            avatar: matchedLocal.avatar,
+          }, rememberMe);
+          return null;
+        }
+        return "Tidak dapat terhubung. Periksa koneksi lalu coba lagi.";
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    setIsLoading(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      if (matchedLocal) {
+        saveUser({
+          id: matchedLocal.id,
+          name: matchedLocal.name,
+          email: matchedLocal.email,
+          role: matchedLocal.role,
+          roleTitle: matchedLocal.roleTitle,
+          avatar: matchedLocal.avatar,
+        }, rememberMe);
+        return null;
+      }
+      return "Username/email atau password tidak sesuai.";
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const registerWithPassword = useCallback(
+    async ({ name, email, password, role = "Operator" }: RegisterPayload): Promise<RegisterResult> => {
+      const cleanName = name.trim();
+      const cleanEmail = email.trim().toLowerCase();
+
+      if (!cleanName) {
+        return { error: "Nama lengkap wajib diisi." };
+      }
+      if (!cleanEmail.includes("@")) {
+        return { error: "Masukkan alamat email yang valid." };
+      }
+      if (password.length < 6) {
+        return { error: "Password minimal 6 karakter." };
+      }
+
+      const client = getSupabase() || supabase;
+      if (client) {
+        setIsLoading(true);
+        try {
+          const { data, error } = await client.auth.signUp({
+            email: cleanEmail,
+            password,
+            options: {
+              data: {
+                full_name: cleanName,
+                name: cleanName,
+                role,
+              },
+            },
+          });
+          if (error) {
+            return { error: error.message };
+          }
+          if (data.session && data.user) {
+            saveUser(mapSupabaseUser(data.user));
+            return { error: null, needsEmailConfirmation: false };
+          }
+          return { error: null, needsEmailConfirmation: true };
+        } catch {
+          return { error: "Tidak dapat terhubung. Coba lagi beberapa saat." };
+        } finally {
+          setIsLoading(false);
+        }
+      }
+
+      setIsLoading(true);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        const existingLocal = getLocalUsers();
+        const allAccounts = [...DEMO_CREDENTIALS, ...existingLocal];
+        const duplicate = allAccounts.some(
+          (acc) => acc.email.toLowerCase() === cleanEmail
+        );
+        if (duplicate) {
+          return { error: "Email sudah terdaftar. Silakan masuk dengan akun tersebut." };
+        }
+
+        const usernameBase = cleanEmail.split("@")[0] || cleanName.toLowerCase().replace(/\s+/g, "");
+        const newAccount: StoredLocalAccount = {
+          id: `usr-${Date.now()}`,
+          username: usernameBase,
+          email: cleanEmail,
+          password,
+          name: cleanName,
+          role,
+          roleTitle: role === "Supervisor K3" ? "Lead Safety & HSE Officer" : "Operator Jaga",
+          avatar:
+            "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&h=120&q=80",
+        };
+        saveLocalUsers([...existingLocal, newAccount]);
+        saveUser({
+          id: newAccount.id,
+          name: newAccount.name,
+          email: newAccount.email,
+          role: newAccount.role,
+          roleTitle: newAccount.roleTitle,
+          avatar: newAccount.avatar,
+        });
+        return { error: null, needsEmailConfirmation: false };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  const resetPassword = useCallback(async (email: string) => {
+    const client = getSupabase() || supabase;
+    if (!client) return "Pemulihan password hanya tersedia jika Supabase aktif. Gunakan akun default atau daftar akun baru.";
+
+    setIsLoading(true);
+    try {
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const { error } = await client.auth.resetPasswordForEmail(email, {
+        redirectTo: origin ? `${origin}/auth/reset-password` : undefined,
+      });
+      return error?.message ?? null;
+    } catch {
+      return "Tidak dapat terhubung. Coba lagi beberapa saat.";
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const openAuthModal = useCallback(() => setIsAuthModalOpen(true), []);
   const closeAuthModal = useCallback(() => setIsAuthModalOpen(false), []);
+
+  const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const isPublicPath = PUBLIC_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  );
+
+  useEffect(() => {
+    if (isClient && !user && !isPublicPath) {
+      router.replace("/login");
+    }
+  }, [isClient, user, isPublicPath, router]);
+
+  const shouldBlockRender = !isPublicPath && (!isClient || !user);
 
   return (
     <AuthContext.Provider
@@ -305,10 +614,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         closeAuthModal,
         login,
         loginWithGoogle,
+        loginWithPassword,
+        registerWithPassword,
+        resetPassword,
         logout,
       }}
     >
-      {children}
+      {shouldBlockRender ? (
+        <div className="min-h-screen bg-[#f4f3f0]" aria-hidden="true" />
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }
