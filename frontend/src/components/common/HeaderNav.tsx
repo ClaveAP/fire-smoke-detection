@@ -1,318 +1,142 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Fire,
-  List,
-  X,
-  SignOut,
-  CaretDown,
-} from "@phosphor-icons/react";
+import { CaretDown, List, Pulse, ShieldCheck, SignOut, X } from "@phosphor-icons/react";
 import { useAuth } from "@/context/AuthContext";
-import { AuthModal, GoogleLogo } from "@/components/auth/AuthModal";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { GoogleLogo } from "@/components/auth/GoogleLogo";
 import { LogoutConfirmModal } from "@/components/auth/LogoutConfirmModal";
+import { BrandMark } from "@/components/common/BrandMark";
+import styles from "./HeaderNav.module.css";
+
+const links = [
+  { name: "Overview", href: "/" },
+  { name: "Aktivitas", href: "/incidents" },
+  { name: "Kamera", href: "/live-scan" },
+  { name: "Analitik", href: "/inspector" },
+];
+
+const VOWELS = new Set(["a", "i", "u", "e", "o"]);
+
+function getInitials(name: string): string {
+  const clean = name.trim();
+  if (!clean) return "U";
+  const words = clean.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return `${words[0][0]}${words[1][0]}`.toUpperCase();
+  }
+  const word = words[0];
+  if (word.length === 1) return word.toUpperCase();
+  const nextConsonant = word
+    .slice(1)
+    .split("")
+    .find((ch) => /[a-z]/i.test(ch) && !VOWELS.has(ch.toLowerCase()));
+  return `${word[0]}${nextConsonant ?? word[1]}`.toUpperCase();
+}
 
 export function HeaderNav() {
   const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { user, openAuthModal, logout } = useAuth();
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
 
-  const navLinks = [
-    { label: "Beranda", href: "/" },
-    { label: "Live Scan", href: "/live-scan" },
-    { label: "Media Lab", href: "/inspector" },
-    { label: "Insiden", href: "/incidents" },
-  ];
-
-  // Close user dropdown when clicking outside
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setUserDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    const close = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) setProfileOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
   }, []);
 
-  return (
-    <>
-      <header className="fixed top-4 sm:top-5 inset-x-0 z-40 px-3 sm:px-4 flex flex-col items-center pointer-events-none">
-        <div className="pointer-events-auto w-full max-w-[360px] md:w-auto md:max-w-none flex items-center justify-between gap-2 md:gap-4 px-3.5 py-2 rounded-full bg-[#0a0b10]/85 backdrop-blur-xl border border-white/12 shadow-[0_8px_32px_rgba(0,0,0,0.55)]">
-          {/* Brand Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-2 pl-1.5 pr-1 text-sm font-bold text-white shrink-0"
-          >
-            <Fire weight="fill" className="w-4 h-4 text-[#ff5722] shrink-0" />
-            <span className="font-display tracking-tight">AegisFlame</span>
-          </Link>
+  const isLinkActive = (href: string) => href === "/"
+    ? pathname === "/"
+    : href === "/live-scan"
+    ? pathname === href || pathname === "/cameras"
+    : pathname === href;
 
-          {/* Desktop Navigation Links */}
-          <nav
-            aria-label="Navigasi Utama"
-            className="hidden md:flex items-center gap-1"
-          >
-            {navLinks.map((link) => {
-              const active =
-                link.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300 ${
-                    active
-                      ? "bg-white text-[#050507] shadow-sm font-semibold"
-                      : "text-white/65 hover:text-white hover:bg-white/[0.06]"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
+  const initials = user ? getInitials(user.name) : "";
 
-          {/* Desktop Authentication Button / User Profile */}
-          <div className="hidden md:flex items-center pl-1">
-            {user ? (
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setUserDropdownOpen((prev) => !prev)}
-                  className="group flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/12 text-xs text-white transition-all duration-200 active:scale-[0.98]"
-                  aria-expanded={userDropdownOpen}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-6 h-6 rounded-full object-cover border border-white/20 shrink-0"
-                  />
-                  <span className="font-medium max-w-[100px] truncate">
-                    {user.name.split(" ")[0]}
-                  </span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                  <CaretDown
-                    weight="bold"
-                    className={`w-3 h-3 text-white/50 transition-transform duration-200 ${
-                      userDropdownOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-
-                {/* User Dropdown Menu */}
-                {userDropdownOpen && (
-                  <div className="absolute right-0 mt-2.5 w-64 rounded-2xl bg-[#0b0d14]/95 backdrop-blur-2xl border border-white/12 p-3 shadow-2xl flex flex-col gap-2.5 z-50 animate-[fadeIn_0.15s_ease-out]">
-                    <div className="flex items-center gap-2.5 pb-2.5 border-b border-white/10">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-10 h-10 rounded-full object-cover border border-white/20 shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold text-white truncate">
-                          {user.name}
-                        </div>
-                        <div className="text-[10px] text-white/50 truncate">
-                          {user.email}
-                        </div>
-                        <span className="mt-1 inline-block px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold bg-[#ff5722]/15 text-[#ff6b3d] border border-[#ff5722]/35">
-                          {user.roleTitle}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="px-2 py-1 text-[11px] text-white/55 flex items-center justify-between">
-                      <span>Status Shift</span>
-                      <span className="inline-flex items-center gap-1.5 font-medium text-emerald-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        Aktif Bertugas
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserDropdownOpen(false);
-                        setIsLogoutModalOpen(true);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-red-300 hover:bg-red-500/15 border border-transparent hover:border-red-500/30 transition-all text-left cursor-pointer"
-                    >
-                      <SignOut weight="bold" className="w-4 h-4 text-red-400 shrink-0" />
-                      <span>Keluar (Logout)</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={openAuthModal}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.08] hover:bg-white text-white hover:text-[#050507] border border-white/15 text-xs font-semibold whitespace-nowrap transition-all duration-300 active:scale-[0.98]"
-              >
-                <GoogleLogo className="w-3.5 h-3.5 shrink-0" />
-                <span>Masuk</span>
-              </button>
-            )}
-          </div>
-
-          {/* Mobile Right Controls: Avatar/Login + Hamburger */}
-          <div className="md:hidden flex items-center gap-2">
-            {user ? (
-              <button
-                type="button"
-                onClick={openAuthModal}
-                className="w-7 h-7 rounded-full overflow-hidden border border-white/20 shrink-0 active:scale-95 transition-transform"
-                title={`Login sebagai ${user.name}`}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={openAuthModal}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.08] hover:bg-white text-white hover:text-[#050507] border border-white/15 text-[11px] font-semibold whitespace-nowrap transition-colors"
-              >
-                <GoogleLogo className="w-3 h-3 shrink-0" />
-                <span>Masuk</span>
-              </button>
-            )}
-
+  return <>
+    <header className={styles.header}>
+      <div className={styles.inner}>
+        <Link href="/" className={styles.brand}>
+          <BrandMark className={styles.mark} />
+          <span>AegisFlame<small>Fire safety system</small></span>
+        </Link>
+        <nav className={styles.desktopNav} aria-label="Navigasi utama">
+          {links.map((link) => { const active = isLinkActive(link.href); return <Link key={link.name} href={link.href} aria-current={active ? "page" : undefined} className={active ? styles.active : ""}>{link.name}</Link>; })}
+        </nav>
+        <div className={styles.right}>
+          {user ? <div className={styles.profileWrap} ref={profileRef}>
             <button
               type="button"
-              onClick={() => setMobileMenuOpen((prev) => !prev)}
-              className="w-8 h-8 rounded-full flex items-center justify-center bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-white shrink-0 transition-colors"
-              aria-expanded={mobileMenuOpen}
-              aria-label="Menu navigasi"
+              className={`${styles.profile} ${profileOpen ? styles.profileActive : ""}`}
+              onClick={() => setProfileOpen((value) => !value)}
+              aria-expanded={profileOpen}
             >
-              {mobileMenuOpen ? (
-                <X weight="bold" className="w-4 h-4" />
-              ) : (
-                <List weight="bold" className="w-4 h-4" />
-              )}
+              <span className={styles.avatar} aria-hidden="true">{initials}</span>
+              <span>{user.name}<small>{user.role}</small></span>
+              <CaretDown size={13} className={`${styles.caret} ${profileOpen ? styles.caretOpen : ""}`} />
             </button>
-          </div>
-        </div>
-
-        {/* Mobile Floating Dropdown Menu */}
-        {mobileMenuOpen && (
-          <nav
-            aria-label="Navigasi Mobile"
-            className="pointer-events-auto md:hidden mt-2 w-full max-w-[360px] rounded-3xl bg-[#0a0b10]/95 backdrop-blur-2xl border border-white/12 p-3 flex flex-col gap-2 shadow-2xl"
-          >
-            {/* Mobile User Card if Logged in */}
-            {user && (
-              <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-between gap-3 mb-1">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-9 h-9 rounded-full object-cover border border-white/20 shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <div className="text-xs font-semibold text-white truncate">
-                      {user.name}
-                    </div>
-                    <div className="text-[10px] text-white/50 truncate">
-                      {user.email}
-                    </div>
+            {profileOpen && (
+              <div className={styles.profileMenu} role="menu" aria-label="Menu profil">
+                <div className={styles.profileHeader}>
+                  <span className={styles.avatarLarge} aria-hidden="true">{initials}</span>
+                  <div className={styles.profileIdentity}>
+                    <b>{user.name}</b>
+                    <small>{user.email}</small>
                   </div>
                 </div>
-
-                <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-[#ff5722]/15 text-[#ff6b3d] border border-[#ff5722]/35">
-                  {user.role}
-                </span>
+                <div className={styles.profileMetaList}>
+                  <div className={styles.profileMeta}>
+                    <span><ShieldCheck size={14} weight="duotone" /> Peran</span>
+                    <strong>{user.role}</strong>
+                  </div>
+                  <div className={styles.profileMeta}>
+                    <span><Pulse size={14} weight="duotone" /> Status sesi</span>
+                    <em className={styles.statusOnline}><i /> Aktif</em>
+                  </div>
+                </div>
+                <div className={styles.profileDivider} />
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={styles.logoutButton}
+                  onClick={() => { setProfileOpen(false); setLogoutOpen(true); }}
+                >
+                  <SignOut size={14} weight="bold" />
+                  <span>Keluar dari akun</span>
+                </button>
               </div>
             )}
-
-            {/* Nav Links */}
-            <div className="flex flex-col gap-1">
-              {navLinks.map((link) => {
-                const active =
-                  link.href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(link.href);
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-2.5 rounded-2xl text-xs font-medium transition-colors flex items-center justify-between ${
-                      active
-                        ? "bg-white text-[#050507] font-semibold"
-                        : "text-white/75 hover:bg-white/[0.06] hover:text-white"
-                    }`}
-                  >
-                    <span>{link.label}</span>
-                    {active && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#ff5722]" />
-                    )}
-                  </Link>
-                );
-              })}
+          </div> : <button className={styles.login} onClick={openAuthModal}><GoogleLogo className={styles.googleIcon} /><span>Masuk</span></button>}
+          <button className={styles.menuButton} onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-label="Buka menu">{menuOpen ? <X size={18} /> : <List size={18} />}</button>
+        </div>
+      </div>
+      {menuOpen && (
+        <nav className={styles.mobileNav} aria-label="Navigasi mobile">
+          {user && (
+            <div className={styles.mobileUser}>
+              <span className={styles.avatar} aria-hidden="true">{initials}</span>
+              <div>
+                <b>{user.name}</b>
+                <small>{user.role}</small>
+              </div>
             </div>
-
-            {/* Mobile Auth Actions at Bottom */}
-            <div className="pt-2 border-t border-white/10">
-              {user ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setIsLogoutModalOpen(true);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-xs font-semibold text-red-300 transition-colors"
-                >
-                  <SignOut weight="bold" className="w-4 h-4" />
-                  <span>Keluar (Logout)</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    openAuthModal();
-                  }}
-                  className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-[#050507] text-xs font-semibold transition-colors"
-                >
-                  <GoogleLogo className="w-4 h-4" />
-                  <span>Masuk dengan Google</span>
-                </button>
-              )}
-            </div>
-          </nav>
-        )}
-      </header>
-
-      {/* Auth Modal Global Dialog */}
-      <AuthModal />
-
-      {/* Logout Confirmation Modal */}
-      <LogoutConfirmModal
-        isOpen={isLogoutModalOpen}
-        onClose={() => setIsLogoutModalOpen(false)}
-        onConfirm={() => {
-          setIsLogoutModalOpen(false);
-          logout();
-        }}
-      />
-    </>
-  );
+          )}
+          {links.map((link) => <Link key={link.name} href={link.href} onClick={() => setMenuOpen(false)} className={isLinkActive(link.href) ? styles.mobileActive : ""}>{link.name}</Link>)}
+          {user && <>
+            <div className={styles.profileDivider} />
+            <button onClick={() => { setMenuOpen(false); setLogoutOpen(true); }}><SignOut size={14} weight="bold" /> Keluar</button>
+          </>}
+        </nav>
+      )}
+    </header>
+    <AuthModal />
+    <LogoutConfirmModal isOpen={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); void logout(); }} />
+  </>;
 }
