@@ -55,11 +55,11 @@ export function MediaUploader({
   return (
     <div className="rounded-2xl sm:rounded-3xl bg-[#0b0d14] border border-white/10 p-5 flex flex-col gap-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-base font-bold text-white">
+        <h2 className="font-display text-base font-medium tracking-[-.035em] text-white">
           Sumber Media
         </h2>
         {isProcessing && (
-          <span className="text-xs font-mono text-[#ff6b3d] animate-pulse">
+          <span className="text-xs font-medium text-[#ff6b3d] animate-pulse">
             Memindai...
           </span>
         )}
@@ -87,7 +87,7 @@ export function MediaUploader({
         <div className="w-10 h-10 rounded-full bg-white/[0.06] mx-auto flex items-center justify-center text-[#ff6b3d] mb-2.5">
           <UploadSimple weight="duotone" className="w-4 h-4" />
         </div>
-        <div className="text-xs font-semibold text-white">
+        <div className="text-xs font-medium text-white">
           Unggah Video MP4 atau Gambar
         </div>
         <div className="text-[11px] text-white/50 mt-0.5">
@@ -134,7 +134,7 @@ export function MediaUploader({
                 </div>
 
                 <span
-                  className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${
+                  className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium tabular-nums ${
                     preset.category === "dual"
                       ? "bg-[#ff5722]/20 text-[#ff6b3d]"
                       : preset.category === "fire"

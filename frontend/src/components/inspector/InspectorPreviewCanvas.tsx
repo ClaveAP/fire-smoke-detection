@@ -97,7 +97,7 @@ export function InspectorPreviewCanvas({
       <div className="px-3.5 py-3 sm:px-5 sm:py-3.5 border-b border-white/10 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <span className="w-2 h-2 rounded-full bg-[#ff5722] shrink-0" />
-          <span className="text-xs sm:text-sm font-semibold text-white truncate flex items-center gap-1.5">
+          <span className="text-xs sm:text-sm font-medium tracking-[-.015em] text-white truncate flex items-center gap-1.5">
             {isVideo && (
               <VideoCamera weight="bold" className="w-3.5 h-3.5 text-[#ff5722] shrink-0" />
             )}
@@ -108,7 +108,7 @@ export function InspectorPreviewCanvas({
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           {/* Fire Pill */}
           <span
-            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-mono font-semibold border ${
+            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium tabular-nums border ${
               fireBoxes.length > 0
                 ? "bg-[#ff5722]/15 text-[#ff6b3d] border-[#ff5722]/40"
                 : "bg-white/[0.03] text-white/40 border-white/10"
@@ -120,7 +120,7 @@ export function InspectorPreviewCanvas({
 
           {/* Smoke Pill */}
           <span
-            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-mono font-semibold border ${
+            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium tabular-nums border ${
               smokeBoxes.length > 0
                 ? "bg-[#38bdf8]/15 text-[#38bdf8] border-[#38bdf8]/40"
                 : "bg-white/[0.03] text-white/40 border-white/10"
@@ -132,19 +132,19 @@ export function InspectorPreviewCanvas({
 
           {/* Overall Status Pill */}
           {hasBoth ? (
-            <span className="px-2.5 sm:px-3 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 text-[11px] sm:text-xs font-semibold">
+            <span className="px-2.5 sm:px-3 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 text-[11px] sm:text-xs font-medium">
               Api + Asap Terdeteksi
             </span>
           ) : fireBoxes.length > 0 ? (
-            <span className="px-2.5 sm:px-3 py-1 rounded-full bg-[#ff5722] text-white text-[11px] sm:text-xs font-semibold">
+            <span className="px-2.5 sm:px-3 py-1 rounded-full bg-[#ff5722] text-white text-[11px] sm:text-xs font-medium">
               Titik Api Terdeteksi
             </span>
           ) : smokeBoxes.length > 0 ? (
-            <span className="px-2.5 sm:px-3 py-1 rounded-full bg-[#38bdf8] text-[#050507] text-[11px] sm:text-xs font-semibold">
+            <span className="px-2.5 sm:px-3 py-1 rounded-full bg-[#38bdf8] text-[#050507] text-[11px] sm:text-xs font-medium">
               Kepulan Asap Terdeteksi
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] sm:text-xs font-semibold">
+            <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] sm:text-xs font-medium">
               <ShieldCheck weight="duotone" className="w-3.5 h-3.5 shrink-0" />
               Aman
             </span>
@@ -208,7 +208,7 @@ export function InspectorPreviewCanvas({
             <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/10 mx-auto flex items-center justify-center text-[#ff5722] mb-3">
               <ImageIcon weight="duotone" className="w-6 h-6" />
             </div>
-            <div className="text-sm font-semibold text-white mb-1">
+            <div className="text-sm font-medium text-white mb-1">
               Belum Ada Media
             </div>
             <p className="text-xs text-white/55 max-w-xs">
@@ -223,7 +223,7 @@ export function InspectorPreviewCanvas({
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="px-3.5 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white/90 hover:text-white text-xs font-mono flex items-center gap-2 transition-all shadow-2xl hover:scale-105 active:scale-95 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white/90 hover:text-white text-xs font-medium flex items-center gap-2 transition-all shadow-2xl hover:scale-105 active:scale-95 cursor-pointer"
               title="Keluar Layar Penuh (Tekan ESC)"
             >
               <CornersIn weight="bold" className="w-3.5 h-3.5 text-[#ff5722]" />
@@ -240,7 +240,7 @@ export function InspectorPreviewCanvas({
               <div className="w-10 h-10 rounded-full border-2 border-t-[#ff5722] border-r-[#ff6b3d] border-b-transparent border-l-transparent animate-spin" />
             </div>
             <div className="text-center px-4">
-              <p className="text-xs sm:text-sm font-semibold text-white tracking-wide">
+              <p className="text-xs sm:text-sm font-medium text-white tracking-wide">
                 {isVideo ? "Menganalisis Frame Video MP4..." : "Menganalisis Berkas Gambar..."}
               </p>
               <p className="text-[11px] text-white/60 font-mono mt-1">

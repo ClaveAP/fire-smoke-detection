@@ -307,37 +307,17 @@ export default function MediaInspectorPage() {
     });
   }, [thresholdDetections, showFire, showSmoke]);
 
-  const handleExportSnapshot = useCallback(() => {
-    const exportData = {
-      timestamp: new Date().toISOString(),
-      sample: sampleTitle,
-      confidenceThreshold: confidence,
-      layers: { fire: showFire, smoke: showSmoke },
-      detections: filteredDetections,
-    };
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `detection-audit-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [sampleTitle, confidence, showFire, showSmoke, filteredDetections]);
-
   return (
-    <div className="min-h-screen bg-[#050507] text-[#f5f5f7] flex flex-col font-sans overflow-x-hidden">
+    <div data-horizon className="min-h-screen bg-[#050507] text-[#f5f5f7] flex flex-col font-sans overflow-x-hidden">
       <HeaderNav />
 
       <main className="flex-1 max-w-7xl w-full mx-auto pt-20 sm:pt-24 pb-10 sm:pb-12 px-3.5 sm:px-6 lg:px-8 flex flex-col gap-4 sm:gap-6">
-        {/* Clean Minimal Page Title */}
         <div>
-          <h1 className="font-display text-xl sm:text-3xl font-bold text-white">
-            Media Inspector Lab
+          <h1 className="font-display text-3xl sm:text-[38px] font-medium tracking-[-.065em] leading-[1.1] text-white">
+            Analitik media
           </h1>
-          <p className="text-xs sm:text-sm text-white/60">
-            Unggah video (MP4) atau gambar (WebP, JPG, PNG) untuk menganalisis deteksi titik api dan kepulan asap per objek.
+          <p className="mt-2 max-w-3xl text-[13px] text-white/60">
+            Analisis rekaman CCTV untuk meninjau deteksi api dan asap per objek.
           </p>
         </div>
 
@@ -366,7 +346,6 @@ export default function MediaInspectorPage() {
             <DetectionTable
               boxes={filteredDetections}
               inferenceTimeMs={inferenceTimeMs}
-              onExportSnapshot={handleExportSnapshot}
             />
           </div>
 

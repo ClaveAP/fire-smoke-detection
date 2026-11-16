@@ -1,6 +1,8 @@
 "use client";
 
 import { Fire, Wind } from "@phosphor-icons/react";
+import type { CSSProperties } from "react";
+import styles from "./PlaybackControls.module.css";
 
 interface PlaybackControlsProps {
   confidence: number;
@@ -14,138 +16,32 @@ interface PlaybackControlsProps {
   smokeCount?: number;
 }
 
-export function PlaybackControls({
-  confidence,
-  onConfidenceChange,
-  showFire,
-  onToggleFire,
-  showSmoke,
-  onToggleSmoke,
-  filteredCount,
-  fireCount = 0,
-  smokeCount = 0,
-}: PlaybackControlsProps) {
-  const thresholdPresets = [
-    { label: "Optimal 20%", value: 0.2 },
-    { label: "Sensitif 30%", value: 0.3 },
-    { label: "Seimbang 50%", value: 0.5 },
-    { label: "Ketat 80%", value: 0.8 },
+export function PlaybackControls({ confidence, onConfidenceChange, showFire, onToggleFire, showSmoke, onToggleSmoke, filteredCount, fireCount = 0, smokeCount = 0 }: PlaybackControlsProps) {
+  const presets = [
+    { label: "Optimal", value: 0.2, hint: "20%" },
+    { label: "Sensitif", value: 0.3, hint: "30%" },
+    { label: "Seimbang", value: 0.5, hint: "50%" },
+    { label: "Ketat", value: 0.8, hint: "80%" },
   ];
 
-  return (
-    <div className="rounded-2xl sm:rounded-3xl bg-[#0b0d14] border border-white/10 p-5 flex flex-col gap-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="font-display text-base font-bold text-white">
-          Filter &amp; Sensitivitas
-        </h2>
-        <span className="px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/10 text-xs font-mono text-white/80">
-          {filteredCount} aktif
-        </span>
-      </div>
-
-      {/* Confidence Slider */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-white/60">Batas Akurasi Minimum</span>
-          <span className="font-mono font-bold text-white text-sm">
-            {(confidence * 100).toFixed(0)}%
-          </span>
-        </div>
-
-        <input
-          type="range"
-          min="10"
-          max="95"
-          step="1"
-          value={Math.round(confidence * 100)}
-          onChange={(e) => onConfidenceChange(Number(e.target.value) / 100)}
-          className="w-full accent-[#ff5722] bg-white/10 h-1.5 rounded-full cursor-pointer"
-        />
-
-        <div className="grid grid-cols-3 gap-2 pt-1">
-          {thresholdPresets.map((preset) => {
-            const isSelected = Math.abs(confidence - preset.value) < 0.02;
-            return (
-              <button
-                key={preset.label}
-                type="button"
-                onClick={() => onConfidenceChange(preset.value)}
-                className={`py-1.5 px-2 rounded-full text-[11px] font-medium border transition-all ${
-                  isSelected
-                    ? "bg-white text-[#050507] font-semibold border-white"
-                    : "bg-white/[0.03] text-white/65 border-white/10 hover:text-white"
-                }`}
-              >
-                {preset.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Fire & Smoke Layer Toggles */}
-      <div className="space-y-2.5 pt-2 border-t border-white/10">
-        <div className="text-xs text-white/60">Layer Visual:</div>
-
-        <div className="grid grid-cols-2 gap-2.5">
-          <button
-            type="button"
-            onClick={onToggleFire}
-            className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between gap-2 ${
-              showFire
-                ? "bg-[#ff5722]/15 text-white border-[#ff5722]/50"
-                : "bg-white/[0.02] text-white/40 border-white/10"
-            }`}
-          >
-            <div className="flex items-center justify-between w-full">
-              <Fire
-                weight="fill"
-                className={`w-4 h-4 ${
-                  showFire ? "text-[#ff5722]" : "text-white/30"
-                }`}
-              />
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-black/40">
-                {showFire ? "AKTIF" : "MATI"}
-              </span>
-            </div>
-            <div>
-              <div className="text-xs font-semibold">Titik Api</div>
-              <div className="text-[11px] font-mono text-[#ff6b3d]">
-                {fireCount} objek
-              </div>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={onToggleSmoke}
-            className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between gap-2 ${
-              showSmoke
-                ? "bg-[#38bdf8]/15 text-white border-[#38bdf8]/50"
-                : "bg-white/[0.02] text-white/40 border-white/10"
-            }`}
-          >
-            <div className="flex items-center justify-between w-full">
-              <Wind
-                weight="bold"
-                className={`w-4 h-4 ${
-                  showSmoke ? "text-[#38bdf8]" : "text-white/30"
-                }`}
-              />
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-black/40">
-                {showSmoke ? "AKTIF" : "MATI"}
-              </span>
-            </div>
-            <div>
-              <div className="text-xs font-semibold">Kepulan Asap</div>
-              <div className="text-[11px] font-mono text-[#38bdf8]">
-                {smokeCount} objek
-              </div>
-            </div>
-          </button>
-        </div>
+  return <section className={styles.panel} aria-label="Filter dan sensitivitas">
+    <header className={styles.header}><div><h2>Filter deteksi</h2><p>Atur ambang akurasi dan objek yang ditampilkan.</p></div><span className={styles.count}>{filteredCount}<small>objek</small></span></header>
+    <div className={styles.threshold}>
+      <div className={styles.thresholdLabel}><label htmlFor="confidence-threshold">Batas akurasi minimum</label><output htmlFor="confidence-threshold">{Math.round(confidence * 100)}%</output></div>
+      <input id="confidence-threshold" type="range" min="10" max="95" step="1" value={Math.round(confidence * 100)} style={{ "--progress": `${Math.round(confidence * 100)}%` } as CSSProperties} onChange={(event) => onConfidenceChange(Number(event.target.value) / 100)} />
+      <div className={styles.presets} role="group" aria-label="Preset batas akurasi">
+        {presets.map((preset) => {
+          const active = Math.abs(confidence - preset.value) < 0.02;
+          return <button key={preset.label} type="button" aria-pressed={active} onClick={() => onConfidenceChange(preset.value)} className={active ? styles.presetActive : styles.preset}><b>{preset.label}</b><span>{preset.hint}</span></button>;
+        })}
       </div>
     </div>
-  );
+    <div className={styles.layers}>
+      <div className={styles.layerHeading}><b>Layer visual</b><span>Pilih penanda pada pratinjau</span></div>
+      <div className={styles.layerGrid}>
+        <button type="button" aria-pressed={showFire} onClick={onToggleFire} className={`${styles.layer} ${showFire ? styles.fireOn : ""}`}><span className={styles.layerIcon}><Fire weight="fill" size={17} /></span><span className={styles.layerCopy}><b>Titik api</b><small>{fireCount} objek</small></span><span className={`${styles.toggle} ${showFire ? styles.toggleOn : ""}`}><i /></span></button>
+        <button type="button" aria-pressed={showSmoke} onClick={onToggleSmoke} className={`${styles.layer} ${showSmoke ? styles.smokeOn : ""}`}><span className={styles.layerIcon}><Wind weight="bold" size={17} /></span><span className={styles.layerCopy}><b>Kepulan asap</b><small>{smokeCount} objek</small></span><span className={`${styles.toggle} ${showSmoke ? styles.toggleOn : ""}`}><i /></span></button>
+      </div>
+    </div>
+  </section>;
 }

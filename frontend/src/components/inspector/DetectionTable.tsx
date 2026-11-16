@@ -1,41 +1,30 @@
 "use client";
 
 import { BoundingBox } from "@/types/detection";
-import { DownloadSimple, Fire, Wind } from "@phosphor-icons/react";
+import { Fire, Wind } from "@phosphor-icons/react";
 
 interface DetectionTableProps {
   boxes: BoundingBox[];
   inferenceTimeMs?: number;
-  onExportSnapshot: () => void;
 }
 
 export function DetectionTable({
   boxes,
   inferenceTimeMs = 11.8,
-  onExportSnapshot,
 }: DetectionTableProps) {
   return (
     <div className="rounded-2xl sm:rounded-3xl bg-[#0b0d14] border border-white/10 overflow-hidden flex flex-col">
       {/* Clean Table Header */}
-      <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
+      <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-b border-white/10 flex flex-wrap items-center gap-2.5 sm:gap-3">
         <div className="flex items-center gap-2.5">
-          <h3 className="font-display text-sm sm:text-base font-bold text-white">
+          <h3 className="font-display text-sm sm:text-base font-medium tracking-[-.035em] text-white">
             Objek Terdeteksi ({boxes.length})
           </h3>
-          <span className="text-xs font-mono text-white/50">
+          <span className="text-xs tabular-nums text-white/50">
             · {inferenceTimeMs.toFixed(1)} ms
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={onExportSnapshot}
-          disabled={boxes.length === 0}
-          className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-white/[0.06] hover:bg-white hover:text-[#050507] border border-white/12 text-xs font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-        >
-          <DownloadSimple weight="bold" className="w-3.5 h-3.5 shrink-0" />
-          <span>Export JSON</span>
-        </button>
       </div>
 
       {/* Table Body */}
@@ -67,12 +56,12 @@ export function DetectionTable({
                   >
                     <td className="py-3.5 px-4 sm:px-5">
                       {isFire ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#ff5722]/15 text-[#ff6b3d] border border-[#ff5722]/35">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#ff5722]/15 text-[#ff6b3d] border border-[#ff5722]/35">
                           <Fire weight="fill" className="w-3.5 h-3.5 shrink-0" />
                           Titik Api (Fire)
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#38bdf8]/15 text-[#38bdf8] border border-[#38bdf8]/35">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#38bdf8]/15 text-[#38bdf8] border border-[#38bdf8]/35">
                           <Wind weight="bold" className="w-3.5 h-3.5 shrink-0" />
                           Kepulan Asap (Smoke)
                         </span>
@@ -80,7 +69,7 @@ export function DetectionTable({
                     </td>
                     <td className="py-3.5 px-4 sm:px-5">
                       <div className="flex items-center gap-3 min-w-[130px] max-w-[160px]">
-                        <span className="font-mono font-bold text-white w-12">
+                        <span className="font-medium tabular-nums text-white w-12">
                           {(box.confidence * 100).toFixed(1)}%
                         </span>
                         <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
