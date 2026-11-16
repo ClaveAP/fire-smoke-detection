@@ -14,146 +14,48 @@ interface IncidentFiltersProps {
   onReset: () => void;
 }
 
-export function IncidentFilters({
-  search,
-  onSearchChange,
-  typeFilter,
-  onTypeFilterChange,
-  statusFilter,
-  onStatusFilterChange,
-  totalCount,
-  filteredCount,
-  onReset,
-}: IncidentFiltersProps) {
-  const hasActiveFilters =
-    search.trim() !== "" || typeFilter !== "all" || statusFilter !== "all";
-
+export function IncidentFilters({ search, onSearchChange, typeFilter, onTypeFilterChange, statusFilter, onStatusFilterChange, totalCount, filteredCount, onReset }: IncidentFiltersProps) {
+  const hasActiveFilters = search.trim() !== "" || typeFilter !== "all" || statusFilter !== "all";
   const hazardOptions = [
-    {
-      id: "all",
-      label: "Semua",
-      icon: Stack,
-      activeClass: "bg-white text-black shadow-md",
-    },
-    {
-      id: "dual",
-      label: "Api + Asap",
-      icon: FlameIcon,
-      activeClass:
-        "bg-[#ff5a1f]/20 text-white border border-[#ff5a1f]/50 shadow-[0_0_20px_rgba(255,90,31,0.2)]",
-    },
-    {
-      id: "fire",
-      label: "Titik Api",
-      icon: Fire,
-      activeClass:
-        "bg-[#ff5a1f] text-white shadow-[0_4px_16px_rgba(255,90,31,0.35)]",
-    },
-    {
-      id: "smoke",
-      label: "Kepulan Asap",
-      icon: Wind,
-      activeClass:
-        "bg-[#38bdf8] text-slate-950 shadow-[0_4px_16px_rgba(56,189,248,0.3)]",
-    },
+    { id: "all", label: "Semua", icon: Stack },
+    { id: "dual", label: "Api + Asap", icon: FlameIcon },
+    { id: "fire", label: "Titik Api", icon: Fire },
+    { id: "smoke", label: "Kepulan Asap", icon: Wind },
   ];
-
   const statusOptions = [
-    { id: "all", label: "Semua Status" },
+    { id: "all", label: "Semua status" },
     { id: "active", label: "Aktif" },
     { id: "investigating", label: "Investigasi" },
     { id: "resolved", label: "Selesai" },
   ];
 
   return (
-    <div className="rounded-2xl sm:rounded-3xl bg-[#0b0d14] border border-white/10 p-4 sm:p-5 flex flex-col gap-3.5 sm:gap-4">
-      {/* Top Row: Pill Search Input & Segmented Hazard Pills */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        {/* Search Input */}
-        <div className="relative flex-1 min-w-0">
-          <MagnifyingGlass className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Cari ID insiden, kamera, atau catatan..."
-            className="w-full bg-white/[0.03] border border-white/10 focus:border-[#ff5a1f]/60 rounded-full pl-10 pr-10 py-2.5 text-xs text-white placeholder-zinc-500 outline-none transition-colors"
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => onSearchChange("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/[0.06] hover:bg-white/15 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
-              aria-label="Hapus pencarian"
-            >
-              <X weight="bold" className="w-3.5 h-3.5" />
-            </button>
-          )}
+    <section className="flex flex-col gap-3 rounded-[17px] border border-[#e9e8e3] bg-white p-4 sm:p-5" aria-label="Cari dan saring insiden">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="relative min-w-0 flex-1">
+          <MagnifyingGlass className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#85877f]" />
+          <input type="search" value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="Cari ID insiden, kamera, atau catatan" className="h-10 w-full rounded-full border border-[#deddd7] bg-white pl-10 pr-10 text-xs text-[#292b27] outline-none transition focus:border-[#c94738] focus:ring-2 focus:ring-[#c94738]/10" />
+          {search && <button type="button" onClick={() => onSearchChange("")} className="absolute right-2.5 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-[#777971] transition hover:bg-[#f4f3f0] hover:text-[#292b27]" aria-label="Hapus pencarian"><X size={14} /></button>}
         </div>
-
-        {/* Hazard Class Segmented Pills — 2x2 grid on narrow phones, row pill on sm+ */}
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 bg-white/[0.03] p-1.5 rounded-2xl sm:rounded-full border border-white/10">
-          {hazardOptions.map((opt) => {
-            const Icon = opt.icon;
-            const isActive = typeFilter === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => onTypeFilterChange(opt.id)}
-                className={`flex items-center justify-center sm:justify-start gap-1.5 px-3 sm:px-3.5 py-2 sm:py-1.5 rounded-xl sm:rounded-full text-[11px] sm:text-xs font-medium whitespace-nowrap transition-all active:scale-[0.98] ${
-                  isActive
-                    ? opt.activeClass
-                    : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
-                }`}
-              >
-                <Icon size={32} weight="duotone" className="w-3.5 h-3.5 shrink-0" />
-                <span>{opt.label}</span>
-              </button>
-            );
+        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter jenis deteksi">
+          {hazardOptions.map(({ id, label, icon: Icon }) => {
+            const active = typeFilter === id;
+            return <button key={id} type="button" onClick={() => onTypeFilterChange(id)} aria-pressed={active} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#bd4338] focus-visible:ring-offset-2 ${active ? "bg-[#f7e9e5] text-[#963d34]" : "text-[#686a63] hover:bg-[#f4f3f0] hover:text-[#292b27]"}`}><Icon size={14} weight="duotone" />{label}</button>;
           })}
         </div>
       </div>
-
-      {/* Bottom Row: Status Pills & Result Counter */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 pt-3 border-t border-white/[0.06]">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {statusOptions.map((st) => {
-            const isActive = statusFilter === st.id;
-            return (
-              <button
-                key={st.id}
-                type="button"
-                onClick={() => onStatusFilterChange(st.id)}
-                className={`px-3 py-1 rounded-full text-[11px] font-medium border transition-all active:scale-[0.98] ${
-                  isActive
-                    ? "bg-white/10 text-white border-white/25"
-                    : "bg-transparent text-zinc-400 border-white/[0.06] hover:text-white hover:border-white/15"
-                }`}
-              >
-                {st.label}
-              </button>
-            );
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#eeede8] pt-3">
+        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter status">
+          {statusOptions.map(({ id, label }) => {
+            const active = statusFilter === id;
+            return <button key={id} type="button" onClick={() => onStatusFilterChange(id)} aria-pressed={active} className={`min-h-8 rounded-full border px-3 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#bd4338] focus-visible:ring-offset-2 ${active ? "border-[#292b27] bg-[#292b27] text-white" : "border-[#e9e8e3] bg-white text-[#686a63] hover:bg-[#f7f6f3] hover:text-[#292b27]"}`}>{label}</button>;
           })}
         </div>
-
-        <div className="flex items-center gap-3 ml-auto sm:ml-0">
-          <span className="text-[11px] sm:text-xs font-mono text-zinc-400 tabular-nums">
-            Menampilkan <strong className="text-white">{filteredCount}</strong> dari {totalCount}
-          </span>
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={onReset}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ff5a1f]/15 hover:bg-[#ff5a1f]/25 border border-[#ff5a1f]/35 text-[#ff8c42] text-[11px] font-medium transition-all active:scale-[0.98]"
-            >
-              <ArrowCounterClockwise weight="bold" className="w-3 h-3" />
-              <span>Reset</span>
-            </button>
-          )}
+        <div className="ml-auto flex items-center gap-3 text-[11px] text-[#777971]">
+          <span>Menampilkan <strong className="font-medium text-[#292b27]">{filteredCount}</strong> dari {totalCount}</span>
+          {hasActiveFilters && <button type="button" onClick={onReset} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 font-medium text-[#a54137] transition hover:bg-[#f7e9e5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#bd4338] focus-visible:ring-offset-2"><ArrowCounterClockwise size={13} /><span>Reset</span></button>}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -17,22 +17,19 @@ import { IncidentRecord } from "@/types/detection";
 import { INITIAL_INCIDENT_RECORDS } from "@/services/mockDetection";
 import { detectionAdapter } from "@/services/detectionAdapter";
 import { getSupabase, supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import {
   DownloadSimple,
-  LockKey,
-  ShieldWarning,
   FileXls,
   FileCsv,
   CaretDown,
 } from "@phosphor-icons/react";
-import { useAuth } from "@/context/AuthContext";
-import { GoogleLogo } from "@/components/auth/AuthModal";
 
 const emptySubscribe = () => () => {};
 
 export default function IncidentsPage() {
   const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false);
-  const { user, openAuthModal } = useAuth();
+  const { user } = useAuth();
   const isOfficialUser = Boolean(user && !user.id.startsWith("usr-"));
   const [incidents, setIncidents] = useState<IncidentRecord[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -373,7 +370,7 @@ export default function IncidentsPage() {
   // Loading skeleton while mounting client state
   if (!isClient) {
     return (
-      <div className="min-h-screen bg-[#050507] text-[#fafafa] flex flex-col font-sans relative overflow-x-hidden">
+      <div data-horizon className="min-h-screen bg-[#050507] text-[#fafafa] flex flex-col font-sans relative overflow-x-hidden">
         <HeaderNav />
         <main className="relative z-10 flex-1 flex items-center justify-center pt-24 pb-16">
           <div className="w-8 h-8 rounded-full border-2 border-white/10 border-t-[#ff5a1f] animate-spin" />
@@ -382,124 +379,37 @@ export default function IncidentsPage() {
     );
   }
 
-  // Option 1: Restricted Auth Gate if user is not logged in
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-[#050507] text-[#fafafa] flex flex-col font-sans relative overflow-x-hidden">
-        {/* Subtle Fire & Smoke Ambient Glow */}
-        <div
-          className="pointer-events-none fixed inset-0 z-0"
-          style={{
-            background:
-              "radial-gradient(circle at 50% 25%, rgba(255,90,31,0.08), transparent 50%), radial-gradient(circle at 80% 80%, rgba(56,189,248,0.04), transparent 50%)",
-          }}
-        />
-
-        <HeaderNav />
-
-        <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pt-24 pb-16 max-w-4xl mx-auto w-full text-center">
-          {/* Clearance Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#ff5a1f]/10 border border-[#ff5a1f]/30 text-[11px] sm:text-xs font-mono font-medium text-[#ff8c42] mb-6 sm:mb-8">
-            <LockKey weight="bold" className="w-3.5 h-3.5" />
-            <span>Khusus petugas</span>
-          </div>
-
-          {/* Pod Icon */}
-          <div className="relative mb-6">
-            <div className="absolute -inset-4 rounded-3xl bg-[#ff5a1f]/15 blur-2xl pointer-events-none" />
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-[#0e111a] border border-[#ff5a1f]/40 flex items-center justify-center text-[#ff5a1f] shadow-2xl shadow-[#ff5a1f]/20">
-              <ShieldWarning weight="duotone" className="w-8 h-8 sm:w-10 sm:h-10" />
-            </div>
-          </div>
-
-          {/* Title & Description */}
-          <h1 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-white max-w-xl">
-            Masuk untuk melihat riwayat insiden
-          </h1>
-
-          <p className="mt-3.5 sm:mt-4 text-xs sm:text-sm text-zinc-400 max-w-lg leading-relaxed">
-            Rekaman kamera, lokasi, dan data suhu tiap insiden hanya bisa dilihat oleh{" "}
-            <span className="text-zinc-200 font-medium">Operator</span> dan{" "}
-            <span className="text-zinc-200 font-medium">Supervisor K3</span> yang sudah login.
-          </p>
-
-          {/* Login CTA Button */}
-          <div className="mt-8 flex flex-col items-center gap-3 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={openAuthModal}
-              className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-white hover:bg-zinc-100 text-zinc-950 text-sm font-semibold flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-white/10"
-            >
-              <GoogleLogo className="w-4 h-4" />
-              <span>Masuk dengan Akun Google</span>
-            </button>
-
-            <span className="text-[11px] font-mono text-zinc-500">
-              Mode demo: pilih akun Operator atau Supervisor K3 setelah menekan tombol.
-            </span>
-          </div>
-
-          {/* Locked Ghost Metric Cards Preview */}
-          <div className="mt-12 sm:mt-14 w-full grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 opacity-30 blur-[1px] pointer-events-none select-none">
-            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 text-left">
-              <div className="text-[11px] text-zinc-500 font-sans">Alarm Aktif</div>
-              <div className="text-xl font-bold text-white mt-1 font-mono">••</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 text-left">
-              <div className="text-[11px] text-zinc-500 font-sans">Deteksi Api</div>
-              <div className="text-xl font-bold text-white mt-1 font-mono">••</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 text-left">
-              <div className="text-[11px] text-zinc-500 font-sans">Deteksi Asap</div>
-              <div className="text-xl font-bold text-white mt-1 font-mono">••</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 text-left">
-              <div className="text-[11px] text-zinc-500 font-sans">Selesai &amp; Aman</div>
-              <div className="text-xl font-bold text-white mt-1 font-mono">••</div>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-[#050507] text-[#fafafa] flex flex-col font-sans relative overflow-x-hidden">
-      {/* Subtle Fire & Smoke Ambient Glow */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          background:
-            "radial-gradient(circle at 18% 12%, rgba(255,90,31,0.06), transparent 40%), radial-gradient(circle at 82% 20%, rgba(56,189,248,0.05), transparent 40%)",
-        }}
-      />
-
+    <div data-horizon className="min-h-screen bg-[#050507] text-[#fafafa] flex flex-col font-sans relative overflow-x-hidden">
       <HeaderNav />
 
       <main className="relative z-10 flex-1 pt-20 sm:pt-24 pb-10 sm:pb-12 px-3.5 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full flex flex-col gap-4 sm:gap-5">
-        {/* Clean Header Row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-              Riwayat Insiden
+        <div className="flex flex-wrap items-end justify-between gap-5 sm:gap-8 pb-1">
+          <div>
+            <h1 className="text-3xl sm:text-[38px] font-medium tracking-[-.065em] leading-[1.1] text-white">
+              Aktivitas keselamatan
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[11px] sm:text-xs font-mono text-zinc-400">
-              {incidents.length} Rekaman
-            </span>
+            <div className="mt-2 flex flex-wrap items-center gap-2.5">
+              <p className="text-[13px] text-zinc-400">Pantau bukti terbaru dan tindak lanjut insiden dari seluruh area.</p>
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[10px] font-medium text-zinc-400">
+                {incidents.length} rekaman
+              </span>
+            </div>
           </div>
 
-          {/* Export Dropdown Menu */}
-          <div className="relative" ref={exportMenuRef}>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Export Dropdown Menu */}
+            <div id="reports" className="relative scroll-mt-24" ref={exportMenuRef}>
             <button
               type="button"
               onClick={() => setIsExportOpen((prev) => !prev)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.07] hover:bg-white/[0.12] border border-white/15 hover:border-[#ff5a1f]/50 text-white text-xs font-semibold transition-all active:scale-[0.98] shadow-sm"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[#e1dfd9] bg-white px-4 text-xs font-medium text-[#454740] transition-colors hover:bg-[#f8f7f4] active:scale-[.98]"
             >
-              <DownloadSimple weight="bold" className="w-3.5 h-3.5 text-[#ff8c42]" />
+              <DownloadSimple weight="bold" className="w-3.5 h-3.5 text-[#bd4338]" />
               <span>Ekspor Laporan</span>
               <CaretDown
                 weight="bold"
-                className={`w-3 h-3 text-zinc-400 transition-transform duration-200 ${
+                className={`w-3 h-3 text-[#85877f] transition-transform duration-200 ${
                   isExportOpen ? "rotate-180" : ""
                 }`}
               />
@@ -507,8 +417,8 @@ export default function IncidentsPage() {
 
             {/* Dropdown Popover */}
             {isExportOpen && (
-              <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-[#0b0d14]/95 backdrop-blur-2xl border border-white/12 p-2 shadow-2xl z-40 flex flex-col gap-1 animate-[fadeIn_0.15s_ease-out]">
-                <div className="px-3 py-1.5 text-[10px] font-mono font-medium text-zinc-400 uppercase tracking-wider border-b border-white/[0.06]">
+              <div className="absolute right-0 z-40 mt-2 flex w-72 flex-col gap-1 rounded-2xl border border-[#e7e6e1] bg-white p-2">
+                <div className="border-b border-[#eeede8] px-3 py-1.5 text-[10px] font-medium text-[#777971]">
                   Pilih Format Berkas
                 </div>
 
@@ -516,19 +426,19 @@ export default function IncidentsPage() {
                 <button
                   type="button"
                   onClick={exportToExcel}
-                  className="w-full text-left p-2.5 rounded-xl hover:bg-white/[0.06] transition-colors flex items-start gap-2.5 group"
+                  className="group flex w-full items-start gap-2.5 rounded-xl p-2.5 text-left transition-colors hover:bg-[#f7f6f3]"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#edf4ef] text-[#4e8063]">
                     <FileXls weight="duotone" className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-semibold text-white group-hover:text-emerald-300 transition-colors flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-[#292b27]">
                       <span>Microsoft Excel (.xls)</span>
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">
+                      <span className="rounded bg-[#edf4ef] px-1.5 py-0.5 text-[9px] text-[#4e8063]">
                         Rekomendasi
                       </span>
                     </div>
-                    <div className="text-[11px] text-zinc-400 leading-snug mt-0.5">
+                    <div className="mt-0.5 text-[11px] leading-snug text-[#777971]">
                       Tabel rapi bergaris, berwarna, dan otomatis terpisah per kolom di Excel.
                     </div>
                   </div>
@@ -538,16 +448,16 @@ export default function IncidentsPage() {
                 <button
                   type="button"
                   onClick={() => exportToCsv(";")}
-                  className="w-full text-left p-2.5 rounded-xl hover:bg-white/[0.06] transition-colors flex items-start gap-2.5 group"
+                  className="group flex w-full items-start gap-2.5 rounded-xl p-2.5 text-left transition-colors hover:bg-[#f7f6f3]"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 mt-0.5">
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f0efea] text-[#686a63]">
                     <FileCsv weight="duotone" className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-semibold text-white group-hover:text-blue-300 transition-colors">
+                    <div className="text-xs font-medium text-[#292b27]">
                       CSV untuk Excel (.csv)
                     </div>
-                    <div className="text-[11px] text-zinc-400 leading-snug mt-0.5">
+                    <div className="mt-0.5 text-[11px] leading-snug text-[#777971]">
                       Pemisah titik-koma (;) dengan UTF-8 BOM, otomatis rapi di Excel Indonesia/Mac.
                     </div>
                   </div>
@@ -557,22 +467,23 @@ export default function IncidentsPage() {
                 <button
                   type="button"
                   onClick={() => exportToCsv(",")}
-                  className="w-full text-left p-2.5 rounded-xl hover:bg-white/[0.06] transition-colors flex items-start gap-2.5 group"
+                  className="group flex w-full items-start gap-2.5 rounded-xl p-2.5 text-left transition-colors hover:bg-[#f7f6f3]"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center text-zinc-300 shrink-0 mt-0.5">
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f0efea] text-[#686a63]">
                     <FileCsv weight="bold" className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-semibold text-white group-hover:text-zinc-200 transition-colors">
+                    <div className="text-xs font-medium text-[#292b27]">
                       CSV Standar (.csv)
                     </div>
-                    <div className="text-[11px] text-zinc-400 leading-snug mt-0.5">
+                    <div className="mt-0.5 text-[11px] leading-snug text-[#777971]">
                       Pemisah koma (,), kompatibel dengan Google Sheets, Python, &amp; Database.
                     </div>
                   </div>
                 </button>
               </div>
             )}
+          </div>
           </div>
         </div>
 
