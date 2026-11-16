@@ -208,6 +208,15 @@ npm run dev
 Buka [http://localhost:3000](http://localhost:3000) di browser.
 > 💡 **Tips:** Frontend dapat langsung dijalankan secara penuh (termasuk fitur **Simulasi Login Google**, **Live Webcam Scanner**, **Preset Inspector**, dan **Incident Logging**) tanpa perlu menyalakan server backend terlebih dahulu.
 
+#### Akun Login Default
+
+Saat pertama kali membuka aplikasi, pengguna akan diarahkan ke halaman `/login`. Anda dapat langsung masuk menggunakan akun default berikut atau membuat akun baru melalui tautan **Buat Akun**:
+
+| Peran | Username / Email | Password |
+| :--- | :--- | :--- |
+| **Admin** | `admin` atau `admin@aegisflame.id` | `admin123` |
+| **Operator** | `operator` atau `operator@aegisflame.id` | `operator123` |
+
 ---
 
 ### 2. Menjalankan Backend (FastAPI — Deteksi Api & Asap)
