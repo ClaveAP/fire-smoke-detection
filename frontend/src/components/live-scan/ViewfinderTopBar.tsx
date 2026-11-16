@@ -78,11 +78,11 @@ export function ViewfinderTopBar({
           <span>{activeLabel}</span>
         </span>
         <span className="hidden sm:inline text-white/30">·</span>
-        <span className="hidden sm:inline font-mono text-white/70">
+        <span className="hidden sm:inline tabular-nums text-white/70">
           {isStreamLive ? `${streamFps.toFixed(1)} FPS` : "60 FPS"}
         </span>
         {engineLabel && (
-          <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.07] border border-white/12 font-mono text-[10px] text-white/70 max-w-[190px] truncate">
+          <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.07] border border-white/12 text-[10px] text-white/70 max-w-[190px] truncate">
             {engineLabel}
           </span>
         )}
@@ -111,7 +111,7 @@ export function ViewfinderTopBar({
           <button
             type="button"
             onClick={onFlipCamera}
-            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.16] text-white border border-white/15 backdrop-blur-xl transition-all duration-300 active:scale-95 shadow-lg cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-medium bg-white/[0.08] hover:bg-white/[0.16] text-white border border-white/15 backdrop-blur-xl transition-all duration-300 active:scale-95 shadow-lg cursor-pointer"
             title="Balik Kamera (Ganti Depan / Belakang untuk HP, Tablet, & Laptop)"
           >
             <CameraRotate weight="duotone" className="w-3.5 h-3.5 text-[#ff6b3d] shrink-0" />
@@ -125,7 +125,7 @@ export function ViewfinderTopBar({
           onClick={onToggleWebcam}
           disabled={isConnectingWebcam}
           type="button"
-          className={`inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold backdrop-blur-xl border transition-all duration-300 active:scale-[0.98] shadow-lg cursor-pointer ${
+          className={`inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-medium backdrop-blur-xl border transition-all duration-300 active:scale-[0.98] shadow-lg cursor-pointer ${
             isWebcam
               ? "bg-emerald-500/20 hover:bg-red-500/25 text-emerald-300 hover:text-red-200 border-emerald-400/40 hover:border-red-400/50"
               : "bg-white/[0.08] hover:bg-white/[0.15] text-white border-white/15"
@@ -167,7 +167,7 @@ export function ViewfinderTopBar({
           type="button"
           className={`inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-xs font-medium backdrop-blur-xl border transition-all duration-300 ${
             flashlightOn
-              ? "bg-amber-400 text-[#050507] border-amber-300 font-semibold"
+              ? "bg-amber-400 text-[#050507] border-amber-300 font-medium"
               : "bg-black/70 hover:bg-white/10 text-white/85 border-white/12"
           }`}
           title="Senter / Kecerahan"

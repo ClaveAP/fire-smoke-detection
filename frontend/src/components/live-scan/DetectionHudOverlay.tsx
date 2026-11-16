@@ -36,9 +36,9 @@ const BOX_STYLES: Record<DetectionClass, { border: string; fill: string; chip: s
     chipText: "FIRE",
   },
   smoke: {
-    border: "border-[#38bdf8]",
-    fill: "bg-[#38bdf8]/10",
-    chip: "bg-[#38bdf8] text-[#050507]",
+    border: "border-[#b9b8b1]",
+    fill: "bg-[#b9b8b1]/15",
+    chip: "bg-[#555750] text-white",
     chipText: "SMOKE",
   },
 };
@@ -141,10 +141,11 @@ export function DetectionHudOverlay({
                 width: `${boxW}%`,
                 height: `${boxH}%`,
               }}
+              data-detection-class={box.label}
               className={`absolute rounded-xl sm:rounded-2xl border-2 ${style.border} ${style.fill} p-2 sm:p-3 flex flex-col justify-between text-left transition-all duration-150`}
             >
               <div
-                className={`self-start inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full ${style.chip} text-[10px] sm:text-xs font-bold font-mono shadow-lg whitespace-nowrap`}
+                className={`self-start inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full ${style.chip} text-[10px] sm:text-xs font-medium font-sans shadow-lg whitespace-nowrap`}
               >
                 <Icon
                   weight={box.label === "fire" ? "fill" : "bold"}
@@ -167,9 +168,10 @@ export function DetectionHudOverlay({
             width: `${webcamFireBox.w * pctWidth}%`,
             height: `${webcamFireBox.h * pctHeight}%`,
           }}
+          data-detection-class="fire"
           className="absolute rounded-xl sm:rounded-2xl border-2 border-[#ff5722] bg-[#ff5722]/15 p-2 sm:p-3 flex flex-col justify-between text-left transition-all duration-200 shadow-[0_0_24px_rgba(255,87,34,0.45)]"
         >
-          <div className="self-start inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#ff5722] text-white text-[10px] sm:text-xs font-bold font-mono shadow-lg whitespace-nowrap">
+          <div className="self-start inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#ff5722] text-white text-[10px] sm:text-xs font-medium font-sans shadow-lg whitespace-nowrap">
             <Fire weight="fill" className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
             <span>FIRE · {Math.round(webcamFireBox.confidence * 100)}%</span>
           </div>
@@ -180,16 +182,17 @@ export function DetectionHudOverlay({
       {shouldRenderStaticBoxes && (
         <button
           type="button"
+          data-smoke-overlay
           onClick={() => setLayer(layer === "smoke" ? "both" : "smoke")}
-          className={`pointer-events-auto absolute top-[14%] sm:top-[12%] left-[48%] sm:left-[52%] w-[44%] sm:w-[31%] h-[32%] sm:h-[36%] rounded-xl sm:rounded-2xl border-2 border-dashed border-[#38bdf8] bg-[#38bdf8]/10 hover:bg-[#38bdf8]/20 p-2 sm:p-3 flex flex-col justify-between text-left transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          className={`pointer-events-auto absolute top-[14%] sm:top-[12%] left-[48%] sm:left-[52%] w-[44%] sm:w-[31%] h-[32%] sm:h-[36%] rounded-xl sm:rounded-2xl border-2 border-dashed border-[#d7d7d1] p-2 sm:p-3 flex flex-col justify-between text-left transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
             showSmoke ? "opacity-100 scale-100" : "opacity-15 scale-95"
           }`}
         >
-          <div className="self-start inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#38bdf8] text-[#050507] text-[10px] sm:text-xs font-bold font-mono shadow-lg whitespace-nowrap">
+          <div className="self-start inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#f4f3f0] text-[#292b27] text-[10px] sm:text-xs font-medium font-sans shadow-lg whitespace-nowrap">
             <Wind weight="bold" className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
             <span>SMOKE · 88%</span>
           </div>
-          <div className="hidden sm:block self-end px-2.5 py-1 rounded-full bg-black/75 border border-white/15 text-[11px] font-mono text-white/90">
+          <div className="hidden sm:block self-end px-2.5 py-1 rounded-full bg-black/75 border border-white/15 text-[11px] text-white/90">
             Asap Volumetrik
           </div>
         </button>
@@ -200,15 +203,16 @@ export function DetectionHudOverlay({
         <button
           type="button"
           onClick={() => setLayer(layer === "fire" ? "both" : "fire")}
+          data-detection-class="fire"
           className={`pointer-events-auto absolute top-[44%] sm:top-[45%] left-[52%] sm:left-[56%] w-[38%] sm:w-[26%] h-[32%] sm:h-[38%] rounded-xl sm:rounded-2xl border-2 border-[#ff5722] bg-[#ff5722]/15 hover:bg-[#ff5722]/25 p-2 sm:p-3 flex flex-col justify-between text-left transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
             showFire ? "opacity-100 scale-100" : "opacity-15 scale-95"
           }`}
         >
-          <div className="self-start inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#ff5722] text-white text-[10px] sm:text-xs font-bold font-mono shadow-lg whitespace-nowrap">
+          <div className="self-start inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#ff5722] text-white text-[10px] sm:text-xs font-medium font-sans shadow-lg whitespace-nowrap">
             <Fire weight="fill" className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
             <span>FIRE · 94%</span>
           </div>
-          <div className="hidden sm:block self-end px-2.5 py-1 rounded-full bg-black/75 border border-white/15 text-[11px] font-mono text-white/90">
+          <div className="hidden sm:block self-end px-2.5 py-1 rounded-full bg-black/75 border border-white/15 text-[11px] text-white/90">
             Inti Api +412°C
           </div>
         </button>
@@ -281,7 +285,7 @@ export function DetectionHudOverlay({
                 onClick={() => setLayer("both")}
                 className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
                   layer === "both"
-                    ? "bg-white text-[#050507] font-semibold"
+                    ? "bg-white text-[#050507] font-medium"
                     : "text-white/65 hover:text-white"
                 }`}
               >
@@ -293,7 +297,7 @@ export function DetectionHudOverlay({
                 onClick={() => setLayer("fire")}
                 className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
                   layer === "fire"
-                    ? "bg-[#ff5722] text-white font-semibold"
+                    ? "bg-[#ff5722] text-white font-medium"
                     : "text-white/65 hover:text-white"
                 }`}
               >
@@ -305,7 +309,7 @@ export function DetectionHudOverlay({
                 onClick={() => setLayer("smoke")}
                 className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
                   layer === "smoke"
-                    ? "bg-[#38bdf8] text-[#050507] font-semibold"
+                    ? "bg-[#d8d8d2] text-[#292b27] font-medium"
                     : "text-white/65 hover:text-white"
                 }`}
               >

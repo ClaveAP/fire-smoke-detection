@@ -265,6 +265,39 @@ export class DetectionAdapter {
     return [];
   }
 
+  /** Register a CCTV stream so the backend can pull frames and analyze detections. */
+  async registerCamera(
+    input: Pick<CameraFeed, "id" | "name" | "location" | "streamUrl">
+  ): Promise<CameraFeed> {
+    if (!this.backendUrl) {
+      throw new Error("Backend belum dikonfigurasi. Atur NEXT_PUBLIC_BACKEND_URL terlebih dahulu.");
+    }
+
+    let response: Response;
+    try {
+      response = await fetch(`${this.backendUrl}/api/v1/cameras`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+    } catch {
+      throw new Error("Backend tidak dapat dijangkau. Periksa koneksi lalu coba lagi.");
+    }
+
+    if (!response.ok) {
+      let detail = "Kamera gagal didaftarkan.";
+      try {
+        const body = (await response.json()) as { detail?: string };
+        if (body.detail) detail = body.detail;
+      } catch {
+        // Keep the plain-language fallback when the backend response is not JSON.
+      }
+      throw new Error(detail);
+    }
+
+    return (await response.json()) as CameraFeed;
+  }
+
   /** JPEG of the frame the server last analyzed, kept in sync with the detection packets. */
   snapshotUrl(cameraId: string, stamp: string | number): string {
     if (!this.backendUrl) return "";

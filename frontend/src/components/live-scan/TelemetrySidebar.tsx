@@ -8,7 +8,6 @@ import {
   BellIcon,
   BellRingingIcon,
 } from "@phosphor-icons/react";
-import { SpecularButton } from "@/components/common/SpecularButton";
 import { CameraStatus } from "@/types/detection";
 
 interface StreamTelemetry {
@@ -86,13 +85,13 @@ export function TelemetrySidebar({
           {/* Clean Header */}
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="font-display text-lg sm:text-xl font-bold text-white">
+              <h2 className="font-display text-lg sm:text-xl font-medium tracking-[-0.035em] text-white">
                 Status Deteksi
               </h2>
               <p className="text-xs text-white/55 truncate">{zoneLabel}</p>
             </div>
             <span
-              className={`shrink-0 px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold border transition-colors ${
+              className={`shrink-0 px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium border transition-colors ${
                 hasDanger
                   ? "bg-[#ff5722]/15 text-[#ff6b3d] border-[#ff5722]/35"
                   : "bg-emerald-500/15 text-emerald-400 border-emerald-500/35"
@@ -132,16 +131,16 @@ export function TelemetrySidebar({
               />
               <div className="relative flex items-center justify-between mb-2">
                 <span className="inline-flex items-center gap-2 text-xs font-medium text-white/80">
-                  <Fire weight="fill" className="w-4 h-4 text-[#ff5722] shrink-0" />
+                  <Fire weight="fill" className="w-4 h-4 text-[#c94738] shrink-0" />
                   <span>Titik Api (Fire)</span>
                 </span>
-                <span className="text-lg font-bold font-mono text-[#ff5722] tabular-nums">
+                <span className="text-lg font-medium font-sans text-[#c94738] tabular-nums">
                   {firePct}%
                 </span>
               </div>
               <div className="relative w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#ff5722] rounded-full transition-all duration-500"
+                  className="h-full bg-[#c94738] rounded-full transition-all duration-500"
                   style={{ width: `${firePct}%` }}
                 />
               </div>
@@ -150,27 +149,27 @@ export function TelemetrySidebar({
             {/* Smoke Metric */}
             <div
               onPointerMove={handleCardMove}
-              className="group relative p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-[#38bdf8]/40 overflow-hidden transition-colors flex flex-col justify-between"
+              className="group relative p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-zinc-300 overflow-hidden transition-colors flex flex-col justify-between"
             >
               <div
                 className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                 style={{
                   background:
-                    "radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(56,189,248,0.15), transparent 70%)",
+                    "radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(175,176,169,0.12), transparent 70%)",
                 }}
               />
               <div className="relative flex items-center justify-between mb-2">
                 <span className="inline-flex items-center gap-2 text-xs font-medium text-white/80">
-                  <Wind weight="bold" className="w-4 h-4 text-[#38bdf8] shrink-0" />
+                  <Wind weight="bold" className="w-4 h-4 text-zinc-500 shrink-0" />
                   <span>Kepulan Asap (Smoke)</span>
                 </span>
-                <span className="text-lg font-bold font-mono text-[#38bdf8] tabular-nums">
+                <span className="text-lg font-medium font-sans text-zinc-700 tabular-nums">
                   {smokePct}%
                 </span>
               </div>
               <div className="relative w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#38bdf8] rounded-full transition-all duration-500"
+                  className="h-full bg-zinc-500 rounded-full transition-all duration-500"
                   style={{ width: `${smokePct}%` }}
                 />
               </div>
@@ -189,7 +188,7 @@ export function TelemetrySidebar({
                   />
                   <span>Estimasi Suhu Inti</span>
                 </span>
-                <span className="text-lg font-bold font-mono tabular-nums text-amber-400">
+                <span className="text-lg font-medium font-sans tabular-nums text-amber-400">
                   {tempDisplay}
                 </span>
               </div>
@@ -206,44 +205,36 @@ export function TelemetrySidebar({
           )}
 
           <div className="w-full flex flex-col">
-            <SpecularButton
+            <button
+              type="button"
               onClick={onEmergencyTrigger}
-              size="md"
-              radius={999}
-              tint={alarmActive ? "#450a0a" : "#1f0909"}
-              tintOpacity={0.92}
-              blur={12}
-              textColor="#ffffff"
-              lineColor={alarmActive ? "#ff3b30" : "#ff5722"}
-              baseColor={alarmActive ? "#7f1d1d" : "#45120b"}
-              intensity={alarmActive ? 1.9 : 1.35}
-              shineSize={alarmActive ? 18 : 14}
-              shineFade={38}
-              thickness={alarmActive ? 1.8 : 1.4}
-              speed={alarmActive ? 1.35 : 0.45}
-              followMouse={true}
-              proximity={280}
-              autoAnimate={alarmActive}
-              className="w-full font-semibold text-xs tracking-wide"
+              aria-pressed={alarmActive}
+              data-primary-gradient={alarmActive ? "true" : undefined}
+              style={alarmActive ? { backgroundImage: "linear-gradient(115deg, #c63d32, #e66a4e)" } : undefined}
+              className={`inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-full border px-5 text-sm font-medium tracking-[-0.015em] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#bd4338] focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+                alarmActive
+                  ? "border-[#c83f32] bg-[#c83f32] text-white hover:border-[#ad3b31] hover:bg-[#ad3b31]"
+                  : "border-[#e1dfd9] bg-white text-[#292b27] hover:bg-[#f7f6f3]"
+              }`}
             >
               {alarmActive ? (
                 <>
                   <BellRingingIcon
-                    size={32}
-                    className="text-red-300 animate-pulse shrink-0"
+                    size={21}
+                    className="shrink-0 text-[#f3b4a9] animate-pulse"
                   />
                   <span>Matikan Alarm Darurat</span>
                 </>
               ) : (
                 <>
                   <BellIcon
-                    size={32}
-                    className="text-[#ff6b3d] shrink-0"
+                    size={21}
+                    className="shrink-0 text-[#bd4338]"
                   />
                   <span>Bunyikan Alarm Darurat</span>
                 </>
               )}
-            </SpecularButton>
+            </button>
           </div>
         </div>
       </div>

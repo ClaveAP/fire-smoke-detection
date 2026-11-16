@@ -61,9 +61,9 @@ export function useDetectionCanvas({
       const h = nh * renderHeight;
 
       const isFire = box.label === "fire";
-      const strokeColor = isFire ? "#ff5722" : "#38bdf8";
-      const fillColor = isFire ? "rgba(255, 87, 34, 0.14)" : "rgba(56, 189, 248, 0.12)";
-      const tagBg = isFire ? "#ff5722" : "#0284c7";
+      const strokeColor = isFire ? "#bd4338" : "#b4b5af";
+      const fillColor = isFire ? "rgba(189, 67, 56, 0.14)" : "rgba(180, 181, 175, 0.16)";
+      const tagBg = isFire ? "#bd4338" : "#53554f";
 
       ctx.fillStyle = fillColor;
       ctx.fillRect(x, y, w, h);
@@ -130,7 +130,7 @@ export function useDetectionCanvas({
 
         ctx.fillStyle = "rgba(6, 14, 32, 0.88)";
         ctx.fillRect(x, coordY, coordW, coordH);
-        ctx.fillStyle = isFire ? "#ffb5a0" : "#38bdf8";
+        ctx.fillStyle = isFire ? "#ffd7d2" : "#e1e2dc";
         ctx.font = "600 10px ui-monospace, monospace";
         ctx.fillText(coordText, x + 5, coordY + coordH / 2);
       }
