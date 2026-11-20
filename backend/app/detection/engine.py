@@ -15,9 +15,10 @@ logger = logging.getLogger("fire_smoke.engine")
 
 def build_detector(settings: Settings) -> Detector:
     engine = settings.engine
-    want_yolo = engine == "yolo" or (
-        engine == "auto" and settings.weights_path.is_file() and importlib.util.find_spec("ultralytics") is not None
-    )
+    weights_ready = settings.weights_path.is_file()
+    ultralytics_ready = importlib.util.find_spec("ultralytics") is not None
+    want_yolo = engine == "yolo" or (engine == "auto" and weights_ready and ultralytics_ready)
+
     if want_yolo:
         try:
             from .yolo import YoloDetector
@@ -31,8 +32,19 @@ def build_detector(settings: Settings) -> Detector:
             if engine == "yolo":
                 raise
             logger.warning("YOLO engine unavailable (%s); falling back to heuristic engine", exc)
-    logger.info("Using heuristic OpenCV detection engine")
-    return HeuristicDetector(settings.confidence_threshold, settings.iou_threshold)
+            fallback = HeuristicDetector(settings.confidence_threshold, settings.iou_threshold)
+            fallback.fallback_reason = f"YOLO gagal dimuat: {exc}"
+            return fallback
+
+    detector = HeuristicDetector(settings.confidence_threshold, settings.iou_threshold)
+    if engine == "heuristic":
+        detector.fallback_reason = "FSD_ENGINE=heuristic — YOLO dimatikan lewat konfigurasi."
+    elif not weights_ready:
+        detector.fallback_reason = f"Bobot YOLO tidak ditemukan di {settings.weights_path}."
+    elif not ultralytics_ready:
+        detector.fallback_reason = "Paket ultralytics belum terpasang pada interpreter backend."
+    logger.info("Using heuristic OpenCV detection engine (%s)", getattr(detector, "fallback_reason", "no reason"))
+    return detector
 
 
 class StreamContext:

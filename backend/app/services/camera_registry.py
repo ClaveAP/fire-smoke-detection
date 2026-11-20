@@ -9,12 +9,10 @@ from ..schemas import BoundingBoxSchema, CameraCreateSchema, CameraFeedSchema, C
 
 logger = logging.getLogger("fire_smoke.cameras")
 
-DEFAULT_CAMERAS = [
-    {"id": "cam-1", "name": "Lab Komputer & Robotika", "location": "Gedung A - Lt. 2"},
-    {"id": "cam-2", "name": "Server Room & Rack Bay", "location": "Gedung B - Basement 1"},
-    {"id": "cam-3", "name": "Gudang Logistik & Material", "location": "Sektor Barat - Pintu 3", "fps": 25, "resolution": "1280x720"},
-    {"id": "cam-4", "name": "Perimeter Parkir Timur", "location": "Area Terbuka - Pos 1"},
-]
+# No placeholder cameras: the dashboard only shows feeds that really exist.
+# Register real cameras through ``cameras.json`` (see cameras.example.json) or
+# ``POST /api/v1/cameras`` from the "Hubungkan CCTV" dialog.
+DEFAULT_CAMERAS: List[dict] = []
 
 
 def derive_status(boxes: List[BoundingBoxSchema], critical_confidence: float) -> CameraStatus:

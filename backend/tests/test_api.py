@@ -73,10 +73,11 @@ def test_incident_crud(client):
 
 
 def test_camera_registry(client):
-    ids = [c["id"] for c in client.get("/api/v1/cameras").json()]
-    assert ids == ["cam-1", "cam-2", "cam-3", "cam-4"]
+    # No seeded placeholder cameras: the list starts empty and only holds real registrations.
+    assert client.get("/api/v1/cameras").json() == []
     created = client.post("/api/v1/cameras", json={"id": "dock-7", "name": "Loading Dock", "streamUrl": "rtsp://x/1"})
     assert created.status_code == 201 and created.json()["status"] == "safe"
+    assert [c["id"] for c in client.get("/api/v1/cameras").json()] == ["dock-7"]
     assert client.delete("/api/v1/cameras/dock-7").status_code == 204
 
 
