@@ -1,19 +1,26 @@
 "use client";
 
-import { RefObject, useRef, useState, useEffect, useCallback } from "react";
 import {
-  Image as ImageIcon,
-  Fire,
-  Wind,
-  ShieldCheck,
-  Play,
-  Pause,
-  VideoCamera,
-  CornersOut,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
+import {
   CornersIn,
+  CornersOut,
+  Fire,
+  Image as ImageIcon,
+  Pause,
+  Play,
+  ShieldCheck,
+  VideoCamera,
+  Wind,
 } from "@phosphor-icons/react";
 import { DetectionCanvas } from "@/components/command-center/DetectionCanvas";
-import { BoundingBox } from "@/types/detection";
+import type { BoundingBox } from "@/types/detection";
+import styles from "./Inspector.module.css";
 
 interface InspectorPreviewCanvasProps {
   sampleTitle: string;
@@ -77,107 +84,88 @@ export function InspectorPreviewCanvas({
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
-      if (viewportRef.current?.requestFullscreen) {
-        viewportRef.current.requestFullscreen().catch(() => {});
-      }
+      viewportRef.current?.requestFullscreen?.().catch(() => {});
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
-      }
+      document.exitFullscreen?.().catch(() => {});
     }
   }, []);
 
-  const fireBoxes = detections.filter((d) => d.label === "fire");
-  const smokeBoxes = detections.filter((d) => d.label === "smoke");
+  const fireBoxes = detections.filter((detection) => detection.label === "fire");
+  const smokeBoxes = detections.filter((detection) => detection.label === "smoke");
   const hasBoth = fireBoxes.length > 0 && smokeBoxes.length > 0;
+  const status = hasBoth
+    ? "dual"
+    : fireBoxes.length > 0
+      ? "fire"
+      : smokeBoxes.length > 0
+        ? "smoke"
+        : "safe";
+  const statusLabel = hasBoth
+    ? "Api dan asap terdeteksi"
+    : fireBoxes.length > 0
+      ? "Titik api terdeteksi"
+      : smokeBoxes.length > 0
+        ? "Kepulan asap terdeteksi"
+        : "Tidak ada bahaya pada ambang ini";
 
   return (
-    <div className="rounded-2xl sm:rounded-3xl bg-[#0b0d14] border border-white/10 overflow-hidden flex flex-col flex-1 min-h-[300px] sm:min-h-[430px]">
-      {/* Clean Pill Header */}
-      <div className="px-3.5 py-3 sm:px-5 sm:py-3.5 border-b border-white/10 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="w-2 h-2 rounded-full bg-[#ff5722] shrink-0" />
-          <span className="text-xs sm:text-sm font-medium tracking-[-.015em] text-white truncate flex items-center gap-1.5">
-            {isVideo && (
-              <VideoCamera weight="bold" className="w-3.5 h-3.5 text-[#ff5722] shrink-0" />
-            )}
-            <span>{sampleTitle}</span>
+    <section className={styles.previewPanel} aria-label="Pratinjau analisis media">
+      <header className={styles.previewHeader}>
+        <div className={styles.previewIdentity}>
+          <span className={styles.previewKicker}>
+            {isVideo ? <VideoCamera size={14} weight="bold" /> : <ImageIcon size={14} />}
+            {isVideo ? "Pemutar video" : "Analisis gambar"}
           </span>
+          <h2 title={sampleTitle}>{sampleTitle}</h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          {/* Fire Pill */}
+        <div className={styles.previewActions}>
           <span
-            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium tabular-nums border ${
-              fireBoxes.length > 0
-                ? "bg-[#ff5722]/15 text-[#ff6b3d] border-[#ff5722]/40"
-                : "bg-white/[0.03] text-white/40 border-white/10"
-            }`}
+            className={styles.detectionBadge}
+            data-type="fire"
+            data-active={fireBoxes.length > 0}
           >
-            <Fire weight="fill" className="w-3.5 h-3.5 shrink-0" />
-            <span>Api: {fireBoxes.length}</span>
+            <Fire size={14} weight="fill" />
+            {fireBoxes.length}
           </span>
-
-          {/* Smoke Pill */}
           <span
-            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium tabular-nums border ${
-              smokeBoxes.length > 0
-                ? "bg-[#38bdf8]/15 text-[#38bdf8] border-[#38bdf8]/40"
-                : "bg-white/[0.03] text-white/40 border-white/10"
-            }`}
+            className={styles.detectionBadge}
+            data-type="smoke"
+            data-active={smokeBoxes.length > 0}
           >
-            <Wind weight="bold" className="w-3.5 h-3.5 shrink-0" />
-            <span>Asap: {smokeBoxes.length}</span>
+            <Wind size={14} weight="bold" />
+            {smokeBoxes.length}
           </span>
-
-          {/* Overall Status Pill */}
-          {hasBoth ? (
-            <span className="px-2.5 sm:px-3 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 text-[11px] sm:text-xs font-medium">
-              Api + Asap Terdeteksi
-            </span>
-          ) : fireBoxes.length > 0 ? (
-            <span className="px-2.5 sm:px-3 py-1 rounded-full bg-[#ff5722] text-white text-[11px] sm:text-xs font-medium">
-              Titik Api Terdeteksi
-            </span>
-          ) : smokeBoxes.length > 0 ? (
-            <span className="px-2.5 sm:px-3 py-1 rounded-full bg-[#38bdf8] text-[#050507] text-[11px] sm:text-xs font-medium">
-              Kepulan Asap Terdeteksi
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] sm:text-xs font-medium">
-              <ShieldCheck weight="duotone" className="w-3.5 h-3.5 shrink-0" />
-              Aman
-            </span>
-          )}
-
-          {/* Fullscreen Button */}
           {previewUrl && (
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-white/[0.06] hover:bg-white/15 text-white/80 hover:text-white border border-white/10 transition-colors shrink-0 cursor-pointer"
-              title={isFullscreen ? "Keluar Layar Penuh (ESC)" : "Layar Penuh"}
-              aria-label="Layar Penuh"
+              className={styles.iconButton}
+              title={isFullscreen ? "Keluar layar penuh" : "Layar penuh"}
+              aria-label={isFullscreen ? "Keluar layar penuh" : "Buka layar penuh"}
             >
-              {isFullscreen ? (
-                <CornersIn weight="bold" className="w-3.5 h-3.5" />
-              ) : (
-                <CornersOut weight="bold" className="w-3.5 h-3.5" />
-              )}
+              {isFullscreen ? <CornersIn size={17} /> : <CornersOut size={17} />}
             </button>
           )}
         </div>
+      </header>
+
+      <div className={styles.previewStatusRow}>
+        <span className={styles.overallStatus} data-status={status}>
+          {status === "safe" ? (
+            <ShieldCheck size={15} weight="duotone" />
+          ) : (
+            <Fire size={15} weight="fill" />
+          )}
+          {statusLabel}
+        </span>
+        <span className={styles.visibleCount}>{detections.length} objek terlihat</span>
       </div>
 
-      {/* Visual Viewport with Dark Space Letterbox/Pillarbox */}
       <div
         ref={viewportRef}
         onDoubleClick={previewUrl ? toggleFullscreen : undefined}
-        className={`relative flex items-center justify-center overflow-hidden transition-all ${
-          isFullscreen
-            ? "fixed inset-0 z-50 bg-black w-screen h-screen select-none"
-            : "flex-1 bg-[#07080d] min-h-[240px] sm:min-h-[380px] max-h-[520px]"
-        }`}
+        className={`${styles.viewport} ${isFullscreen ? styles.viewportFullscreen : ""}`}
       >
         {previewUrl ? (
           isVideo ? (
@@ -186,9 +174,9 @@ export function InspectorPreviewCanvas({
               src={previewUrl}
               playsInline
               muted
-              className="w-full h-full object-contain select-none"
-              onTimeUpdate={(e) => {
-                onTimeUpdate?.(e.currentTarget.currentTime * 1000);
+              className={styles.media}
+              onTimeUpdate={(event) => {
+                onTimeUpdate?.(event.currentTarget.currentTime * 1000);
               }}
               onEnded={() => {
                 if (isPlaying) onTogglePlay?.();
@@ -200,57 +188,41 @@ export function InspectorPreviewCanvas({
               ref={imgRef}
               src={previewUrl}
               alt={sampleTitle}
-              className="w-full h-full object-contain select-none"
+              className={styles.media}
             />
           )
         ) : (
-          <div className="text-center p-6 sm:p-8 select-none">
-            <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/10 mx-auto flex items-center justify-center text-[#ff5722] mb-3">
-              <ImageIcon weight="duotone" className="w-6 h-6" />
-            </div>
-            <div className="text-sm font-medium text-white mb-1">
-              Belum Ada Media
-            </div>
-            <p className="text-xs text-white/55 max-w-xs">
-              Unggah foto atau video MP4, atau pilih salah satu skenario sampel di panel kanan.
-            </p>
+          <div className={styles.emptyPreview}>
+            <span className={styles.emptyIcon}>
+              <ImageIcon size={26} weight="duotone" />
+            </span>
+            <strong>Belum ada media</strong>
+            <p>Unggah foto atau video, atau pilih skenario siap pakai untuk memulai.</p>
           </div>
         )}
 
-        {/* Minimal Floating Exit Button in Fullscreen Mode */}
         {isFullscreen && (
-          <div className="absolute top-4 right-4 z-30 pointer-events-auto">
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              className="px-3.5 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white/90 hover:text-white text-xs font-medium flex items-center gap-2 transition-all shadow-2xl hover:scale-105 active:scale-95 cursor-pointer"
-              title="Keluar Layar Penuh (Tekan ESC)"
-            >
-              <CornersIn weight="bold" className="w-3.5 h-3.5 text-[#ff5722]" />
-              <span className="text-[11px] font-sans font-medium">Keluar Fullscreen (ESC)</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            className={styles.fullscreenExit}
+            title="Keluar layar penuh (Esc)"
+          >
+            <CornersIn size={16} weight="bold" />
+            Keluar layar penuh
+          </button>
         )}
 
-        {/* Processing / AI Scanning Overlay */}
         {isProcessing && (
-          <div className="absolute inset-0 z-40 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center gap-3.5 select-none pointer-events-auto">
-            <div className="relative w-12 h-12 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border-2 border-[#ff5722]/40 animate-ping" />
-              <div className="w-10 h-10 rounded-full border-2 border-t-[#ff5722] border-r-[#ff6b3d] border-b-transparent border-l-transparent animate-spin" />
-            </div>
-            <div className="text-center px-4">
-              <p className="text-xs sm:text-sm font-medium text-white tracking-wide">
-                {isVideo ? "Menganalisis Frame Video MP4..." : "Menganalisis Berkas Gambar..."}
-              </p>
-              <p className="text-[11px] text-white/60 font-mono mt-1">
-                YOLOv11 sedang memindai titik api dan kepulan asap
-              </p>
-            </div>
+          <div className={styles.processingOverlay} role="status">
+            <span className={styles.scannerRing} aria-hidden="true" />
+            <strong>
+              {isVideo ? "Menganalisis frame video" : "Menganalisis gambar"}
+            </strong>
+            <p>YOLOv11 memindai titik api dan kepulan asap.</p>
           </div>
         )}
 
-        {/* Bounding Box Canvas Overlay with Aspect-Ratio Content Tracking */}
         <DetectionCanvas
           detections={detections}
           minConfidence={confidence}
@@ -260,69 +232,64 @@ export function InspectorPreviewCanvas({
         />
       </div>
 
-      {/* Video Playback Toolbar (Only visible when video is loaded and NOT in fullscreen) */}
       {isVideo && previewUrl && (
-        <div className="p-3 sm:px-4 sm:py-2.5 bg-[#0e111a] border-t border-white/10 flex flex-col gap-2 select-none">
-          {/* Progress / Scrubber Bar with Hazard Dots */}
-          <div className="relative w-full flex items-center group">
-            {/* Range Input Scrubber */}
+        <div className={styles.playback}>
+          <div className={styles.timeline}>
             <input
               type="range"
               min={0}
               max={videoDurationMs || 100}
               step={100}
               value={currentTimeMs}
-              onChange={(e) => onSeek?.(Number(e.target.value))}
-              className="w-full h-1.5 bg-white/15 rounded-lg appearance-none cursor-pointer accent-[#ff5722] hover:bg-white/25 transition-all"
+              onChange={(event) => onSeek?.(Number(event.target.value))}
+              className={styles.timelineInput}
+              aria-label="Posisi video"
             />
-
-            {/* Hazard Event Dots along timeline */}
-            {hazardMarkers.map((markerMs, idx) => {
+            {hazardMarkers.map((markerMs, index) => {
               if (!videoDurationMs) return null;
-              const leftPercent = Math.min(100, Math.max(0, (markerMs / videoDurationMs) * 100));
+              const leftPercent = Math.min(
+                100,
+                Math.max(0, (markerMs / videoDurationMs) * 100)
+              );
               return (
                 <button
-                  key={idx}
+                  key={`${markerMs}-${index}`}
                   type="button"
-                  title={`Deteksi Bahaya pada ${formatMs(markerMs)}`}
+                  title={`Deteksi bahaya pada ${formatMs(markerMs)}`}
+                  aria-label={`Buka deteksi bahaya pada ${formatMs(markerMs)}`}
                   onClick={() => onSeek?.(markerMs)}
                   style={{ left: `${leftPercent}%` }}
-                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-[#ff5722] shadow-[0_0_6px_#ff5722] hover:scale-150 transition-transform cursor-pointer"
+                  className={styles.hazardMarker}
                 />
               );
             })}
           </div>
 
-          {/* Controls Bar */}
-          <div className="flex items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
+          <div className={styles.playbackBar}>
+            <div className={styles.playbackMain}>
               <button
                 type="button"
                 onClick={onTogglePlay}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
-                aria-label={isPlaying ? "Jeda" : "Putar"}
+                className={styles.playButton}
+                aria-label={isPlaying ? "Jeda video" : "Putar video"}
               >
                 {isPlaying ? (
-                  <Pause weight="fill" className="w-3.5 h-3.5" />
+                  <Pause size={17} weight="fill" />
                 ) : (
-                  <Play weight="fill" className="w-3.5 h-3.5 translate-x-0.5" />
+                  <Play size={17} weight="fill" />
                 )}
               </button>
-
-              <span className="font-mono text-zinc-300 text-[11px]">
-                {formatMs(currentTimeMs)} / {formatMs(videoDurationMs)}
+              <span className={styles.timecode}>
+                {formatMs(currentTimeMs)} <i>/</i> {formatMs(videoDurationMs)}
               </span>
             </div>
-
-            <div className="flex items-center gap-2 text-[11px] text-zinc-400 font-mono">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/10">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#ff5722]" />
-                <span>Titik Bahaya: {hazardMarkers.length} Frame</span>
-              </span>
-            </div>
+            <span className={styles.hazardSummary}>
+              <i />
+              {hazardMarkers.length} frame berbahaya
+            </span>
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

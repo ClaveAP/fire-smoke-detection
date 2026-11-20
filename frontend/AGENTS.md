@@ -20,7 +20,7 @@ Petunjuk dan konvensi arsitektur kode frontend untuk Fire & Smoke Detection Syst
 - **Icons**: `@phosphor-icons/react` (prioritas utama) & `lucide-react`
 - **State Management**:
   - `src/context/AuthContext.tsx`: Manajemen sesi login pengguna reaktif, simulasi Google Sign-In, peran Operator Lapangan (`usr-operator-01`) vs Supervisor K3 (`usr-supervisor-01`). Disimpan di `localStorage` (`aegisflame_auth_user`).
-  - `src/services/detectionAdapter.ts`: Adapter data tangguh (*resilient bridge*) antara frontend dan backend FastAPI. Memiliki *graceful fallback* 100% ke `src/services/mockDetection.ts` dan `localStorage` jika backend offline.
+  - `src/services/detectionAdapter.ts`: Adapter data tangguh (*resilient bridge*) antara frontend dan backend FastAPI. Jika backend offline, hanya memakai insiden nyata yang tercatat di `localStorage` perangkat — tidak ada dataset demo.
 - **Hardware Integration**:
   - `useWebcamScanner.ts`: Pemindaian api webcam laptop real-time dengan bypass otomatis untuk kamera virtual/OBS.
   - `useAlarmSound.ts`: Sirine audio darurat berbasis Web Audio API lokal.

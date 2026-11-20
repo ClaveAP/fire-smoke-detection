@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Fire, List, X, SignOut, CaretDown } from "@phosphor-icons/react";
+import { Fire, List, X, SignOut, CaretDown, ArrowLeft } from "@phosphor-icons/react";
 import { useAuth } from "@/context/AuthContext";
 import { GoogleLogo } from "@/components/auth/GoogleLogo";
 import { LogoutConfirmModal } from "@/components/auth/LogoutConfirmModal";
@@ -46,7 +46,17 @@ export function LandingNav() {
           </Link>
 
           {/* Desktop Authentication Button / User Profile */}
-          <div className="hidden md:flex items-center pl-1">
+          <div className="hidden md:flex items-center gap-2 pl-1">
+            {user && (
+              <Link
+                href="/dashboard"
+                title="Kembali ke dashboard"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-xs font-medium text-white/80 hover:text-white transition-all duration-200 active:scale-[0.98]"
+              >
+                <ArrowLeft weight="bold" className="w-3.5 h-3.5 shrink-0" />
+                <span>Kembali</span>
+              </Link>
+            )}
             {user ? (
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -135,6 +145,15 @@ export function LandingNav() {
               <>
                 <Link
                   href="/dashboard"
+                  className="w-8 h-8 rounded-full flex items-center justify-center bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-white shrink-0 transition-colors active:scale-95"
+                  title="Kembali ke dashboard"
+                  aria-label="Kembali ke dashboard"
+                >
+                  <ArrowLeft weight="bold" className="w-4 h-4" />
+                </Link>
+
+                <Link
+                  href="/dashboard"
                   className="w-7 h-7 rounded-full overflow-hidden border border-white/20 shrink-0 active:scale-95 transition-transform"
                   title={`Login sebagai ${user.name}`}
                 >
@@ -201,6 +220,16 @@ export function LandingNav() {
                 {user.role}
               </span>
             </div>
+
+            {/* Back to workspace */}
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-xs font-semibold text-white transition-colors"
+            >
+              <ArrowLeft weight="bold" className="w-4 h-4 shrink-0" />
+              <span>Kembali ke Dashboard</span>
+            </Link>
 
             {/* Mobile Auth Actions */}
             <div className="pt-2 border-t border-white/10">

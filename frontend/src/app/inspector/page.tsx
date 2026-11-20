@@ -1,35 +1,29 @@
 "use client";
 
 import { useState, useCallback, useMemo, useRef } from "react";
-import { HeaderNav } from "@/components/common/HeaderNav";
+import { WorkspaceShell } from "@/components/dashboard/WorkspaceShell";
+import { WorkspacePageHeader } from "@/components/dashboard/WorkspacePageHeader";
 import { MediaUploader } from "@/components/inspector/MediaUploader";
 import { PlaybackControls } from "@/components/inspector/PlaybackControls";
 import { DetectionTable } from "@/components/inspector/DetectionTable";
 import { InspectorPreviewCanvas } from "@/components/inspector/InspectorPreviewCanvas";
 import { BoundingBox, IncidentRecord, VideoFrameDetection } from "@/types/detection";
 import { detectionAdapter } from "@/services/detectionAdapter";
-import {
-  INSPECTOR_PRESET_SAMPLES,
-  InspectorSamplePreset,
-} from "@/services/mockDetection";
-
-const DEFAULT_PRESET = INSPECTOR_PRESET_SAMPLES[0];
+import { InspectorSamplePreset } from "@/services/inspectorPresets";
+import workspaceStyles from "@/components/dashboard/WorkspacePage.module.css";
+import styles from "@/components/inspector/Inspector.module.css";
 
 export default function MediaInspectorPage() {
   const [activePresetId, setActivePresetId] = useState<string | undefined>(
-    DEFAULT_PRESET.id
+    undefined
   );
-  const [previewUrl, setPreviewUrl] = useState<string | null>(
-    DEFAULT_PRESET.previewUrl
-  );
-  const [sampleTitle, setSampleTitle] = useState<string>(DEFAULT_PRESET.title);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [sampleTitle, setSampleTitle] = useState<string>("Belum ada media");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [detections, setDetections] = useState<BoundingBox[]>(
-    DEFAULT_PRESET.boxes
-  );
-  const [inferenceTimeMs, setInferenceTimeMs] = useState<number>(
-    DEFAULT_PRESET.inferenceTimeMs
-  );
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [detections, setDetections] = useState<BoundingBox[]>([]);
+  const [inferenceTimeMs, setInferenceTimeMs] = useState<number>(0);
+  const [engineName, setEngineName] = useState<string>("");
   const [confidence, setConfidence] = useState<number>(0.20);
   const [showFire, setShowFire] = useState<boolean>(true);
   const [showSmoke, setShowSmoke] = useState<boolean>(true);
@@ -102,6 +96,7 @@ export default function MediaInspectorPage() {
       setIsProcessing(true);
       setIsPlaying(false);
       setCurrentTimeMs(0);
+      setAnalysisError(null);
 
       const isVideoFile = Boolean(
         file &&
@@ -117,6 +112,7 @@ export default function MediaInspectorPage() {
         setPreviewUrl(preset.previewUrl);
         setVideoFrames([]);
         setVideoDurationMs(0);
+        setInferenceTimeMs(0);
         localPreviewUrl = preset.previewUrl;
       } else if (file) {
         setActivePresetId(undefined);
@@ -126,13 +122,22 @@ export default function MediaInspectorPage() {
       }
 
       try {
-        if (file) {
+        if (preset) {
+          // Sample media carries hand-drawn annotations — show them as-is, no engine call.
+          setIsVideo(false);
+          setVideoFrames([]);
+          setVideoDurationMs(0);
+          setInferenceTimeMs(0);
+          setEngineName("");
+          setDetections(preset.boxes);
+        } else if (file) {
           if (isVideoFile) {
             // Video analysis via backend /detect/video
             const res = await detectionAdapter.detectVideo(file);
             setVideoFrames(res.frames);
             setVideoDurationMs(res.durationMs);
             setInferenceTimeMs(res.inferenceTimeMs);
+            setEngineName(res.engine ?? "");
 
             // Set initial boxes from first frame with detections
             const frameWithBoxes = res.frames.find((f) => f.boxes.length > 0);
@@ -178,12 +183,9 @@ export default function MediaInspectorPage() {
                 zone: "Pengujian Video MP4",
                 type: primaryType,
                 secondaryType: secondaryType,
-                confidence: peakConf || 0.8,
+                confidence: peakConf,
                 smokeConfidence: res.summary.smoke?.peakConfidence,
-                temperatureC: hasFire ? 340 : 90,
-                smokeDensityDbm: hasSmoke ? 2.8 : 1.1,
                 status: "active",
-                snapshotUrl: "/presets/preset-dual.webp",
                 operator: activeOperator,
                 notes: `Analisis video "${file.name}" selesai: durasi ${(res.durationMs / 1000).toFixed(1)}s, ${res.frames.length} frame diproses dalam ${res.inferenceTimeMs}ms.`,
                 detections: frameWithBoxes?.boxes || [],
@@ -196,6 +198,7 @@ export default function MediaInspectorPage() {
             const res = await detectionAdapter.detectImage(file);
             setDetections(res.boxes);
             setInferenceTimeMs(res.inferenceTimeMs);
+            setEngineName(res.engine ?? "");
 
             // Automatically log custom uploaded media detections into Incident Log
             if (!preset && res.boxes.length > 0) {
@@ -207,17 +210,13 @@ export default function MediaInspectorPage() {
               // Convert image file to Data URL for persistent localStorage preview
               const snapshotDataUrl = await new Promise<string>((resolve) => {
                 if (!file.type.startsWith("image/")) {
-                  resolve("/presets/preset-dual.webp");
+                  resolve("");
                   return;
                 }
                 const reader = new FileReader();
                 reader.onload = () =>
-                  resolve(
-                    typeof reader.result === "string"
-                      ? reader.result
-                      : "/presets/preset-dual.webp"
-                  );
-                reader.onerror = () => resolve("/presets/preset-dual.webp");
+                  resolve(typeof reader.result === "string" ? reader.result : "");
+                reader.onerror = () => resolve("");
                 reader.readAsDataURL(file);
               });
 
@@ -251,25 +250,25 @@ export default function MediaInspectorPage() {
                 secondaryType: fireBox && smokeBox ? "smoke" : undefined,
                 confidence: primaryBox.confidence,
                 smokeConfidence: smokeBox?.confidence,
-                temperatureC: fireBox ? 320 : 95,
-                smokeDensityDbm: smokeBox ? 3.1 : 1.2,
                 status: "active",
-                snapshotUrl: snapshotDataUrl || localPreviewUrl || "/presets/preset-dual.webp",
+                snapshotUrl: snapshotDataUrl || localPreviewUrl || undefined,
                 operator: activeOperator,
                 notes: `Hasil uji deteksi file "${file.name}" di Media Lab (${res.boxes.length} objek terdeteksi dalam ${res.inferenceTimeMs} ms).`,
                 detections: res.boxes,
               });
             }
           }
-        } else if (preset) {
-          setIsVideo(false);
-          setVideoFrames([]);
-          setVideoDurationMs(0);
-          setDetections(preset.boxes);
-          setInferenceTimeMs(preset.inferenceTimeMs);
         }
       } catch (err) {
         console.error("Inference failed:", err);
+        setDetections([]);
+        setInferenceTimeMs(0);
+        setVideoFrames([]);
+        setAnalysisError(
+          err instanceof Error
+            ? err.message
+            : "Analisis gagal dijalankan pada mesin deteksi."
+        );
       } finally {
         setIsProcessing(false);
       }
@@ -307,23 +306,50 @@ export default function MediaInspectorPage() {
     });
   }, [thresholdDetections, showFire, showSmoke]);
 
+  const usesHeuristic = engineName.startsWith("heuristic");
+  const engineLabel = engineName
+    ? usesHeuristic
+      ? "Heuristic OpenCV"
+      : `YOLO · ${engineName.split("/").pop() || engineName}`
+    : "";
+
   return (
-    <div data-horizon className="min-h-screen bg-[#050507] text-[#f5f5f7] flex flex-col font-sans overflow-x-hidden">
-      <HeaderNav />
+    <WorkspaceShell dataUI="inspector">
+      <div className={workspaceStyles.content}>
+        <WorkspacePageHeader
+          title="Media Inspector"
+          description="Uji gambar atau rekaman video, tinjau setiap objek, dan sesuaikan sensitivitas deteksi tanpa meninggalkan workspace."
+          aside={
+            <div
+              className={workspaceStyles.status}
+              data-online={!isProcessing}
+            >
+              <i />
+              <span>
+                {isProcessing
+                  ? "Analisis berjalan"
+                  : isVideo
+                    ? "Video siap ditinjau"
+                    : "Gambar siap ditinjau"}
+              </span>
+              <span className={workspaceStyles.count}>
+                {inferenceTimeMs ? `${inferenceTimeMs.toFixed(1)} ms` : "—"}
+              </span>
+              {engineLabel && <span className={workspaceStyles.count}>{engineLabel}</span>}
+            </div>
+          }
+        />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto pt-20 sm:pt-24 pb-10 sm:pb-12 px-3.5 sm:px-6 lg:px-8 flex flex-col gap-4 sm:gap-6">
-        <div>
-          <h1 className="font-display text-3xl sm:text-[38px] font-medium tracking-[-.065em] leading-[1.1] text-white">
-            Analitik media
-          </h1>
-          <p className="mt-2 max-w-3xl text-[13px] text-white/60">
-            Analisis rekaman CCTV untuk meninjau deteksi api dan asap per objek.
+        {usesHeuristic && (
+          <p className={styles.engineWarning} role="status">
+            <b>Detektor YOLO belum aktif.</b> Hasil di bawah memakai detektor warna OpenCV, sehingga api/asap pada
+            rekaman nyata sering lolos. Buka <code>/api/v1/health</code> di backend untuk melihat alasannya
+            (<code>engineNote</code>).
           </p>
-        </div>
+        )}
 
-        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
-          {/* Left Column: Visual Stage & Table */}
-          <div className="flex-1 min-w-0 flex flex-col gap-4 sm:gap-6">
+        <div className={styles.workspace}>
+          <div className={styles.stage}>
             <InspectorPreviewCanvas
               sampleTitle={sampleTitle}
               previewUrl={previewUrl}
@@ -342,15 +368,9 @@ export default function MediaInspectorPage() {
               hazardMarkers={hazardMarkers}
               isProcessing={isProcessing}
             />
-
-            <DetectionTable
-              boxes={filteredDetections}
-              inferenceTimeMs={inferenceTimeMs}
-            />
           </div>
 
-          {/* Right Column: 1-col on Mobile, 2-col Grid on Tablet, 384px Sidebar on Desktop */}
-          <div className="w-full lg:w-96 grid grid-cols-1 md:grid-cols-2 lg:flex lg:flex-col gap-4 sm:gap-6 shrink-0">
+          <aside className={styles.controls} aria-label="Kontrol analisis media">
             <MediaUploader
               onMediaSelect={handleMediaSelect}
               isProcessing={isProcessing}
@@ -368,9 +388,21 @@ export default function MediaInspectorPage() {
               fireCount={fireCount}
               smokeCount={smokeCount}
             />
+          </aside>
+
+          <div className={styles.results}>
+            <DetectionTable
+              boxes={filteredDetections}
+              inferenceTimeMs={inferenceTimeMs}
+            />
           </div>
         </div>
-      </main>
-    </div>
+
+        <footer className={workspaceStyles.footer}>
+          <span>Preview tetap gelap agar bounding box terbaca di semua tema.</span>
+          <span>{filteredDetections.length} objek ditampilkan pada hasil analisis.</span>
+        </footer>
+      </div>
+    </WorkspaceShell>
   );
 }

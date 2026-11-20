@@ -1,7 +1,8 @@
 "use client";
 
-import { BoundingBox } from "@/types/detection";
-import { Fire, Wind } from "@phosphor-icons/react";
+import { Fire, ShieldCheck, Wind } from "@phosphor-icons/react";
+import type { BoundingBox } from "@/types/detection";
+import styles from "./Inspector.module.css";
 
 interface DetectionTableProps {
   boxes: BoundingBox[];
@@ -10,94 +11,93 @@ interface DetectionTableProps {
 
 export function DetectionTable({
   boxes,
-  inferenceTimeMs = 11.8,
+  inferenceTimeMs,
 }: DetectionTableProps) {
   return (
-    <div className="rounded-2xl sm:rounded-3xl bg-[#0b0d14] border border-white/10 overflow-hidden flex flex-col">
-      {/* Clean Table Header */}
-      <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-b border-white/10 flex flex-wrap items-center gap-2.5 sm:gap-3">
-        <div className="flex items-center gap-2.5">
-          <h3 className="font-display text-sm sm:text-base font-medium tracking-[-.035em] text-white">
-            Objek Terdeteksi ({boxes.length})
-          </h3>
-          <span className="text-xs tabular-nums text-white/50">
-            · {inferenceTimeMs.toFixed(1)} ms
-          </span>
+    <section className={styles.resultsPanel} aria-labelledby="detection-results-title">
+      <header className={styles.resultsHeader}>
+        <div className={styles.panelHeading}>
+          <h2 id="detection-results-title">Objek terdeteksi</h2>
+          <p>Daftar berubah mengikuti ambang akurasi dan layer yang aktif.</p>
         </div>
+        <div className={styles.resultsMeta}>
+          <strong>{boxes.length}</strong>
+          <span>{inferenceTimeMs ? `${inferenceTimeMs.toFixed(1)} ms` : "—"} inferensi</span>
+        </div>
+      </header>
 
-      </div>
-
-      {/* Table Body */}
-      <div className="overflow-x-auto">
-        {boxes.length === 0 ? (
-          <div className="p-6 sm:p-8 text-center text-xs text-white/50">
-            Tidak ada objek api atau asap pada ambang batas saat ini.
+      {boxes.length === 0 ? (
+        <div className={styles.emptyResults}>
+          <ShieldCheck size={28} weight="duotone" />
+          <strong>Tidak ada objek yang ditampilkan</strong>
+          <p>Turunkan ambang akurasi atau aktifkan kembali layer api dan asap.</p>
+        </div>
+      ) : (
+        <div className={styles.detectionTable}>
+          <div className={styles.detectionTableHeader} aria-hidden="true">
+            <span>Jenis deteksi</span>
+            <span>Tingkat akurasi</span>
+            <span>Posisi [X, Y, W, H]</span>
+            <span>Cakupan</span>
           </div>
-        ) : (
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-white/10 text-[11px] text-white/50 bg-white/[0.02] whitespace-nowrap">
-                <th className="py-3 px-4 sm:px-5 font-medium">Jenis Deteksi</th>
-                <th className="py-3 px-4 sm:px-5 font-medium">Tingkat Akurasi</th>
-                <th className="py-3 px-4 sm:px-5 font-medium">Posisi [X, Y, W, H]</th>
-                <th className="py-3 px-4 sm:px-5 font-medium text-right">Cakupan</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/8 whitespace-nowrap">
-              {boxes.map((box) => {
-                const isFire = box.label === "fire";
-                const [x, y, w, h] = box.bbox;
-                const areaPercent = (w * h * 100).toFixed(1);
+          <ol className={styles.detectionList}>
+            {boxes.map((box) => {
+              const isFire = box.label === "fire";
+              const [x, y, width, height] = box.bbox;
+              const areaPercent = (width * height * 100).toFixed(1);
+              const confidencePercent = Math.min(100, box.confidence * 100);
 
-                return (
-                  <tr
-                    key={box.id}
-                    className="hover:bg-white/[0.03] transition-colors"
-                  >
-                    <td className="py-3.5 px-4 sm:px-5">
+              return (
+                <li key={box.id} className={styles.detectionRow}>
+                  <div className={styles.typeCell}>
+                    <span className={styles.detectionType} data-type={box.label}>
                       {isFire ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#ff5722]/15 text-[#ff6b3d] border border-[#ff5722]/35">
-                          <Fire weight="fill" className="w-3.5 h-3.5 shrink-0" />
-                          Titik Api (Fire)
-                        </span>
+                        <Fire size={15} weight="fill" />
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#38bdf8]/15 text-[#38bdf8] border border-[#38bdf8]/35">
-                          <Wind weight="bold" className="w-3.5 h-3.5 shrink-0" />
-                          Kepulan Asap (Smoke)
-                        </span>
+                        <Wind size={15} weight="bold" />
                       )}
-                    </td>
-                    <td className="py-3.5 px-4 sm:px-5">
-                      <div className="flex items-center gap-3 min-w-[130px] max-w-[160px]">
-                        <span className="font-medium tabular-nums text-white w-12">
-                          {(box.confidence * 100).toFixed(1)}%
-                        </span>
-                        <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${
-                              isFire ? "bg-[#ff5722]" : "bg-[#38bdf8]"
-                            }`}
-                            style={{
-                              width: `${Math.min(100, box.confidence * 100)}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 sm:px-5 font-mono text-white/65">
-                      [{x.toFixed(2)}, {y.toFixed(2)}, {w.toFixed(2)},{" "}
-                      {h.toFixed(2)}]
-                    </td>
-                    <td className="py-3.5 px-4 sm:px-5 text-right font-mono text-white/65">
-                      {areaPercent}% area
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
+                      {isFire ? "Titik api" : "Kepulan asap"}
+                    </span>
+                  </div>
+
+                  <div className={styles.confidenceCell}>
+                    <div className={styles.confidenceTop}>
+                      <span className={styles.cellLabel}>Akurasi</span>
+                      <strong>{confidencePercent.toFixed(1)}%</strong>
+                    </div>
+                    <span
+                      className={styles.confidenceTrack}
+                      role="progressbar"
+                      aria-label={`Akurasi ${isFire ? "titik api" : "kepulan asap"}`}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Number(confidencePercent.toFixed(1))}
+                    >
+                      <i
+                        data-type={box.label}
+                        style={{ width: `${confidencePercent}%` }}
+                      />
+                    </span>
+                  </div>
+
+                  <div className={styles.positionCell}>
+                    <span className={styles.cellLabel}>Posisi [X, Y, W, H]</span>
+                    <code>
+                      [{x.toFixed(2)}, {y.toFixed(2)}, {width.toFixed(2)}, {height.toFixed(2)}]
+                    </code>
+                  </div>
+
+                  <div className={styles.coverageCell}>
+                    <span className={styles.cellLabel}>Cakupan</span>
+                    <strong>{areaPercent}%</strong>
+                    <small>dari area media</small>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      )}
+    </section>
   );
 }

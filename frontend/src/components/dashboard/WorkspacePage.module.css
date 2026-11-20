@@ -1,0 +1,133 @@
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.masthead {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.titleBlock {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.titleBlock h1 {
+  margin: 0;
+  color: var(--dash-text);
+  font-family: var(--font-poppins), sans-serif;
+  font-size: clamp(30px, 8vw, 50px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.titleBlock p {
+  max-width: 610px;
+  margin: 14px auto 0;
+  color: var(--dash-muted);
+  font-size: 12px;
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+
+.mastheadSide {
+  display: flex;
+  order: -1;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 20px;
+  border-top: 1px solid var(--dash-line);
+  color: var(--dash-faint);
+  font-size: 10px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.status {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 13px;
+  border: 1px solid var(--dash-line);
+  border-radius: 999px;
+  color: var(--dash-muted);
+  background: var(--dash-nav-bg);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.status i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dash-accent);
+}
+
+.status[data-online="true"] i {
+  background: var(--dash-success);
+}
+
+.count {
+  color: var(--dash-text);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+}
+
+@media (min-width: 760px) {
+  .content {
+    gap: 20px;
+  }
+
+  .masthead {
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-direction: row;
+    gap: 32px;
+    margin-bottom: 12px;
+    text-align: left;
+  }
+
+  .titleBlock {
+    margin: 0;
+  }
+
+  .titleBlock p {
+    margin-inline: 0;
+    font-size: 13px;
+  }
+
+  .mastheadSide {
+    order: initial;
+    justify-content: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+  }
+
+  .footer {
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+    text-align: left;
+  }
+}

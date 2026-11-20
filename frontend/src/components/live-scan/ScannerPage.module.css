@@ -1,0 +1,64 @@
+.embedded {
+  width: 100%;
+  min-width: 0;
+  color: var(--dash-text);
+  font-family: var(--font-poppins), sans-serif;
+}
+
+.embeddedContent {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.workspace {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.cameraColumn {
+  display: flex;
+  min-width: 0;
+  min-height: 500px;
+  flex-direction: column;
+}
+
+.viewfinder {
+  min-height: 500px;
+  background: var(--dash-camera);
+  box-shadow: 0 18px 45px -32px var(--dash-shadow);
+}
+
+.notice {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgb(255 87 34 / 24%);
+  border-radius: 15px;
+  color: var(--dash-accent-light);
+  background: var(--dash-accent-soft);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+@media (min-width: 1080px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.8fr);
+    gap: 20px;
+  }
+
+  .cameraColumn,
+  .viewfinder {
+    min-height: 600px;
+  }
+}
+
+@media (max-width: 520px) {
+  .cameraColumn,
+  .viewfinder {
+    min-height: 540px;
+  }
+}

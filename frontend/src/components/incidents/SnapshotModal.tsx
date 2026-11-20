@@ -1,8 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IncidentRecord } from "@/types/detection";
-import { X, Fire, Wind, ShieldWarning, Thermometer, Camera } from "@phosphor-icons/react";
+import {
+  Camera,
+  Fire,
+  ShieldWarning,
+  Thermometer,
+  Wind,
+  X,
+} from "@phosphor-icons/react";
+import type { IncidentRecord } from "@/types/detection";
+import styles from "./Incidents.module.css";
 
 interface SnapshotModalProps {
   incident: IncidentRecord | null;
@@ -14,6 +22,15 @@ interface SnapshotModalProps {
   onDelete?: (incidentId: string) => void;
 }
 
+const statusOptions: Array<{
+  value: IncidentRecord["status"];
+  label: string;
+}> = [
+  { value: "active", label: "Aktif" },
+  { value: "investigating", label: "Investigasi" },
+  { value: "resolved", label: "Selesai" },
+];
+
 export function SnapshotModal({
   incident,
   onClose,
@@ -24,8 +41,8 @@ export function SnapshotModal({
   const [showSmokeBox, setShowSmokeBox] = useState(true);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -33,136 +50,89 @@ export function SnapshotModal({
 
   if (!incident) return null;
 
-  const boxes = incident.detections || [
-    {
-      id: "fallback-1",
-      label: incident.type,
-      confidence: incident.confidence,
-      bbox: [0.34, 0.32, 0.32, 0.38] as [number, number, number, number],
-    },
-  ];
+  const boxes = incident.detections || [];
 
-  const visibleBoxes = boxes.filter((b) => {
-    if (b.label === "fire" && !showFireBox) return false;
-    if (b.label === "smoke" && !showSmokeBox) return false;
+  const visibleBoxes = boxes.filter((box) => {
+    if (box.label === "fire" && !showFireBox) return false;
+    if (box.label === "smoke" && !showSmokeBox) return false;
     return true;
   });
 
-  const statusOptions: Array<{
-    value: IncidentRecord["status"];
-    label: string;
-    activeClass: string;
-  }> = [
-    {
-      value: "active",
-      label: "Aktif",
-      activeClass: "bg-[#ff5a1f]/20 text-[#ff8c42] border-[#ff5a1f]/50",
-    },
-    {
-      value: "investigating",
-      label: "Investigasi",
-      activeClass: "bg-amber-500/20 text-amber-300 border-amber-500/50",
-    },
-    {
-      value: "resolved",
-      label: "Selesai",
-      activeClass: "bg-emerald-500/20 text-emerald-300 border-emerald-500/50",
-    },
-  ];
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xl overflow-y-auto"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-3xl my-auto rounded-2xl sm:rounded-3xl bg-[#0b0d14] border border-white/12 shadow-[0_24px_90px_rgba(0,0,0,0.85)] overflow-hidden flex flex-col max-h-[90dvh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+    <div className={styles.modalBackdrop} onClick={onClose}>
+      <section
+        className={styles.snapshotModal}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="snapshot-modal-title"
+        onClick={(event) => event.stopPropagation()}
       >
-        {/* Modal Header */}
-        <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-b border-white/[0.06] flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-[#ff5a1f]/15 border border-[#ff5a1f]/35 flex items-center justify-center shrink-0">
-              <ShieldWarning weight="duotone" className="w-4 h-4 text-[#ff5a1f]" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <span className="text-xs sm:text-sm font-semibold text-white truncate">
-                  Bukti Rekaman {incident.id.toUpperCase()}
-                </span>
-                <span className="text-[10px] sm:text-[11px] font-mono px-2 sm:px-2.5 py-0.5 rounded-full bg-white/[0.05] border border-white/10 text-zinc-300">
-                  {incident.cameraId}
-                </span>
-              </div>
+        <header className={styles.modalHeader}>
+          <div className={styles.modalTitleGroup}>
+            <span className={styles.modalTitleIcon}>
+              <ShieldWarning size={18} weight="duotone" />
+            </span>
+            <div>
+              <h2 id="snapshot-modal-title">
+                Bukti rekaman {incident.id.toUpperCase()}
+              </h2>
+              <span className={styles.modalCameraId}>{incident.cameraId}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
+          <div className={styles.modalHeaderActions}>
             <button
               type="button"
+              aria-pressed={showFireBox}
               onClick={() => setShowFireBox(!showFireBox)}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-medium border transition-all ${
-                showFireBox
-                  ? "bg-[#ff5a1f]/15 text-[#ff8c42] border-[#ff5a1f]/40"
-                  : "bg-white/[0.03] text-zinc-500 border-white/10"
-              }`}
+              className={styles.modalLayerButton}
+              data-type="fire"
+              data-active={showFireBox}
             >
-              <Fire weight="fill" className="w-3.5 h-3.5 text-[#ff5a1f] shrink-0" />
-              <span className="hidden min-[400px]:inline">Kotak</span>
-              <span>Api</span>
+              <Fire size={14} weight="fill" />
+              <span>Kotak api</span>
             </button>
-
             <button
               type="button"
+              aria-pressed={showSmokeBox}
               onClick={() => setShowSmokeBox(!showSmokeBox)}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-medium border transition-all ${
-                showSmokeBox
-                  ? "bg-[#38bdf8]/15 text-[#38bdf8] border-[#38bdf8]/40"
-                  : "bg-white/[0.03] text-zinc-500 border-white/10"
-              }`}
+              className={styles.modalLayerButton}
+              data-type="smoke"
+              data-active={showSmokeBox}
             >
-              <Wind weight="duotone" className="w-3.5 h-3.5 text-[#38bdf8] shrink-0" />
-              <span className="hidden min-[400px]:inline">Kotak</span>
-              <span>Asap</span>
+              <Wind size={14} weight="duotone" />
+              <span>Kotak asap</span>
             </button>
-
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/[0.05] hover:bg-white/15 text-zinc-400 hover:text-white border border-white/10 flex items-center justify-center transition-colors shrink-0"
+              className={styles.modalClose}
               aria-label="Tutup modal"
             >
-              <X weight="bold" className="w-4 h-4" />
+              <X size={17} weight="bold" />
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* CCTV Frame Viewport with Fire & Smoke Bounding Boxes */}
-        <div className="relative aspect-video bg-[#050507] overflow-hidden border-b border-white/[0.06] shrink-0">
+        <div className={styles.modalViewport}>
           {incident.snapshotUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={incident.snapshotUrl}
               alt={incident.cameraName}
-              className="w-full h-full object-cover opacity-90"
+              className={styles.modalImage}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050507]/85 via-transparent to-[#050507]/50 pointer-events-none" />
+          <div className={styles.modalImageShade} aria-hidden="true" />
 
-          {/* Top Left Camera Pill Overlay */}
-          <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 max-w-[calc(100%-1.25rem)] bg-black/65 backdrop-blur-md border border-white/10 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full font-mono text-[10px] sm:text-[11px] text-zinc-200 flex items-center gap-1.5 sm:gap-2 truncate">
-            <Camera weight="duotone" className="w-3.5 h-3.5 text-[#ff5a1f] shrink-0" />
-            <span className="truncate">{incident.cameraName}</span>
-            <span className="hidden sm:inline text-zinc-600">•</span>
-            <span
-              suppressHydrationWarning
-              className="hidden sm:inline text-zinc-400 tabular-nums shrink-0"
-            >
+          <div className={styles.modalCameraPill}>
+            <Camera size={15} weight="duotone" />
+            <span>{incident.cameraName}</span>
+            <time suppressHydrationWarning dateTime={incident.timestamp}>
               {new Date(incident.timestamp).toLocaleString("id-ID")}
-            </span>
+            </time>
           </div>
 
-          {/* Render Bounding Boxes */}
           {visibleBoxes.map((box) => {
             const isFire = box.label === "fire";
             const [nx, ny, nw, nh] = box.bbox;
@@ -175,130 +145,113 @@ export function SnapshotModal({
                   width: `${nw * 100}%`,
                   height: `${nh * 100}%`,
                 }}
-                className={`absolute rounded-xl sm:rounded-2xl transition-all ${
-                  isFire
-                    ? "border-2 border-[#ff5a1f] bg-[#ff5a1f]/15 shadow-[0_0_30px_rgba(255,90,31,0.45)]"
-                    : "border-2 border-[#38bdf8] bg-[#38bdf8]/10 shadow-[0_0_25px_rgba(56,189,248,0.3)]"
-                }`}
+                className={styles.boundingBox}
+                data-type={box.label}
               >
-                <div
-                  className={`absolute -top-3 sm:-top-3.5 left-2 sm:left-3 px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-mono font-bold text-white flex items-center gap-1 sm:gap-1.5 whitespace-nowrap shadow-lg ${
-                    isFire ? "bg-[#ff5a1f]" : "bg-[#0284c7]"
-                  }`}
-                >
+                <span className={styles.boundingLabel} data-type={box.label}>
                   {isFire ? (
-                    <Fire weight="fill" className="w-3 h-3 text-white shrink-0" />
+                    <Fire size={12} weight="fill" />
                   ) : (
-                    <Wind weight="bold" className="w-3 h-3 shrink-0" />
+                    <Wind size={12} weight="bold" />
                   )}
-                  <span>
-                    {isFire ? "FIRE" : "SMOKE"}{" "}
-                    {(box.confidence * 100).toFixed(1)}%
-                  </span>
-                </div>
+                  {isFire ? "FIRE" : "SMOKE"} {(box.confidence * 100).toFixed(1)}%
+                </span>
               </div>
             );
           })}
         </div>
 
-        {/* Incident Details Footer */}
-        <div className="p-4 sm:p-5 flex flex-col gap-3">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 font-mono text-xs">
-            <div className="p-3 rounded-2xl bg-white/[0.025] border border-white/[0.06]">
-              <div className="text-[11px] font-sans text-zinc-400">Akurasi Api</div>
-              <div className="text-sm font-bold text-[#ff5a1f] mt-1 tabular-nums">
+        <div className={styles.modalBody}>
+          <div className={styles.modalMetrics}>
+            <div className={styles.modalMetric}>
+              <span>Akurasi api</span>
+              <strong data-tone="fire">
                 {incident.type === "fire"
                   ? `${(incident.confidence * 100).toFixed(1)}%`
-                  : "0.0%"}
-              </div>
+                  : incident.secondaryType === "fire"
+                    ? `${(incident.confidence * 100).toFixed(1)}%`
+                    : "—"}
+              </strong>
             </div>
-
-            <div className="p-3 rounded-2xl bg-white/[0.025] border border-white/[0.06]">
-              <div className="text-[11px] font-sans text-zinc-400">Akurasi Asap</div>
-              <div className="text-sm font-bold text-[#38bdf8] mt-1 tabular-nums">
+            <div className={styles.modalMetric}>
+              <span>Akurasi asap</span>
+              <strong data-tone="smoke">
                 {incident.smokeConfidence
                   ? `${(incident.smokeConfidence * 100).toFixed(1)}%`
                   : incident.type === "smoke"
-                  ? `${(incident.confidence * 100).toFixed(1)}%`
-                  : "14.2%"}
-              </div>
+                    ? `${(incident.confidence * 100).toFixed(1)}%`
+                    : "—"}
+              </strong>
             </div>
-
-            <div className="p-3 rounded-2xl bg-white/[0.025] border border-white/[0.06]">
-              <div className="text-[11px] font-sans text-zinc-400">Suhu Puncak</div>
-              <div className="text-sm font-bold text-white mt-1 flex items-center gap-1 tabular-nums">
-                <Thermometer weight="duotone" className="w-3.5 h-3.5 text-[#ff5a1f]" />
-                <span>+{incident.temperatureC || 185}°C</span>
-              </div>
+            <div className={styles.modalMetric}>
+              <span>Suhu puncak</span>
+              <strong>
+                <Thermometer size={15} weight="duotone" />
+                {incident.temperatureC ? `+${incident.temperatureC}°C` : "—"}
+              </strong>
             </div>
-
-            <div className="p-3 rounded-2xl bg-white/[0.025] border border-white/[0.06]">
-              <div className="text-[11px] font-sans text-zinc-400">Kepekatan Asap</div>
-              <div className="text-sm font-bold text-white mt-1 tabular-nums">
-                {incident.smokeDensityDbm ? `${incident.smokeDensityDbm} dB/m` : "1.2 dB/m"}
-              </div>
+            <div className={styles.modalMetric}>
+              <span>Kepekatan asap</span>
+              <strong>
+                {incident.smokeDensityDbm
+                  ? `${incident.smokeDensityDbm} dB/m`
+                  : "—"}
+              </strong>
             </div>
           </div>
 
           {incident.notes && (
-            <div className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.06] text-xs text-zinc-300 leading-relaxed">
-              <span className="font-semibold text-white mr-2">Catatan:</span>
-              {incident.notes}
+            <div className={styles.modalNotes}>
+              <strong>Catatan</strong>
+              <p>{incident.notes}</p>
             </div>
           )}
 
           {incident.operator && (
-            <div className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.06] flex items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-3 min-w-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={
-                    incident.operator.avatar ||
-                    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&h=120&q=80"
-                  }
-                  alt={incident.operator.name}
-                  className="w-8 h-8 rounded-full border border-white/15 object-cover shrink-0"
-                />
-                <div className="flex flex-col min-w-0">
-                  <div className="font-semibold text-white truncate">
-                    {incident.operator.name}
-                  </div>
-                  <div className="text-[11px] text-zinc-400 truncate">
+            <div className={styles.modalOperator}>
+              <div className={styles.modalOperatorIdentity}>
+                {incident.operator.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={incident.operator.avatar} alt={incident.operator.name} />
+                ) : (
+                  <i className={styles.modalOperatorInitial} aria-hidden="true">
+                    {incident.operator.name.charAt(0).toUpperCase()}
+                  </i>
+                )}
+                <span>
+                  <strong>{incident.operator.name}</strong>
+                  <small>
                     {incident.operator.roleTitle || incident.operator.role}
-                  </div>
-                </div>
+                  </small>
+                </span>
               </div>
-              <span className="shrink-0 text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-white/[0.05] border border-white/10 text-zinc-300">
-                {incident.operator.role}
-              </span>
+              <span className={styles.modalRole}>{incident.operator.role}</span>
             </div>
           )}
 
-          {/* Production Incident Workflow Actions (PATCH & DELETE /api/v1/incidents/{id}) */}
           {(onUpdateStatus || onDelete) && (
-            <div className="pt-2 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-2.5">
+            <div className={styles.modalActions}>
               {onUpdateStatus && (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[11px] text-zinc-400 mr-1">
-                    Status Penanganan:
-                  </span>
-                  {statusOptions.map((opt) => {
-                    const active = incident.status === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => onUpdateStatus(incident.id, opt.value)}
-                        className={`px-3 py-1 rounded-full text-[11px] font-medium border transition-colors ${
-                          active
-                            ? opt.activeClass
-                            : "bg-white/[0.03] hover:bg-white/[0.08] text-zinc-400 hover:text-white border-white/10"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
+                <div className={styles.modalStatusControl}>
+                  <span>Status penanganan</span>
+                  <div className={styles.modalStatusOptions}>
+                    {statusOptions.map((option) => {
+                      const active = incident.status === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => onUpdateStatus(incident.id, option.value)}
+                          className={styles.modalStatusButton}
+                          data-status={option.value}
+                          data-active={active}
+                        >
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -306,15 +259,15 @@ export function SnapshotModal({
                 <button
                   type="button"
                   onClick={() => onDelete(incident.id)}
-                  className="px-3 py-1 rounded-full text-[11px] font-medium bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 transition-colors ml-auto"
+                  className={styles.modalDelete}
                 >
-                  Hapus Rekaman
+                  Hapus rekaman
                 </button>
               )}
             </div>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

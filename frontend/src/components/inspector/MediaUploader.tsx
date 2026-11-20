@@ -1,11 +1,18 @@
 "use client";
 
-import { useState, useRef, DragEvent, ChangeEvent } from "react";
-import { UploadSimple, Fire, Wind, ShieldCheck, Stack } from "@phosphor-icons/react";
+import { useState, type ChangeEvent, type DragEvent } from "react";
+import {
+  Fire,
+  ShieldCheck,
+  Stack,
+  UploadSimple,
+  Wind,
+} from "@phosphor-icons/react";
 import {
   INSPECTOR_PRESET_SAMPLES,
-  InspectorSamplePreset,
-} from "@/services/mockDetection";
+  type InspectorSamplePreset,
+} from "@/services/inspectorPresets";
+import styles from "./Inspector.module.css";
 
 interface MediaUploaderProps {
   onMediaSelect: (file: File | null, preset?: InspectorSamplePreset) => void;
@@ -19,30 +26,27 @@ export function MediaUploader({
   isProcessing,
 }: MediaUploaderProps) {
   const [isDragOver, setIsDragOver] = useState(false);
-  const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
+  const handleDragOver = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
     setIsDragOver(true);
   };
 
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
+  const handleDragLeave = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
     setIsDragOver(false);
   };
 
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
+  const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
     setIsDragOver(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      onMediaSelect(e.dataTransfer.files[0]);
-    }
+    const file = event.dataTransfer.files?.[0];
+    if (file) onMediaSelect(file);
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      onMediaSelect(e.target.files[0]);
-    }
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) onMediaSelect(file);
   };
 
   const handlePresetClick = (preset: InspectorSamplePreset) => {
@@ -53,104 +57,75 @@ export function MediaUploader({
   };
 
   return (
-    <div className="rounded-2xl sm:rounded-3xl bg-[#0b0d14] border border-white/10 p-5 flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h2 className="font-display text-base font-medium tracking-[-.035em] text-white">
-          Sumber Media
-        </h2>
-        {isProcessing && (
-          <span className="text-xs font-medium text-[#ff6b3d] animate-pulse">
-            Memindai...
-          </span>
-        )}
-      </div>
+    <section className={styles.panel} aria-busy={isProcessing}>
+      <header className={styles.panelHeader}>
+        <div className={styles.panelHeading}>
+          <h2>Sumber media</h2>
+          <p>Pilih berkas sendiri atau gunakan skenario pengujian.</p>
+        </div>
+        {isProcessing && <span className={styles.processing}>Memindai</span>}
+      </header>
 
-      {/* Clean Dropzone */}
-      <div
+      <label
+        className={`${styles.dropzone} ${isDragOver ? styles.dragOver : ""}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
-        className={`rounded-2xl border border-dashed p-5 text-center cursor-pointer transition-all duration-300 ${
-          isDragOver
-            ? "border-[#ff5722] bg-[#ff5722]/10"
-            : "border-white/15 hover:border-white/35 bg-white/[0.02] hover:bg-white/[0.04]"
-        }`}
       >
         <input
-          ref={inputRef}
+          className={styles.fileInput}
           type="file"
           accept="video/mp4,video/*,image/webp,image/jpeg,image/png,image/*"
           onChange={handleFileChange}
-          className="hidden"
         />
-        <div className="w-10 h-10 rounded-full bg-white/[0.06] mx-auto flex items-center justify-center text-[#ff6b3d] mb-2.5">
-          <UploadSimple weight="duotone" className="w-4 h-4" />
-        </div>
-        <div className="text-xs font-medium text-white">
-          Unggah Video MP4 atau Gambar
-        </div>
-        <div className="text-[11px] text-white/50 mt-0.5">
-          Tarik atau klik untuk memilih file MP4, WebP, JPG, atau PNG
-        </div>
-      </div>
+        <span className={styles.uploadIcon}>
+          <UploadSimple size={21} weight="duotone" />
+        </span>
+        <strong>Unggah video atau gambar</strong>
+        <span>Tarik berkas ke sini atau klik untuk memilih</span>
+        <small>MP4, WebM, WebP, JPG, PNG</small>
+      </label>
 
-      {/* Preset Scenarios */}
-      <div className="space-y-2.5">
-        <div className="text-xs font-medium text-white/60">
-          Atau coba skenario siap pakai:
+      <div className={styles.presetsBlock}>
+        <div className={styles.sectionLabel}>
+          <span>Skenario siap pakai</span>
+          <small>{INSPECTOR_PRESET_SAMPLES.length} media</small>
         </div>
+        <p className={styles.presetNote}>
+          Kotak pada media contoh adalah anotasi manual, bukan keluaran model.
+        </p>
 
-        <div className="flex flex-col gap-2">
+        <div className={styles.presetList}>
           {INSPECTOR_PRESET_SAMPLES.map((preset) => {
             const isSelected = activePresetId === preset.id;
             return (
               <button
                 key={preset.id}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => handlePresetClick(preset)}
-                className={`w-full px-3.5 py-2.5 rounded-2xl text-left border transition-all duration-300 flex items-center justify-between gap-2 ${
-                  isSelected
-                    ? "bg-white/[0.09] border-white/30 text-white"
-                    : "bg-white/[0.02] hover:bg-white/[0.05] border-white/10 text-white/75"
-                }`}
+                className={`${styles.preset} ${isSelected ? styles.presetSelected : ""}`}
               >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  {preset.category === "dual" && (
-                    <Stack weight="duotone" className="w-4 h-4 text-[#ff6b3d] shrink-0" />
-                  )}
-                  {preset.category === "fire" && (
-                    <Fire weight="fill" className="w-4 h-4 text-[#ff5722] shrink-0" />
-                  )}
-                  {preset.category === "smoke" && (
-                    <Wind weight="bold" className="w-4 h-4 text-[#38bdf8] shrink-0" />
-                  )}
+                <span className={styles.presetIcon} data-category={preset.category}>
+                  {preset.category === "dual" && <Stack size={17} weight="duotone" />}
+                  {preset.category === "fire" && <Fire size={17} weight="fill" />}
+                  {preset.category === "smoke" && <Wind size={17} weight="bold" />}
                   {preset.category === "nominal" && (
-                    <ShieldCheck weight="duotone" className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <ShieldCheck size={17} weight="duotone" />
                   )}
-                  <span className="text-xs font-medium truncate">
-                    {preset.title.replace(" // ", " · ")}
-                  </span>
-                </div>
-
-                <span
-                  className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium tabular-nums ${
-                    preset.category === "dual"
-                      ? "bg-[#ff5722]/20 text-[#ff6b3d]"
-                      : preset.category === "fire"
-                      ? "bg-[#ff5722]/20 text-[#ff5722]"
-                      : preset.category === "smoke"
-                      ? "bg-[#38bdf8]/20 text-[#38bdf8]"
-                      : "bg-emerald-500/20 text-emerald-400"
-                  }`}
-                >
-                  {preset.boxes.length} objek
+                </span>
+                <span className={styles.presetCopy}>
+                  <b>{preset.title.replace(" // ", " · ")}</b>
+                  <small>{preset.filename}</small>
+                </span>
+                <span className={styles.presetCount} data-category={preset.category}>
+                  {preset.boxes.length}
                 </span>
               </button>
             );
           })}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

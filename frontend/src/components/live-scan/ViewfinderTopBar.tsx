@@ -79,7 +79,7 @@ export function ViewfinderTopBar({
         </span>
         <span className="hidden sm:inline text-white/30">·</span>
         <span className="hidden sm:inline tabular-nums text-white/70">
-          {isStreamLive ? `${streamFps.toFixed(1)} FPS` : "60 FPS"}
+          {isStreamLive ? `${streamFps.toFixed(1)} FPS` : "—"}
         </span>
         {engineLabel && (
           <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.07] border border-white/12 text-[10px] text-white/70 max-w-[190px] truncate">

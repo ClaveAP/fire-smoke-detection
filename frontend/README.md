@@ -62,13 +62,13 @@ flowchart LR
     UI[Next.js Pages & Components] --> Adapter[detectionAdapter.ts]
     
     Adapter -->|Jika Backend Online| API[FastAPI /api/v1/*]
-    Adapter -->|Jika Backend Offline / Fallback| Mock[mockDetection.ts + localStorage]
+    Adapter -->|Jika Backend Offline / Fallback| Local[localStorage insiden nyata di perangkat]
     
     API --> DB[(SQLite Database)]
 ```
 
 ### Operasi Data yang Didukung:
-1. **Mengambil Riwayat Insiden (`getIncidentRecords`)**: Memanggil `GET /api/v1/incidents`. Jika gagal, menggabungkan data lokal `localStorage` dengan data awal (*seed*).
+1. **Mengambil Riwayat Insiden (`getIncidentRecords`)**: Memanggil `GET /api/v1/incidents`. Jika gagal, memakai insiden nyata yang tercatat di `localStorage` perangkat ini. Tidak ada dataset demo.
 2. **Mencatat Insiden Baru (`recordIncident`)**: Menyimpan ke `localStorage` browser dan mengirimkan payload JSON ke `POST /api/v1/incidents`.
 3. **Memperbarui Status Insiden (`updateIncidentStatus`)**: Mengirimkan `PATCH /api/v1/incidents/{id}` dengan status baru (`active`, `investigating`, `resolved`).
 4. **Menghapus Insiden (`deleteIncident`)**: Mengirimkan `DELETE /api/v1/incidents/{id}`.

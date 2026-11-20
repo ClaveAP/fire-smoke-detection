@@ -8,29 +8,28 @@ import {
   useRef,
   useSyncExternalStore,
 } from "react";
-import { HeaderNav } from "@/components/common/HeaderNav";
+import { WorkspaceShell } from "@/components/dashboard/WorkspaceShell";
+import { WorkspacePageHeader } from "@/components/dashboard/WorkspacePageHeader";
 import { IncidentFilters } from "@/components/incidents/IncidentFilters";
 import { IncidentStatCards } from "@/components/incidents/IncidentStatCards";
 import { IncidentTable } from "@/components/incidents/IncidentTable";
 import { SnapshotModal } from "@/components/incidents/SnapshotModal";
 import { IncidentRecord } from "@/types/detection";
-import { INITIAL_INCIDENT_RECORDS } from "@/services/mockDetection";
 import { detectionAdapter } from "@/services/detectionAdapter";
 import { getSupabase, supabase } from "@/lib/supabase";
-import { useAuth } from "@/context/AuthContext";
 import {
   DownloadSimple,
   FileXls,
   FileCsv,
   CaretDown,
 } from "@phosphor-icons/react";
+import workspaceStyles from "@/components/dashboard/WorkspacePage.module.css";
+import styles from "@/components/incidents/Incidents.module.css";
 
 const emptySubscribe = () => () => {};
 
 export default function IncidentsPage() {
   const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false);
-  const { user } = useAuth();
-  const isOfficialUser = Boolean(user && !user.id.startsWith("usr-"));
   const [incidents, setIncidents] = useState<IncidentRecord[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>("");
@@ -42,18 +41,17 @@ export default function IncidentsPage() {
 
   const fetchIncidents = useCallback(async () => {
     setIsLoading(true);
-    const records = await detectionAdapter.getIncidentRecords(isOfficialUser);
+    const records = await detectionAdapter.getIncidentRecords();
     setIncidents(records);
     setIsLoading(false);
-  }, [isOfficialUser]);
+  }, []);
 
   useEffect(() => {
     fetchIncidents();
   }, [fetchIncidents]);
 
-  // Realtime synchronization with Supabase Database for official users
+  // Realtime synchronization with the Supabase database
   useEffect(() => {
-    if (!isOfficialUser) return;
     const client = getSupabase() || supabase;
     if (!client) return;
 
@@ -63,7 +61,7 @@ export default function IncidentsPage() {
         "postgres_changes",
         { event: "*", schema: "public", table: "incidents" },
         () => {
-          detectionAdapter.getIncidentRecords(true).then((records) => {
+          detectionAdapter.getIncidentRecords().then((records) => {
             setIncidents(records);
           });
         }
@@ -73,7 +71,7 @@ export default function IncidentsPage() {
     return () => {
       client.removeChannel(channel);
     };
-  }, [isOfficialUser]);
+  }, []);
 
   // Close export dropdown when clicking outside
   useEffect(() => {
@@ -367,125 +365,91 @@ export default function IncidentsPage() {
     [filtered]
   );
 
+  const exportOptions = [
+    {
+      label: "Microsoft Excel (.xls)",
+      detail: "Tabel berformat untuk audit dan laporan K3.",
+      icon: FileXls,
+      action: exportToExcel,
+      recommended: true,
+    },
+    {
+      label: "CSV untuk Excel (.csv)",
+      detail: "Pemisah titik-koma dengan UTF-8 BOM.",
+      icon: FileCsv,
+      action: () => exportToCsv(";"),
+      recommended: false,
+    },
+    {
+      label: "CSV Standar (.csv)",
+      detail: "Pemisah koma untuk Sheets, Python, dan database.",
+      icon: FileCsv,
+      action: () => exportToCsv(","),
+      recommended: false,
+    },
+  ];
+
   // Loading skeleton while mounting client state
   if (!isClient) {
     return (
-      <div data-horizon className="min-h-screen bg-[#050507] text-[#fafafa] flex flex-col font-sans relative overflow-x-hidden">
-        <HeaderNav />
-        <main className="relative z-10 flex-1 flex items-center justify-center pt-24 pb-16">
-          <div className="w-8 h-8 rounded-full border-2 border-white/10 border-t-[#ff5a1f] animate-spin" />
-        </main>
-      </div>
+      <WorkspaceShell dataUI="incident-log">
+        <div className={workspaceStyles.content}>
+          <WorkspacePageHeader
+            title="Aktivitas keselamatan."
+            description="Pantau bukti terbaru dan tindak lanjut insiden dari seluruh area."
+          />
+          <div className={styles.loading} aria-label="Memuat riwayat insiden"><i /></div>
+        </div>
+      </WorkspaceShell>
     );
   }
 
   return (
-    <div data-horizon className="min-h-screen bg-[#050507] text-[#fafafa] flex flex-col font-sans relative overflow-x-hidden">
-      <HeaderNav />
-
-      <main className="relative z-10 flex-1 pt-20 sm:pt-24 pb-10 sm:pb-12 px-3.5 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full flex flex-col gap-4 sm:gap-5">
-        <div className="flex flex-wrap items-end justify-between gap-5 sm:gap-8 pb-1">
-          <div>
-            <h1 className="text-3xl sm:text-[38px] font-medium tracking-[-.065em] leading-[1.1] text-white">
-              Aktivitas keselamatan
-            </h1>
-            <div className="mt-2 flex flex-wrap items-center gap-2.5">
-              <p className="text-[13px] text-zinc-400">Pantau bukti terbaru dan tindak lanjut insiden dari seluruh area.</p>
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[10px] font-medium text-zinc-400">
-                {incidents.length} rekaman
+    <WorkspaceShell dataUI="incident-log">
+      <div className={workspaceStyles.content}>
+        <WorkspacePageHeader
+          title="Aktivitas keselamatan."
+          description="Pantau bukti terbaru dan tindak lanjut insiden dari seluruh area."
+          aside={
+            <>
+              <span className={workspaceStyles.status} data-online={!isLoading}>
+                <i />{isLoading ? "Menyegarkan rekaman" : `${incidents.length} rekaman tersimpan`}
               </span>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Export Dropdown Menu */}
-            <div id="reports" className="relative scroll-mt-24" ref={exportMenuRef}>
-            <button
-              type="button"
-              onClick={() => setIsExportOpen((prev) => !prev)}
-              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[#e1dfd9] bg-white px-4 text-xs font-medium text-[#454740] transition-colors hover:bg-[#f8f7f4] active:scale-[.98]"
-            >
-              <DownloadSimple weight="bold" className="w-3.5 h-3.5 text-[#bd4338]" />
-              <span>Ekspor Laporan</span>
-              <CaretDown
-                weight="bold"
-                className={`w-3 h-3 text-[#85877f] transition-transform duration-200 ${
-                  isExportOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {/* Dropdown Popover */}
-            {isExportOpen && (
-              <div className="absolute right-0 z-40 mt-2 flex w-72 flex-col gap-1 rounded-2xl border border-[#e7e6e1] bg-white p-2">
-                <div className="border-b border-[#eeede8] px-3 py-1.5 text-[10px] font-medium text-[#777971]">
-                  Pilih Format Berkas
-                </div>
-
-                {/* Option 1: Microsoft Excel (.xls) */}
+              <div id="reports" className={styles.exportArea} ref={exportMenuRef}>
                 <button
                   type="button"
-                  onClick={exportToExcel}
-                  className="group flex w-full items-start gap-2.5 rounded-xl p-2.5 text-left transition-colors hover:bg-[#f7f6f3]"
+                  onClick={() => setIsExportOpen((prev) => !prev)}
+                  className={styles.exportButton}
+                  aria-expanded={isExportOpen}
                 >
-                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#edf4ef] text-[#4e8063]">
-                    <FileXls weight="duotone" className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-[#292b27]">
-                      <span>Microsoft Excel (.xls)</span>
-                      <span className="rounded bg-[#edf4ef] px-1.5 py-0.5 text-[9px] text-[#4e8063]">
-                        Rekomendasi
-                      </span>
-                    </div>
-                    <div className="mt-0.5 text-[11px] leading-snug text-[#777971]">
-                      Tabel rapi bergaris, berwarna, dan otomatis terpisah per kolom di Excel.
-                    </div>
-                  </div>
+                  <DownloadSimple size={15} weight="bold" />
+                  <span>Ekspor Laporan</span>
+                  <CaretDown size={12} weight="bold" className={`${styles.exportCaret} ${isExportOpen ? styles.exportCaretOpen : ""}`} />
                 </button>
-
-                {/* Option 2: CSV untuk Excel (Semicolon Delimited) */}
-                <button
-                  type="button"
-                  onClick={() => exportToCsv(";")}
-                  className="group flex w-full items-start gap-2.5 rounded-xl p-2.5 text-left transition-colors hover:bg-[#f7f6f3]"
-                >
-                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f0efea] text-[#686a63]">
-                    <FileCsv weight="duotone" className="w-4 h-4" />
+                {isExportOpen && (
+                  <div className={styles.exportPopover}>
+                    <span className={styles.exportPopoverLabel}>Pilih format berkas</span>
+                    {exportOptions.map((option) => {
+                      const Icon = option.icon;
+                      return (
+                        <button key={option.label} type="button" onClick={option.action} className={styles.exportOption}>
+                          <span className={styles.exportOptionIcon}><Icon size={17} weight="duotone" /></span>
+                          <span className={styles.exportOptionCopy}>
+                            <span className={styles.exportOptionTitle}>
+                              {option.label}
+                              {option.recommended && <span className={styles.recommended}>Rekomendasi</span>}
+                            </span>
+                            <small>{option.detail}</small>
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-medium text-[#292b27]">
-                      CSV untuk Excel (.csv)
-                    </div>
-                    <div className="mt-0.5 text-[11px] leading-snug text-[#777971]">
-                      Pemisah titik-koma (;) dengan UTF-8 BOM, otomatis rapi di Excel Indonesia/Mac.
-                    </div>
-                  </div>
-                </button>
-
-                {/* Option 3: CSV Standar (Comma Delimited) */}
-                <button
-                  type="button"
-                  onClick={() => exportToCsv(",")}
-                  className="group flex w-full items-start gap-2.5 rounded-xl p-2.5 text-left transition-colors hover:bg-[#f7f6f3]"
-                >
-                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f0efea] text-[#686a63]">
-                    <FileCsv weight="bold" className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-medium text-[#292b27]">
-                      CSV Standar (.csv)
-                    </div>
-                    <div className="mt-0.5 text-[11px] leading-snug text-[#777971]">
-                      Pemisah koma (,), kompatibel dengan Google Sheets, Python, &amp; Database.
-                    </div>
-                  </div>
-                </button>
+                )}
               </div>
-            )}
-          </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         <IncidentStatCards
           activeCount={activeCount}
@@ -512,7 +476,12 @@ export default function IncidentsPage() {
           onInspect={(item) => setInspectingIncident(item)}
           onResetFilters={resetFilters}
         />
-      </main>
+
+        <footer className={workspaceStyles.footer}>
+          <span>AegisFlame / Audit insiden keselamatan</span>
+          <span>Filter dan ekspor mengikuti rekaman yang ditampilkan</span>
+        </footer>
+      </div>
 
       <SnapshotModal
         incident={inspectingIncident}
@@ -520,6 +489,6 @@ export default function IncidentsPage() {
         onUpdateStatus={handleUpdateStatus}
         onDelete={handleDeleteIncident}
       />
-    </div>
+    </WorkspaceShell>
   );
 }

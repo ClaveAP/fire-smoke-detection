@@ -58,6 +58,8 @@ export interface DetectionResult {
   boxes: BoundingBox[];
   inferenceTimeMs: number;
   timestamp: string;
+  /** Detector that produced the boxes, e.g. "yolo:fire-smoke-yolo11n/best.pt". */
+  engine?: string;
 }
 
 export interface VideoFrameDetection {
@@ -102,6 +104,10 @@ export interface BackendHealth {
   service: string;
   version: string;
   engine: string;
+  /** Why the heuristic engine is active instead of YOLO ("" when YOLO runs). */
+  engineNote?: string;
+  weightsPath?: string;
+  weightsAvailable?: boolean;
   confidenceThreshold: number;
   uptimeSeconds: number;
 }

@@ -12,6 +12,7 @@ import { ViewfinderStream } from "@/components/live-scan/ViewfinderStream";
 import { DetectionHudOverlay } from "@/components/live-scan/DetectionHudOverlay";
 import { TelemetrySidebar } from "@/components/live-scan/TelemetrySidebar";
 import { BackendHealth, CameraFeed, StreamMode, StreamFramePacket } from "@/types/detection";
+import styles from "./ScannerPage.module.css";
 
 /** The browser webcam registers itself on the backend under this id (push mode, no streamUrl). */
 const WEBCAM_CAMERA_ID = "WEBCAM-01";
@@ -384,12 +385,11 @@ export default function LiveScanPage({ embedded = false, initialSource }: Scanne
   return (
     <div
       ref={containerRef}
-      data-horizon={embedded ? "embedded" : true}
-      className={embedded ? "w-full text-[#f5f5f7] font-sans" : "min-h-screen bg-[#050507] text-[#f5f5f7] flex flex-col font-sans select-none overflow-x-hidden"}
+      className={embedded ? styles.embedded : "min-h-screen bg-[#050507] text-[#f5f5f7] flex flex-col font-sans select-none overflow-x-hidden"}
     >
       {!embedded && <HeaderNav />}
 
-      <Main className={embedded ? "w-full flex flex-col gap-4" : "flex-1 max-w-7xl w-full mx-auto pt-20 sm:pt-24 pb-8 sm:pb-10 px-3.5 sm:px-6 lg:px-8 flex flex-col gap-4 sm:gap-6"}>
+      <Main className={embedded ? styles.embeddedContent : "flex-1 max-w-7xl w-full mx-auto pt-20 sm:pt-24 pb-8 sm:pb-10 px-3.5 sm:px-6 lg:px-8 flex flex-col gap-4 sm:gap-6"}>
         {/* Clean Minimal Page Title */}
         {!embedded && <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div>
@@ -412,14 +412,14 @@ export default function LiveScanPage({ embedded = false, initialSource }: Scanne
         </div>}
 
         {/* Workspace Layout */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-4 sm:gap-6">
+        <div className={embedded ? styles.workspace : "flex-1 flex flex-col lg:flex-row gap-4 sm:gap-6"}>
           {/* Left Camera Stage */}
-          <div className="flex-1 flex flex-col min-h-[380px] sm:min-h-[480px] lg:min-h-[600px]">
+          <div className={embedded ? styles.cameraColumn : "flex-1 flex flex-col min-h-[380px] sm:min-h-[480px] lg:min-h-[600px]"}>
             <section
               ref={viewfinderRef}
               data-video-stage
               onDoubleClick={toggleFullscreen}
-              className={`relative flex-1 overflow-hidden flex flex-col transition-all select-none ${
+              className={`relative flex-1 overflow-hidden flex flex-col transition-all select-none ${embedded ? styles.viewfinder : ""} ${
                 isFullscreen
                   ? "bg-black rounded-none border-none w-screen h-screen"
                   : "rounded-2xl sm:rounded-3xl border border-white/10 bg-[#0a0b10]"

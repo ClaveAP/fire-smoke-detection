@@ -1,3 +1,5 @@
+import styles from "./Incidents.module.css";
+
 interface IncidentStatCardsProps {
   activeCount: number;
   fireCount: number;
@@ -21,12 +23,12 @@ export function IncidentStatCards({
   ];
 
   return (
-    <section className="grid grid-cols-1 min-[440px]:grid-cols-2 lg:grid-cols-4 gap-3" aria-label="Ringkasan insiden">
+    <section className={styles.stats} aria-label="Ringkasan insiden">
       {items.map((item) => (
-        <article key={item.label} data-primary-gradient={item.primary ? "true" : undefined} className={`flex min-h-[112px] flex-col justify-center gap-2 rounded-[17px] border px-5 py-4 ${item.primary ? "border-[#c83f32] bg-[#c83f32] text-white" : "border-[#eeede9] bg-white text-[#292b27]"}`}>
-          <span className={`text-xs ${item.primary ? "text-white" : "text-[#777971]"}`}>{item.label}</span>
-          <b className={`text-[28px] font-medium leading-none tracking-[-.055em] tabular-nums ${item.primary ? "text-white" : ""}`}>{item.value}</b>
-          <small className={`text-[10px] ${item.primary ? "text-white" : "text-[#969790]"}`}>{item.detail}</small>
+        <article key={item.label} className={`${styles.stat} ${item.primary ? styles.statPrimary : ""}`}>
+          <span className={styles.statLabel}>{item.label}</span>
+          <b className={styles.statValue}>{String(item.value).padStart(2, "0")}</b>
+          <small className={styles.statDetail}>{item.detail}</small>
         </article>
       ))}
     </section>

@@ -429,8 +429,6 @@ export function useWebcamScanner({
             zone: "Pemindaian Kamera Langsung",
             type: "fire",
             confidence: Number(conf.toFixed(3)),
-            temperatureC: Math.round(140 + conf * 260),
-            smokeDensityDbm: 1.8,
             status: "active",
             snapshotUrl: snapUrl,
             operator: activeOperator,

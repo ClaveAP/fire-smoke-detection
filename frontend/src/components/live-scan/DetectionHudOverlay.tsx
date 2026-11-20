@@ -190,10 +190,10 @@ export function DetectionHudOverlay({
         >
           <div className="self-start inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#f4f3f0] text-[#292b27] text-[10px] sm:text-xs font-medium font-sans shadow-lg whitespace-nowrap">
             <Wind weight="bold" className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-            <span>SMOKE · 88%</span>
+            <span>SMOKE · contoh area</span>
           </div>
           <div className="hidden sm:block self-end px-2.5 py-1 rounded-full bg-black/75 border border-white/15 text-[11px] text-white/90">
-            Asap Volumetrik
+            Ilustrasi tata letak, bukan hasil deteksi
           </div>
         </button>
       )}
@@ -210,10 +210,10 @@ export function DetectionHudOverlay({
         >
           <div className="self-start inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#ff5722] text-white text-[10px] sm:text-xs font-medium font-sans shadow-lg whitespace-nowrap">
             <Fire weight="fill" className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-            <span>FIRE · 94%</span>
+            <span>FIRE · contoh area</span>
           </div>
           <div className="hidden sm:block self-end px-2.5 py-1 rounded-full bg-black/75 border border-white/15 text-[11px] text-white/90">
-            Inti Api +412°C
+            Ilustrasi tata letak, bukan hasil deteksi
           </div>
         </button>
       )}
@@ -247,10 +247,10 @@ export function DetectionHudOverlay({
                   ? "Menampilkan simulasi kotak deteksi pada kamera"
                   : "Memindai kamera perangkat secara real-time (Area Aman)"
                 : layer === "both"
-                ? "Menampilkan deteksi titik api & kepulan asap"
+                ? "Mode simulasi — kotak hanya ilustrasi, bukan deteksi nyata"
                 : layer === "fire"
-                ? "Fokus pada titik api termal"
-                : "Fokus pada kepulan asap"}
+                ? "Fokus ilustrasi titik api"
+                : "Fokus ilustrasi kepulan asap"}
             </span>
           </div>
 
