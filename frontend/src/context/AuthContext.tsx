@@ -85,7 +85,7 @@ const AUTH_COOKIE_KEY = "aegisflame_session";
 const AUTH_CHANGE_EVENT = "aegisflame_auth_change";
 const IDLE_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 Jam (7.200.000 ms)
 const LAST_ACTIVITY_KEY = "aegisflame_last_activity";
-const PUBLIC_PATHS = ["/login", "/auth/callback", "/auth/reset-password"];
+const PUBLIC_PATHS = ["/", "/login", "/auth/callback", "/auth/reset-password"];
 const emptySubscribe = () => () => {};
 
 function setCookie(name: string, value: string, days?: number) {

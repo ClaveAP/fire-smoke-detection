@@ -12,7 +12,7 @@ import { BrandMark } from "@/components/common/BrandMark";
 import styles from "./HeaderNav.module.css";
 
 const links = [
-  { name: "Overview", href: "/" },
+  { name: "Overview", href: "/dashboard" },
   { name: "Aktivitas", href: "/incidents" },
   { name: "Kamera", href: "/live-scan" },
   { name: "Analitik", href: "/inspector" },

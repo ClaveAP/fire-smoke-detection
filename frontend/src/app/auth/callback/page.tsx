@@ -15,7 +15,7 @@ export default function AuthCallbackPage() {
       if (!supabase) {
         setStatus("error");
         setErrorMessage("Supabase client belum dikonfigurasi.");
-        setTimeout(() => router.replace("/"), 2500);
+        setTimeout(() => router.replace("/dashboard"), 2500);
         return;
       }
 
@@ -28,7 +28,7 @@ export default function AuthCallbackPage() {
         if (data.session) {
           setStatus("success");
           setTimeout(() => {
-            router.replace("/");
+            router.replace("/dashboard");
           }, 800);
         } else {
           // If no immediate session, give auth state listener a moment
@@ -37,7 +37,7 @@ export default function AuthCallbackPage() {
               if (session) {
                 setStatus("success");
                 authListener.subscription.unsubscribe();
-                router.replace("/");
+                router.replace("/dashboard");
               }
             }
           );
@@ -47,7 +47,7 @@ export default function AuthCallbackPage() {
         setErrorMessage(
           err instanceof Error ? err.message : "Terjadi kesalahan saat otentikasi Google."
         );
-        setTimeout(() => router.replace("/"), 3000);
+        setTimeout(() => router.replace("/dashboard"), 3000);
       }
     }
 

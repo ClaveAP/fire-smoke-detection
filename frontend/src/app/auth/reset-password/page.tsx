@@ -57,7 +57,7 @@ export default function ResetPasswordPage() {
     }
     setIsError(false);
     setMessage("Password berhasil diperbarui. Mengarahkan ke dashboard...");
-    window.setTimeout(() => router.replace("/"), 900);
+    window.setTimeout(() => router.replace("/dashboard"), 900);
   };
 
   return (
