@@ -50,7 +50,7 @@ flowchart TD
         Canvas["useDetectionCanvas (HTML5 2D Overlay)"]
         Synth["useAlarmSound (Web Audio API Siren)"]
         Adapter["detectionAdapter Service"]
-        MockEngine["mockDetection Engine & Local Incident Store"]
+        MockEngine["Local Incident Store (localStorage)"]
     end
 
     subgraph Service["Backend Microservice (FastAPI)"]
@@ -155,7 +155,7 @@ fire-smoke-detection/
 │   │   │   └── command-center/                   # DetectionCanvas
 │   │   ├── context/                              # AuthContext.tsx (Global auth state & demo profiles)
 │   │   ├── hooks/                                # useWebcamScanner, useDetectionCanvas, useAlarmSound
-│   │   ├── services/                             # detectionAdapter.ts & mockDetection.ts
+│   │   ├── services/                             # detectionAdapter.ts & inspectorPresets.ts
 │   │   └── types/                                # Kontrak tipe data TypeScript (detection.ts)
 │   ├── package.json
 │   └── tailwind.config.ts
