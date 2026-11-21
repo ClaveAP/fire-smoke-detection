@@ -18,6 +18,8 @@ import styles from "./ScannerPage.module.css";
 const WEBCAM_CAMERA_ID = "WEBCAM-01";
 const AUTO_ALARM_FIRE_THRESHOLD = 0.8;
 const AUTO_ALARM_CONFIRM_FRAMES = 2;
+/** How long the frame must stay clear before an automatic alarm stops itself. */
+const AUTO_ALARM_RELEASE_MS = 3000;
 
 const SIMULATION_SOURCE = "simulation";
 const WEBCAM_SOURCE = "webcam";
@@ -52,6 +54,9 @@ export default function LiveScanPage({ embedded = false, initialSource }: Scanne
   const deviceLaunchHandledRef = useRef(false);
   const serverFireFramesRef = useRef(0);
   const serverClearFramesRef = useRef(0);
+  /** Which alarm is running: automatic (fire detected) or pressed by the operator. */
+  const alarmSourceRef = useRef<"auto" | "manual" | null>(null);
+  const lastFireAtRef = useRef<number | null>(null);
 
   const { playAlert, stopAlarm } = useAlarmSound();
 
@@ -84,6 +89,8 @@ export default function LiveScanPage({ embedded = false, initialSource }: Scanne
 
   const handleAutoAlarmTrigger = useCallback(() => {
     alarmActiveRef.current = true;
+    alarmSourceRef.current = "auto";
+    lastFireAtRef.current = Date.now();
     setAlarmActive(true);
     playAlert("critical", true);
     showToast("Api melewati ambang 80% — alarm otomatis berbunyi.", 4500);
@@ -158,6 +165,7 @@ export default function LiveScanPage({ embedded = false, initialSource }: Scanne
 
     const fireConfidence = bestConfidence(stream.packet.detections, "fire");
     if (fireConfidence >= AUTO_ALARM_FIRE_THRESHOLD) {
+      lastFireAtRef.current = Date.now();
       serverFireFramesRef.current += 1;
       serverClearFramesRef.current = 0;
       if (
@@ -203,6 +211,27 @@ export default function LiveScanPage({ embedded = false, initialSource }: Scanne
     pushFrame: stream.pushFrame,
     onWebcamToggle: setWebcamRequested,
   });
+
+  // The webcam detector reports a box only while flames are visible on the frame.
+  useEffect(() => {
+    if (webcamFireBox) lastFireAtRef.current = Date.now();
+  }, [webcamFireBox]);
+
+  // An automatically raised alarm releases itself once the frame stays clear,
+  // while a manually pressed alarm stays latched until the operator stops it.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (!alarmActiveRef.current || alarmSourceRef.current !== "auto") return;
+      const lastFireAt = lastFireAtRef.current;
+      if (lastFireAt !== null && Date.now() - lastFireAt < AUTO_ALARM_RELEASE_MS) return;
+      alarmActiveRef.current = false;
+      alarmSourceRef.current = null;
+      setAlarmActive(false);
+      stopAlarm();
+      showToast("Api tidak terdeteksi lagi — alarm darurat berhenti otomatis.", 4000);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [showToast, stopAlarm]);
 
   const mode: StreamMode = isWebcam ? "webcam" : selectedCameraId ? "cctv" : "simulation";
   const isCctvLive = mode === "cctv" && stream.isLive;
@@ -328,6 +357,7 @@ export default function LiveScanPage({ embedded = false, initialSource }: Scanne
     setAlarmActive((prev) => {
       const next = !prev;
       alarmActiveRef.current = next;
+      alarmSourceRef.current = next ? "manual" : null;
       if (next) {
         autoSilencedRef.current = false;
         playAlert("critical", true);

@@ -108,6 +108,66 @@ export function InspectorPreviewCanvas({
         ? "Kepulan asap terdeteksi"
         : "Tidak ada bahaya pada ambang ini";
 
+  // Shared between the inline player and the fullscreen overlay so both behave identically.
+  const playbackControls = isVideo && previewUrl ? (
+    <>
+      <div className={styles.timeline}>
+        <input
+          type="range"
+          min={0}
+          max={videoDurationMs || 100}
+          step={100}
+          value={currentTimeMs}
+          onChange={(event) => onSeek?.(Number(event.target.value))}
+          className={styles.timelineInput}
+          aria-label="Posisi video"
+        />
+        {hazardMarkers.map((markerMs, index) => {
+          if (!videoDurationMs) return null;
+          const leftPercent = Math.min(
+            100,
+            Math.max(0, (markerMs / videoDurationMs) * 100)
+          );
+          return (
+            <button
+              key={`${markerMs}-${index}`}
+              type="button"
+              title={`Deteksi bahaya pada ${formatMs(markerMs)}`}
+              aria-label={`Buka deteksi bahaya pada ${formatMs(markerMs)}`}
+              onClick={() => onSeek?.(markerMs)}
+              style={{ left: `${leftPercent}%` }}
+              className={styles.hazardMarker}
+            />
+          );
+        })}
+      </div>
+
+      <div className={styles.playbackBar}>
+        <div className={styles.playbackMain}>
+          <button
+            type="button"
+            onClick={onTogglePlay}
+            className={styles.playButton}
+            aria-label={isPlaying ? "Jeda video" : "Putar video"}
+          >
+            {isPlaying ? (
+              <Pause size={17} weight="fill" />
+            ) : (
+              <Play size={17} weight="fill" />
+            )}
+          </button>
+          <span className={styles.timecode}>
+            {formatMs(currentTimeMs)} <i>/</i> {formatMs(videoDurationMs)}
+          </span>
+        </div>
+        <span className={styles.hazardSummary}>
+          <i />
+          {hazardMarkers.length} frame berbahaya
+        </span>
+      </div>
+    </>
+  ) : null;
+
   return (
     <section className={styles.previewPanel} aria-label="Pratinjau analisis media">
       <header className={styles.previewHeader}>
@@ -213,6 +273,12 @@ export function InspectorPreviewCanvas({
           </button>
         )}
 
+        {isFullscreen && playbackControls && (
+          <div className={`${styles.playback} ${styles.playbackOverlay}`}>
+            {playbackControls}
+          </div>
+        )}
+
         {isProcessing && (
           <div className={styles.processingOverlay} role="status">
             <span className={styles.scannerRing} aria-hidden="true" />
@@ -232,63 +298,8 @@ export function InspectorPreviewCanvas({
         />
       </div>
 
-      {isVideo && previewUrl && (
-        <div className={styles.playback}>
-          <div className={styles.timeline}>
-            <input
-              type="range"
-              min={0}
-              max={videoDurationMs || 100}
-              step={100}
-              value={currentTimeMs}
-              onChange={(event) => onSeek?.(Number(event.target.value))}
-              className={styles.timelineInput}
-              aria-label="Posisi video"
-            />
-            {hazardMarkers.map((markerMs, index) => {
-              if (!videoDurationMs) return null;
-              const leftPercent = Math.min(
-                100,
-                Math.max(0, (markerMs / videoDurationMs) * 100)
-              );
-              return (
-                <button
-                  key={`${markerMs}-${index}`}
-                  type="button"
-                  title={`Deteksi bahaya pada ${formatMs(markerMs)}`}
-                  aria-label={`Buka deteksi bahaya pada ${formatMs(markerMs)}`}
-                  onClick={() => onSeek?.(markerMs)}
-                  style={{ left: `${leftPercent}%` }}
-                  className={styles.hazardMarker}
-                />
-              );
-            })}
-          </div>
-
-          <div className={styles.playbackBar}>
-            <div className={styles.playbackMain}>
-              <button
-                type="button"
-                onClick={onTogglePlay}
-                className={styles.playButton}
-                aria-label={isPlaying ? "Jeda video" : "Putar video"}
-              >
-                {isPlaying ? (
-                  <Pause size={17} weight="fill" />
-                ) : (
-                  <Play size={17} weight="fill" />
-                )}
-              </button>
-              <span className={styles.timecode}>
-                {formatMs(currentTimeMs)} <i>/</i> {formatMs(videoDurationMs)}
-              </span>
-            </div>
-            <span className={styles.hazardSummary}>
-              <i />
-              {hazardMarkers.length} frame berbahaya
-            </span>
-          </div>
-        </div>
+      {playbackControls && !isFullscreen && (
+        <div className={styles.playback}>{playbackControls}</div>
       )}
     </section>
   );

@@ -577,6 +577,28 @@
   background: #0e111a;
 }
 
+/* Overlay player shown while the preview is in fullscreen. */
+.playbackOverlay {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 45;
+  padding: 22px clamp(16px, 3.4vw, 44px) 24px;
+  border-top: 0;
+  background: linear-gradient(to top, rgb(5 5 7 / 94%), rgb(5 5 7 / 68%) 62%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.playbackOverlay .playButton {
+  width: 46px;
+  height: 46px;
+}
+
+.playbackOverlay .timecode {
+  font-size: 12px;
+}
+
 .timeline {
   position: relative;
   display: flex;

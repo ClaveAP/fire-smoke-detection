@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { X } from "@phosphor-icons/react";
 import { useAuth } from "@/context/AuthContext";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface LogoutConfirmModalProps {
   isOpen: boolean;
@@ -18,15 +19,7 @@ export function LogoutConfirmModal({
   const { user } = useAuth();
 
   /* ---- Lock background scroll when modal is open ---- */
-  useEffect(() => {
-    if (isOpen) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [isOpen]);
+  useScrollLock(isOpen);
 
   /* ---- ESC key listener ---- */
   useEffect(() => {

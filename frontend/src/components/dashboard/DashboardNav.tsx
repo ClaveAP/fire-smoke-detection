@@ -17,6 +17,7 @@ import {
   VideoCamera,
 } from "@phosphor-icons/react";
 import { useAuth } from "@/context/AuthContext";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { GoogleLogo } from "@/components/auth/GoogleLogo";
 import { LogoutConfirmModal } from "@/components/auth/LogoutConfirmModal";
@@ -84,14 +85,9 @@ export function DashboardNav({
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, []);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [menuOpen]);
+  // The mobile drawer covers the page; freezing the page behind it prevents
+  // the layout underneath from scrolling while the sidebar is open.
+  useScrollLock(menuOpen);
 
   const closeMenu = () => {
     setMenuOpen(false);

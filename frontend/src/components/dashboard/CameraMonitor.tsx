@@ -11,9 +11,12 @@ import { detectionAdapter } from "@/services/detectionAdapter";
 import { ConnectCameraDialog } from "@/components/incidents/ConnectCameraDialog";
 import ScannerPage from "@/components/live-scan/ScannerPage";
 import { useAlarmSound } from "@/hooks/useAlarmSound";
-import type { BackendHealth, CameraFeed, IncidentRecord, StreamFramePacket } from "@/types/detection";
+import type { CameraFeed, IncidentRecord, StreamFramePacket } from "@/types/detection";
 import workspaceStyles from "./WorkspacePage.module.css";
 import styles from "./CameraMonitor.module.css";
+
+/** How long the frame must stay clear before an automatic alarm stops itself. */
+const AUTO_ALARM_RELEASE_MS = 3000;
 
 function MonitorImage({ camera, fallback, onPacket }: { camera?: CameraFeed; fallback?: IncidentRecord; onPacket: (packet: StreamFramePacket | null) => void }) {
   const { state, packet, snapshotSrc, boxes, isLive } = useCameraStream({ cameraId: camera?.streamUrl ? camera.id : null });
@@ -85,7 +88,6 @@ export function CameraMonitor() {
   const [cameras, setCameras] = useState<CameraFeed[]>([]);
   const [incidents, setIncidents] = useState<IncidentRecord[]>([]);
   const [selectedId, setSelectedId] = useState("");
-  const [health, setHealth] = useState<BackendHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "alert">("all");
   const [source, setSource] = useState<"cctv" | "device">("cctv");
@@ -97,15 +99,16 @@ export function CameraMonitor() {
   const clearFramesRef = useRef(0);
   const silencedRef = useRef(false);
   const alarmRef = useRef(false);
+  /** Which alarm is running: automatic (fire detected) or pressed by the operator. */
+  const alarmSourceRef = useRef<"auto" | "manual" | null>(null);
+  const lastFireAtRef = useRef<number | null>(null);
   const { playAlert, stopAlarm } = useAlarmSound();
 
   const refresh = useCallback(async () => {
-    const [health, feeds, events] = await Promise.all([
-      detectionAdapter.getHealth(),
+    const [feeds, events] = await Promise.all([
       detectionAdapter.getCameras(),
       detectionAdapter.getIncidentRecords(),
     ]);
-    setHealth(health);
     setCameras(feeds);
     setIncidents(events);
     setSelectedId((current) => current || feeds.find((camera) => camera.streamUrl)?.id || feeds[0]?.id || "");
@@ -126,6 +129,8 @@ export function CameraMonitor() {
   const onPacket = useCallback((packet: StreamFramePacket | null) => setLatestPacket(packet), []);
   const triggerAlarm = useCallback((automatic = false) => {
     alarmRef.current = true;
+    alarmSourceRef.current = automatic ? "auto" : "manual";
+    lastFireAtRef.current = Date.now();
     silencedRef.current = false;
     setAlarmActive(true);
     playAlert("critical", true);
@@ -135,6 +140,7 @@ export function CameraMonitor() {
   const toggleAlarm = useCallback(() => {
     if (alarmRef.current) {
       alarmRef.current = false;
+      alarmSourceRef.current = null;
       silencedRef.current = true;
       setAlarmActive(false);
       stopAlarm();
@@ -142,10 +148,27 @@ export function CameraMonitor() {
     } else triggerAlarm();
     window.setTimeout(() => setAlarmMessage(""), 3000);
   }, [stopAlarm, triggerAlarm]);
+  // An automatically raised alarm releases itself once the frame stays clear,
+  // while a manually pressed alarm stays latched until the operator stops it.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (!alarmRef.current || alarmSourceRef.current !== "auto") return;
+      const lastFireAt = lastFireAtRef.current;
+      if (lastFireAt !== null && Date.now() - lastFireAt < AUTO_ALARM_RELEASE_MS) return;
+      alarmRef.current = false;
+      alarmSourceRef.current = null;
+      setAlarmActive(false);
+      stopAlarm();
+      setAlarmMessage("Api tidak terdeteksi lagi — alarm darurat berhenti otomatis.");
+      window.setTimeout(() => setAlarmMessage(""), 4000);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [stopAlarm]);
   useEffect(() => {
     if (!latestPacket) { fireFramesRef.current = 0; clearFramesRef.current = 0; return; }
     const fire = latestPacket.detections.reduce((highest, item) => item.label === "fire" ? Math.max(highest, item.confidence) : highest, 0);
     if (fire >= 0.8) {
+      lastFireAtRef.current = Date.now();
       fireFramesRef.current += 1;
       clearFramesRef.current = 0;
       if (fireFramesRef.current >= 2 && !alarmRef.current && !silencedRef.current) triggerAlarm(true);
@@ -156,12 +179,13 @@ export function CameraMonitor() {
     }
   }, [latestPacket, triggerAlarm]);
 
-  const feeds: CameraFeed[] = cameras;
+  // Browser webcams register themselves as cameras too; they belong to the device scanner,
+  // not to the list of connected CCTVs.
+  const feeds: CameraFeed[] = cameras.filter((camera) => !camera.isWebcam);
   const filtered = feeds.filter((camera) => filter === "all" || camera.status !== "safe");
   const selected = filtered.find((camera) => camera.id === selectedId) ?? filtered[0];
   const selectedIncident = incidents.find((item) => item.cameraId === selected?.id);
   const incidentsActive = incidents.filter((incident) => incident.status !== "resolved").length;
-  const healthy = Boolean(health);
   const attentionCount = feeds.filter((camera) => camera.status !== "safe").length;
   const chooseFilter = (next: "all" | "alert") => {
     setFilter(next);
@@ -175,11 +199,6 @@ export function CameraMonitor() {
         <WorkspacePageHeader
           title="Pemindaian kamera langsung."
           description="Pantau feed CCTV dan kamera perangkat untuk deteksi api dan asap secara real-time."
-          aside={
-            <span className={workspaceStyles.status} data-online={healthy}>
-              <i />{healthy ? "Backend tersambung" : loading ? "Memeriksa koneksi" : "Pemindaian lokal"}
-            </span>
-          }
         />
 
         <section className={styles.monitorPanel} aria-label="Pantauan kamera">

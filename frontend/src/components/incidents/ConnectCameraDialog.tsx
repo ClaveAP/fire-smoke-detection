@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Check, VideoCamera, X } from "@phosphor-icons/react";
 import { detectionAdapter } from "@/services/detectionAdapter";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import type { CameraFeed } from "@/types/detection";
 import styles from "./ConnectCameraDialog.module.css";
 
@@ -20,6 +21,8 @@ export function ConnectCameraDialog({ open, onClose, onConnected }: ConnectCamer
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [connected, setConnected] = useState<CameraFeed | null>(null);
+
+  useScrollLock(open);
 
   useEffect(() => {
     if (!open) return;

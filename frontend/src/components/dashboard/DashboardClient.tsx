@@ -163,7 +163,8 @@ export function DashboardClient() {
     };
   }, []);
 
-  const allCameras: CameraFeed[] = cameras;
+  // Webcams the browser registered are not CCTV/area feeds, so they are excluded here.
+  const allCameras: CameraFeed[] = cameras.filter((camera) => !camera.isWebcam);
   const cameraIncidents: IncidentRecord[] = incidents;
   const matchingCameras = allCameras.filter((camera) =>
     `${camera.name} ${camera.location} ${camera.id}`.toLowerCase().includes(query.toLowerCase()),
@@ -182,7 +183,7 @@ export function DashboardClient() {
     ? Math.round(latencyValues.reduce((a, b) => a + b, 0) / latencyValues.length)
     : null;
   // A camera only has a real condition once a frame was analyzed; never count placeholders as safe.
-  const analyzedCameras = cameras.filter(
+  const analyzedCameras = allCameras.filter(
     (camera) => camera.detections.length > 0 || incidents.some((item) => item.cameraId === camera.id),
   );
   const analyzedLocations = [...new Set(analyzedCameras.map((camera) => camera.location).filter(Boolean))];
@@ -317,7 +318,7 @@ export function DashboardClient() {
               <div className={styles.sectionHeading}>
                 <div>
                   <h2>Pantauan kamera</h2>
-                  <p>{cameras.length ? `${cameras.length} kamera terdaftar` : "Belum ada kamera terdaftar"}</p>
+                  <p>{allCameras.length ? `${allCameras.length} kamera terdaftar` : "Belum ada kamera terdaftar"}</p>
                 </div>
                 <span className={styles.cameraCount}>{visibleCameras.length.toString().padStart(2, "0")} feed</span>
               </div>
@@ -381,14 +382,14 @@ export function DashboardClient() {
                 <VideoCamera size={28} />
                 <b>{loading
                   ? "Memuat kamera…"
-                  : cameras.length === 0
+                  : allCameras.length === 0
                     ? "Belum ada kamera terdaftar"
                     : cameraScope === "attention" && matchingCameras.length
                       ? "Semua kamera dalam kondisi aman"
                       : "Kamera tidak ditemukan"}</b>
                 <span>{loading
                   ? "Menghubungkan daftar kamera."
-                  : cameras.length === 0
+                  : allCameras.length === 0
                     ? "Hubungkan CCTV ber-streamUrl lewat Live Scan, atau aktifkan kamera perangkat."
                     : cameraScope === "attention"
                       ? "Tidak ada feed yang memerlukan pemeriksaan saat ini."

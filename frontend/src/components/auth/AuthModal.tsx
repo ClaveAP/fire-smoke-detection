@@ -2,21 +2,14 @@
 
 import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import { LoginCard } from "@/components/auth/LoginCard";
 
 export function AuthModal() {
   const { isAuthModalOpen, closeAuthModal } = useAuth();
 
   /* ---- Lock background scroll when modal is open ---- */
-  useEffect(() => {
-    if (isAuthModalOpen) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [isAuthModalOpen]);
+  useScrollLock(isAuthModalOpen);
 
   /* ---- Escape key listener ---- */
   useEffect(() => {

@@ -32,6 +32,17 @@
   background: var(--dash-accent-soft);
 }
 
+.exportButton:disabled {
+  border-color: var(--dash-line);
+  color: var(--dash-faint);
+  background: transparent;
+  cursor: not-allowed;
+}
+
+.exportButton:disabled > svg {
+  color: var(--dash-faint);
+}
+
 .exportButton > svg:first-child,
 .actionButton > svg {
   color: var(--dash-accent-light);
@@ -912,8 +923,38 @@
 .modalImage {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   opacity: 0.9;
+}
+
+.modalFrameEmpty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 9px;
+  padding: 26px;
+  color: var(--dash-faint);
+  text-align: center;
+}
+
+.modalFrameEmpty svg {
+  color: var(--dash-muted);
+}
+
+.modalFrameEmpty strong {
+  color: var(--dash-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.modalFrameEmpty p {
+  max-width: 330px;
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.65;
 }
 
 .modalImageShade {

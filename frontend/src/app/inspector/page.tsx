@@ -13,6 +13,64 @@ import { InspectorSamplePreset } from "@/services/inspectorPresets";
 import workspaceStyles from "@/components/dashboard/WorkspacePage.module.css";
 import styles from "@/components/inspector/Inspector.module.css";
 
+/**
+ * Grab the frame at `timeMs` from a local video so the incident log has real evidence
+ * instead of an empty preview. Returns "" when the browser cannot decode that frame.
+ */
+async function captureVideoSnapshot(src: string, timeMs: number): Promise<string> {
+  return new Promise((resolve) => {
+    const video = document.createElement("video");
+    let settled = false;
+    const finish = (value: string) => {
+      if (settled) return;
+      settled = true;
+      video.removeAttribute("src");
+      video.load();
+      resolve(value);
+    };
+    const draw = () => {
+      try {
+        const width = video.videoWidth;
+        const height = video.videoHeight;
+        if (!width || !height) {
+          finish("");
+          return;
+        }
+        const scale = Math.min(1, 960 / width);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(width * scale);
+        canvas.height = Math.round(height * scale);
+        canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
+        finish(canvas.toDataURL("image/jpeg", 0.8));
+      } catch {
+        finish("");
+      }
+    };
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    video.addEventListener("error", () => finish(""));
+    video.addEventListener("loadeddata", () => {
+      const target = Math.min(
+        Math.max(0, timeMs / 1000),
+        Math.max(0, (video.duration || 0) - 0.05)
+      );
+      if (target <= 0.01) {
+        draw();
+        return;
+      }
+      try {
+        video.currentTime = target;
+      } catch {
+        draw();
+      }
+    });
+    video.addEventListener("seeked", draw);
+    window.setTimeout(() => finish(""), 6000);
+    video.src = src;
+  });
+}
+
 export default function MediaInspectorPage() {
   const [activePresetId, setActivePresetId] = useState<string | undefined>(
     undefined
@@ -154,6 +212,13 @@ export default function MediaInspectorPage() {
                 res.summary.fire?.peakConfidence || 0,
                 res.summary.smoke?.peakConfidence || 0
               );
+              // Evidence frame: the sampled frame whose boxes are stored below.
+              const snapshot = localPreviewUrl
+                ? await captureVideoSnapshot(
+                    localPreviewUrl,
+                    frameWithBoxes?.timestampMs ?? 0
+                  )
+                : "";
 
               let activeOperator: IncidentRecord["operator"] = undefined;
               if (typeof window !== "undefined") {
@@ -186,6 +251,7 @@ export default function MediaInspectorPage() {
                 confidence: peakConf,
                 smokeConfidence: res.summary.smoke?.peakConfidence,
                 status: "active",
+                snapshotUrl: snapshot || undefined,
                 operator: activeOperator,
                 notes: `Analisis video "${file.name}" selesai: durasi ${(res.durationMs / 1000).toFixed(1)}s, ${res.frames.length} frame diproses dalam ${res.inferenceTimeMs}ms.`,
                 detections: frameWithBoxes?.boxes || [],

@@ -14,6 +14,7 @@ import { IncidentFilters } from "@/components/incidents/IncidentFilters";
 import { IncidentStatCards } from "@/components/incidents/IncidentStatCards";
 import { IncidentTable } from "@/components/incidents/IncidentTable";
 import { SnapshotModal } from "@/components/incidents/SnapshotModal";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { IncidentRecord } from "@/types/detection";
 import { detectionAdapter } from "@/services/detectionAdapter";
 import { getSupabase, supabase } from "@/lib/supabase";
@@ -28,6 +29,51 @@ import styles from "@/components/incidents/Incidents.module.css";
 
 const emptySubscribe = () => () => {};
 
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+const formatDateTime = (isoString: string) => {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "—";
+  return (
+    date
+      .toLocaleString("id-ID", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+      .replace(/\//g, "-") + " WIB"
+  );
+};
+
+/** Local calendar date for file names (UTC would name a WIB evening export "yesterday"). */
+const todayStamp = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+    now.getDate()
+  ).padStart(2, "0")}`;
+};
+
+/** Append the anchor so Safari/Firefox start the download, then release the URL later. */
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+};
+
 export default function IncidentsPage() {
   const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [incidents, setIncidents] = useState<IncidentRecord[]>([]);
@@ -36,6 +82,8 @@ export default function IncidentsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [inspectingIncident, setInspectingIncident] = useState<IncidentRecord | null>(null);
+  /** Incident waiting for the delete confirmation dialog. */
+  const [pendingDelete, setPendingDelete] = useState<IncidentRecord | null>(null);
   const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -126,6 +174,11 @@ export default function IncidentsPage() {
     setStatusFilter("all");
   }, []);
 
+  // Nothing to export means the menu should not stay open with empty results.
+  useEffect(() => {
+    if (filtered.length === 0) setIsExportOpen(false);
+  }, [filtered.length]);
+
   const handleUpdateStatus = useCallback(
     async (incidentId: string, status: IncidentRecord["status"]) => {
       setIncidents((prev) =>
@@ -148,36 +201,15 @@ export default function IncidentsPage() {
   }, []);
 
   /**
-   * Helper: Format datetime readable in Indonesian format (e.g. 04/11/2026, 09:39 WIB)
-   */
-  const formatDateTime = (isoString: string) => {
-    try {
-      const d = new Date(isoString);
-      return (
-        d.toLocaleString("id-ID", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }).replace(/\//g, "-") + " WIB"
-      );
-    } catch {
-      return isoString;
-    }
-  };
-
-  /**
    * Export 1: Formatted Microsoft Excel Worksheet (.xls)
-   * Opens in Microsoft Excel with gorgeous borders, colors, and auto-spaced columns
+   * Opens in Microsoft Excel with borders, colors, and auto-spaced columns
    */
   const exportToExcel = useCallback(() => {
     setIsExportOpen(false);
     const dateFormatted = new Date().toLocaleDateString("id-ID", {
       dateStyle: "full",
     });
-    const filenameDate = new Date().toISOString().slice(0, 10);
+    const filenameDate = todayStamp();
 
     const rowsHtml = filtered
       .map((i, index) => {
@@ -196,21 +228,24 @@ export default function IncidentsPage() {
             ? "background-color: #fef3c7; color: #92400e; font-weight: bold; text-align: center;"
             : "background-color: #dcfce7; color: #166534; font-weight: bold; text-align: center;";
         const bgRow = index % 2 === 0 ? "#ffffff" : "#f8fafc";
+        const operatorLabel = i.operator
+          ? `${i.operator.name} (${i.operator.roleTitle || i.operator.role || "Petugas"})`
+          : "Sistem Otomatis";
 
         return `
           <tr style="background-color: ${bgRow};">
-            <td style="font-family: Consolas, monospace; font-weight: bold; text-align: center;">${i.id.toUpperCase()}</td>
-            <td>${formatDateTime(i.timestamp)}</td>
-            <td style="font-family: Consolas, monospace;">${i.cameraId}</td>
-            <td>${i.cameraName}</td>
-            <td>${i.operator ? `${i.operator.name} (${i.operator.role})` : "Sistem Otomatis"}</td>
+            <td style="font-family: Consolas, monospace; font-weight: bold; text-align: center;">${escapeHtml(i.id.toUpperCase())}</td>
+            <td>${escapeHtml(formatDateTime(i.timestamp))}</td>
+            <td style="font-family: Consolas, monospace;">${escapeHtml(i.cameraId)}</td>
+            <td>${escapeHtml(i.cameraName)}</td>
+            <td>${escapeHtml(operatorLabel)}</td>
             <td style="font-weight: bold; color: ${isFire ? "#dc2626" : "#0284c7"}; text-align: center;">${isFire ? "API (FIRE)" : "ASAP (SMOKE)"}</td>
             <td style="text-align: center;">${hasDual ? "ASAP PEKAT" : "-"}</td>
             <td style="text-align: right; font-family: Consolas, monospace;">${(i.confidence * 100).toFixed(1)}%</td>
             <td style="text-align: right; font-family: Consolas, monospace;">${i.temperatureC ? `+${i.temperatureC}°C` : "-"}</td>
             <td style="text-align: right; font-family: Consolas, monospace;">${i.smokeDensityDbm ? `${i.smokeDensityDbm.toFixed(1)} dB/m` : "-"}</td>
             <td style="${statusStyle}">${statusLabel}</td>
-            <td>${(i.notes || "").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</td>
+            <td>${escapeHtml(i.notes || "")}</td>
           </tr>
         `;
       })
@@ -245,7 +280,7 @@ export default function IncidentsPage() {
       </head>
       <body>
         <div class="header-title">AEGISFLAME — LAPORAN AUDIT INSIDEN K3 &amp; SISTEM KEAMANAN</div>
-        <div class="header-meta">Dicetak pada: ${dateFormatted} | Total Rekaman: ${filtered.length} Insiden Terverifikasi</div>
+        <div class="header-meta">Dicetak pada: ${dateFormatted} | Total Rekaman: ${filtered.length} insiden (mengikuti filter yang aktif)</div>
         <table>
           <thead>
             <tr>
@@ -274,12 +309,7 @@ export default function IncidentsPage() {
     const blob = new Blob([excelTemplate], {
       type: "application/vnd.ms-excel;charset=utf-8;",
     });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `aegisflame-laporan-insiden-${filenameDate}.xls`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `aegisflame-laporan-insiden-${filenameDate}.xls`);
   }, [filtered]);
 
   /**
@@ -289,7 +319,7 @@ export default function IncidentsPage() {
   const exportToCsv = useCallback(
     (delimiter: ";" | ",") => {
       setIsExportOpen(false);
-      const filenameDate = new Date().toISOString().slice(0, 10);
+      const filenameDate = todayStamp();
       const headers = [
         "ID Insiden",
         "Waktu Kejadian (WIB)",
@@ -322,9 +352,10 @@ export default function IncidentsPage() {
           .replace(/"/g, '""');
 
         const cleanCamera = (i.cameraName || "").replace(/"/g, '""');
-        const cleanOperator = (
-          i.operator ? `${i.operator.name} (${i.operator.role})` : "Sistem Otomatis"
-        ).replace(/"/g, '""');
+        const operatorLabel = i.operator
+          ? `${i.operator.name} (${i.operator.roleTitle || i.operator.role || "Petugas"})`
+          : "Sistem Otomatis";
+        const cleanOperator = operatorLabel.replace(/"/g, '""');
 
         return [
           i.id.toUpperCase(),
@@ -342,9 +373,10 @@ export default function IncidentsPage() {
         ];
       });
 
-      // Prepend UTF-8 BOM (\uFEFF) so Excel on Windows/Mac opens degrees (°C) and symbols cleanly
+      // UTF-8 BOM keeps °C and accented text readable in Excel.
+      // The "sep=" directive is an Excel hint only, so the standard comma file stays plain CSV.
       const bom = "\uFEFF";
-      const directive = delimiter === "," ? "sep=,\r\n" : "";
+      const directive = delimiter === ";" ? "sep=;\r\n" : "";
       const csvContent =
         bom +
         directive +
@@ -355,12 +387,7 @@ export default function IncidentsPage() {
       const blob = new Blob([csvContent], {
         type: "text/csv;charset=utf-8;",
       });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `aegisflame-audit-insiden-${filenameDate}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `aegisflame-audit-insiden-${filenameDate}.csv`);
     },
     [filtered]
   );
@@ -421,6 +448,8 @@ export default function IncidentsPage() {
                   onClick={() => setIsExportOpen((prev) => !prev)}
                   className={styles.exportButton}
                   aria-expanded={isExportOpen}
+                  disabled={filtered.length === 0}
+                  title={filtered.length === 0 ? "Tidak ada rekaman untuk diekspor" : "Ekspor rekaman yang sedang ditampilkan"}
                 >
                   <DownloadSimple size={15} weight="bold" />
                   <span>Ekspor Laporan</span>
@@ -487,7 +516,30 @@ export default function IncidentsPage() {
         incident={inspectingIncident}
         onClose={() => setInspectingIncident(null)}
         onUpdateStatus={handleUpdateStatus}
-        onDelete={handleDeleteIncident}
+        suspendEscape={Boolean(pendingDelete)}
+        onDelete={(incidentId) =>
+          setPendingDelete(incidents.find((item) => item.id === incidentId) ?? null)
+        }
+      />
+
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        tone="danger"
+        title="Hapus rekaman insiden?"
+        description={
+          <>
+            Rekaman <b>{pendingDelete?.id.toUpperCase()}</b> dari{" "}
+            <b>{pendingDelete?.cameraName}</b> akan dihapus dari log, backend, dan database.
+            Tindakan ini tidak bisa dibatalkan.
+          </>
+        }
+        confirmLabel="Hapus rekaman"
+        onClose={() => setPendingDelete(null)}
+        onConfirm={() => {
+          const target = pendingDelete;
+          setPendingDelete(null);
+          if (target) void handleDeleteIncident(target.id);
+        }}
       />
     </WorkspaceShell>
   );

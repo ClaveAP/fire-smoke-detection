@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Camera,
+  CameraSlash,
   Fire,
   ShieldWarning,
   Thermometer,
@@ -10,6 +11,8 @@ import {
   X,
 } from "@phosphor-icons/react";
 import type { IncidentRecord } from "@/types/detection";
+import { getMediaContentRect } from "@/lib/mediaGeometry";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import styles from "./Incidents.module.css";
 
 interface SnapshotModalProps {
@@ -20,6 +23,8 @@ interface SnapshotModalProps {
     status: IncidentRecord["status"]
   ) => void;
   onDelete?: (incidentId: string) => void;
+  /** True while a confirmation dialog sits on top, so Esc only closes that dialog. */
+  suspendEscape?: boolean;
 }
 
 const statusOptions: Array<{
@@ -36,21 +41,58 @@ export function SnapshotModal({
   onClose,
   onUpdateStatus,
   onDelete,
+  suspendEscape = false,
 }: SnapshotModalProps) {
   const [showFireBox, setShowFireBox] = useState(true);
   const [showSmokeBox, setShowSmokeBox] = useState(true);
+  const [frameFailed, setFrameFailed] = useState(false);
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const [mediaSize, setMediaSize] = useState({ width: 0, height: 0 });
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+
+  useScrollLock(Boolean(incident));
 
   useEffect(() => {
+    if (suspendEscape) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onClose, suspendEscape]);
+
+  // A new incident starts with a clean frame view.
+  useEffect(() => {
+    setShowFireBox(true);
+    setShowSmokeBox(true);
+    setFrameFailed(false);
+    setMediaSize({ width: 0, height: 0 });
+  }, [incident?.id]);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      setViewportSize({ width: rect.width, height: rect.height });
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [incident?.id]);
 
   if (!incident) return null;
 
   const boxes = incident.detections || [];
+  const hasFrame = Boolean(incident.snapshotUrl) && !frameFailed;
+  // Boxes are normalised to the image, so they must follow the letterboxed drawing area.
+  const contentRect = getMediaContentRect(
+    viewportSize.width,
+    viewportSize.height,
+    mediaSize.width,
+    mediaSize.height
+  );
 
   const visibleBoxes = boxes.filter((box) => {
     if (box.label === "fire" && !showFireBox) return false;
@@ -73,36 +115,40 @@ export function SnapshotModal({
               <ShieldWarning size={18} weight="duotone" />
             </span>
             <div>
-              <h2 id="snapshot-modal-title">
-                Bukti rekaman {incident.id.toUpperCase()}
-              </h2>
+<h2 id="snapshot-modal-title">
+                  {hasFrame ? "Bukti rekaman" : "Detail insiden"} {incident.id.toUpperCase()}
+                </h2>
               <span className={styles.modalCameraId}>{incident.cameraId}</span>
             </div>
           </div>
 
           <div className={styles.modalHeaderActions}>
-            <button
-              type="button"
-              aria-pressed={showFireBox}
-              onClick={() => setShowFireBox(!showFireBox)}
-              className={styles.modalLayerButton}
-              data-type="fire"
-              data-active={showFireBox}
-            >
-              <Fire size={14} weight="fill" />
-              <span>Kotak api</span>
-            </button>
-            <button
-              type="button"
-              aria-pressed={showSmokeBox}
-              onClick={() => setShowSmokeBox(!showSmokeBox)}
-              className={styles.modalLayerButton}
-              data-type="smoke"
-              data-active={showSmokeBox}
-            >
-              <Wind size={14} weight="duotone" />
-              <span>Kotak asap</span>
-            </button>
+            {hasFrame && (
+              <>
+                <button
+                  type="button"
+                  aria-pressed={showFireBox}
+                  onClick={() => setShowFireBox(!showFireBox)}
+                  className={styles.modalLayerButton}
+                  data-type="fire"
+                  data-active={showFireBox}
+                >
+                  <Fire size={14} weight="fill" />
+                  <span>Kotak api</span>
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={showSmokeBox}
+                  onClick={() => setShowSmokeBox(!showSmokeBox)}
+                  className={styles.modalLayerButton}
+                  data-type="smoke"
+                  data-active={showSmokeBox}
+                >
+                  <Wind size={14} weight="duotone" />
+                  <span>Kotak asap</span>
+                </button>
+              </>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -114,14 +160,30 @@ export function SnapshotModal({
           </div>
         </header>
 
-        <div className={styles.modalViewport}>
-          {incident.snapshotUrl && (
+        <div ref={viewportRef} className={styles.modalViewport}>
+          {hasFrame ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={incident.snapshotUrl}
               alt={incident.cameraName}
               className={styles.modalImage}
+              onLoad={(event) =>
+                setMediaSize({
+                  width: event.currentTarget.naturalWidth,
+                  height: event.currentTarget.naturalHeight,
+                })
+              }
+              onError={() => setFrameFailed(true)}
             />
+          ) : (
+            <div className={styles.modalFrameEmpty}>
+              <CameraSlash size={26} weight="duotone" />
+              <strong>Snapshot tidak tersedia</strong>
+              <p>
+                Frame asli insiden ini tidak tersimpan, jadi kotak deteksi tidak bisa
+                digambar di atasnya.
+              </p>
+            </div>
           )}
           <div className={styles.modalImageShade} aria-hidden="true" />
 
@@ -133,17 +195,17 @@ export function SnapshotModal({
             </time>
           </div>
 
-          {visibleBoxes.map((box) => {
+          {hasFrame && visibleBoxes.map((box) => {
             const isFire = box.label === "fire";
             const [nx, ny, nw, nh] = box.bbox;
             return (
               <div
                 key={box.id}
                 style={{
-                  left: `${nx * 100}%`,
-                  top: `${ny * 100}%`,
-                  width: `${nw * 100}%`,
-                  height: `${nh * 100}%`,
+                  left: `${contentRect.pctOffsetX + nx * contentRect.pctWidth}%`,
+                  top: `${contentRect.pctOffsetY + ny * contentRect.pctHeight}%`,
+                  width: `${nw * contentRect.pctWidth}%`,
+                  height: `${nh * contentRect.pctHeight}%`,
                 }}
                 className={styles.boundingBox}
                 data-type={box.label}

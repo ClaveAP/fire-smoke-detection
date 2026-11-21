@@ -213,10 +213,10 @@
 
 .toolbar {
   display: grid;
-  width: min(100%, 760px);
+  width: 100%;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
-  gap: 13px;
+  gap: 14px;
   margin: 30px auto 0;
 }
 
@@ -233,12 +233,14 @@
   color: var(--dash-faint);
   background: var(--dash-hover);
   backdrop-filter: blur(12px);
-  transition: border-color 200ms ease, background-color 200ms ease;
+  cursor: text;
 }
 
+/* Same box at rest, hover, and focus: the pill never lights up or draws a frame. */
+.search:hover,
 .search:focus-within {
-  border-color: rgb(255 87 34 / 55%);
-  background: var(--dash-accent-soft);
+  border-color: var(--dash-line-strong);
+  background: var(--dash-hover);
 }
 
 .search input {
@@ -253,6 +255,12 @@
 
 .search input::placeholder {
   color: var(--dash-faint);
+}
+
+/* The pill keeps a fixed border while typing; no extra frame appears on focus/click. */
+.search input:focus,
+.search input:focus-visible {
+  outline: none;
 }
 
 .liveScanButton {
@@ -1149,12 +1157,6 @@
   border-color: rgb(23 24 29 / 12%);
   background: rgb(255 255 255 / 86%);
   box-shadow: var(--dash-control-shadow);
-}
-
-.page[data-theme="light"] .search:focus-within {
-  border-color: rgb(255 87 34 / 48%);
-  background: #ffffff;
-  box-shadow: 0 0 0 4px var(--dash-accent-soft), var(--dash-control-shadow);
 }
 
 .page[data-theme="light"] .liveScanButton {
